@@ -25,7 +25,7 @@ lemma prod_pow_add_single (x : Fin n → R) (α : Fin n →₀ ℕ) (j : Fin n) 
   congr 1
   rw [Finset.prod_eq_single j]
   · simp
-  · intro i _ hi; simp [Finsupp.single_apply, Ne.symm hi]
+  · intro i _ hi; simp [Ne.symm hi]
   · simp
 
 namespace Chart
@@ -47,13 +47,13 @@ lemma IsCentred.pow_eq_span (hc : c.IsCentred) (N : ℕ) :
     rw [pow_succ, ih, hc, Ideal.span_mul_span]
     congr 1
     ext f
-    simp only [Set.mem_mul, monos, Set.mem_setOf_eq, Set.mem_range]
+    simp only [Set.mem_mul, monos, Set.mem_ofPred_eq, Set.mem_range]
     constructor
     · rintro ⟨a, ⟨α, hα, rfl⟩, b, ⟨j, rfl⟩, rfl⟩
       exact ⟨α + Finsupp.single j 1, by simp [hα], (prod_pow_add_single _ _ _).symm⟩
     · rintro ⟨α, hα, rfl⟩
       obtain ⟨j, hj⟩ : ∃ j, α j ≠ 0 := by
-        by_contra h; push_neg at h
+        by_contra h; push Not at h
         have : α = 0 := Finsupp.ext h
         subst this; simp at hα
       set α' := α - Finsupp.single j 1 with hα'
@@ -158,7 +158,7 @@ lemma IsCentred.mem_sup_pow_succ (hc : c.IsCentred) (S : Set (Fin n)) {g : R} (N
     rw [← Finset.sum_coe_sort T] at h1
     rw [Finset.sum_eq_single t] at h1
     · have ht : c.tau (t : R) = monomial (α t) 1 := by rw [hα t]; exact hc.tau_monomial _
-      rw [smul_eq_mul, map_mul, ht, coeff_mul_monomial, if_pos le_rfl,
+      rw [smul_eq_mul, map_mul, ht, coeff_mul_monomial, ite_eq_left le_rfl,
         tsub_self, mul_one, coeff_zero_eq_constantCoeff_apply, constantCoeff_tau] at h1
       exact (residue_eq_zero_iff _).1 h1
     · intro t' _ hne
@@ -180,7 +180,7 @@ lemma IsCentred.mem_sup_pow_succ (hc : c.IsCentred) (S : Set (Fin n)) {g : R} (N
       refine Ideal.mul_mem_mul (key t hS) ?_
       rw [hc.pow_eq_span]
       exact Ideal.subset_span (hT t.2)
-    · push_neg at hS
+    · push Not at hS
       obtain ⟨i, hiS, hi⟩ := hS
       refine Ideal.mem_sup_left (Ideal.mul_mem_left _ _ ?_)
       rw [hα t, ← Finset.mul_prod_erase _ _ (Finset.mem_univ i)]
@@ -204,8 +204,8 @@ theorem IsCentred.mem_span_iff [IsNoetherianRing R] (hc : c.IsCentred) (S : Set 
     | succ N ih => exact hc.mem_sup_pow_succ S N ih h0
   by_cases hJ : J = ⊤
   · rw [hJ]; trivial
-  haveI : Nontrivial (R ⧸ J) := Ideal.Quotient.nontrivial_iff.2 hJ
-  haveI : IsLocalRing (R ⧸ J) := .of_surjective' _ Ideal.Quotient.mk_surjective
+  have : Nontrivial (R ⧸ J) := Ideal.Quotient.nontrivial_iff.2 hJ
+  have : IsLocalRing (R ⧸ J) := .of_surjective' _ Ideal.Quotient.mk_surjective
   have hmax : maximalIdeal (R ⧸ J) ≠ ⊤ := (maximalIdeal.isMaximal _).ne_top
   have hbot := Ideal.iInf_pow_eq_bot_of_isLocalRing (maximalIdeal (R ⧸ J)) hmax
   rw [← Ideal.Quotient.eq_zero_iff_mem, ← Ideal.mem_bot, ← hbot, Ideal.mem_iInf]
@@ -252,26 +252,6 @@ def F (w : Fin n → ℕ) (j : ℕ) : Ideal R := Ideal.span (c.wmonos w j)
 lemma F_zero (w : Fin n → ℕ) : c.F w 0 = ⊤ := by
   rw [Ideal.eq_top_iff_one]
   exact Ideal.subset_span ⟨0, fun _ _ => rfl, zero_le, by simp⟩
-
-lemma F_antitone (w : Fin n → ℕ) {j j' : ℕ} (h : j ≤ j') : c.F w j' ≤ c.F w j :=
-  Ideal.span_mono fun _ ⟨α, h0, hj, hf⟩ => ⟨α, h0, h.trans hj, hf⟩
-
-lemma F_mul_le (w : Fin n → ℕ) (j j' : ℕ) : c.F w j * c.F w j' ≤ c.F w (j + j') := by
-  rw [F, F, Ideal.span_mul_span, F]
-  refine Ideal.span_mono ?_
-  rintro _ ⟨a, ⟨α, h0, hj, rfl⟩, b, ⟨α', h0', hj', rfl⟩, rfl⟩
-  refine ⟨α + α', fun i hi => by rw [Finsupp.add_apply, h0 i hi, h0' i hi], by rw [map_add]; omega, ?_⟩
-  simp only [Finsupp.add_apply, pow_add, Finset.prod_mul_distrib]
-
-lemma x_mem_F (w : Fin n → ℕ) (i : Fin n) (hi : w i ≠ 0) : c.x i ∈ c.F w (w i) := by
-  refine Ideal.subset_span ⟨Finsupp.single i 1, fun l hl => ?_, by rw [Finsupp.weight_single, one_smul], ?_⟩
-  · rw [Finsupp.single_apply]; split_ifs with h
-    · subst h; exact absurd hl hi
-    · rfl
-  · rw [Finset.prod_eq_single i]
-    · simp
-    · intro l _ hl; rw [Finsupp.single_apply, if_neg (Ne.symm hl), pow_zero]
-    · simp
 
 end Chart
 
@@ -326,7 +306,7 @@ lemma coeff_eq_zero_of_mem_span_monomial {K : Type*} [CommRing K] (w : Fin n →
   | mem Ψ hΨ =>
     intro β hβ
     obtain ⟨α, ⟨_, hj⟩, rfl⟩ := hΨ
-    rw [coeff_monomial, if_neg]
+    rw [coeff_monomial, ite_eq_right]
     rintro rfl; omega
   | zero => intros; simp
   | add _ _ _ _ h1 h2 => intro β hβ; rw [map_add, h1 β hβ, h2 β hβ, add_zero]
@@ -378,7 +358,7 @@ theorem IsCentred.mem_F_iff [IsNoetherianRing R] (hc : c.IsCentred) (w : Fin n �
             rw [← hr, map_sum, map_sum, ← Finset.sum_coe_sort T, Finset.sum_eq_single t] at h1
             · have ht : c.tau (t : R) = monomial (α t) 1 := by
                 rw [hα t]; exact hc.tau_monomial _
-              rwa [smul_eq_mul, map_mul, ht, coeff_mul_monomial, if_pos le_self_add,
+              rwa [smul_eq_mul, map_mul, ht, coeff_mul_monomial, ite_eq_left le_self_add,
                 add_tsub_cancel_left, mul_one] at h1
             · intro t' _ hne
               have ht' : c.tau (t' : R) = monomial (α t') 1 := by
@@ -412,7 +392,7 @@ theorem IsCentred.mem_F_iff [IsNoetherianRing R] (hc : c.IsCentred) (w : Fin n �
               obtain ⟨i, hi, rfl⟩ := hy
               refine Ideal.subset_span ⟨α t + Finsupp.single i 1, fun l hl => ?_, ?_, ?_⟩
               · rw [Finsupp.add_apply, hα0 t l hl, Finsupp.single_apply,
-                  if_neg (by rintro rfl; exact hi hl), add_zero]
+                  ite_eq_right (by rintro rfl; exact hi hl), add_zero]
               · rw [map_add, heq, Finsupp.weight_single, one_smul]
                 have : w i ≠ 0 := hi
                 omega

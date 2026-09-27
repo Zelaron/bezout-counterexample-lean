@@ -1,5 +1,6 @@
 import BezoutCounterexample.Principalization.Vertex
-import BezoutCounterexample.DerivExt
+import BezoutCounterexample.Principalization.DerivExt
+import BezoutCounterexample.SplitConormal
 
 /-!
 # Smoothness of the local weighted Rees algebra
@@ -64,7 +65,7 @@ theorem gradedCI {c : Chart S n} (hc : c.IsCentred) {e : Fin n → ℚ} (he : �
   rw [map_sum] at h0
   simp only [map_mul, hc.tau_monomial, map_sum] at h0
   rw [Finset.sum_eq_single α₀] at h0
-  · rw [coeff_mul_monomial, if_pos (le_add_right le_rfl), mul_one, add_tsub_cancel_left] at h0
+  · rw [coeff_mul_monomial, ite_eq_left (le_add_right le_rfl), mul_one, add_tsub_cancel_left] at h0
     exact h0
   · intro α hα hne
     rw [coeff_mul_monomial]
@@ -81,9 +82,9 @@ theorem gradedCI {c : Chart S n} (hc : c.IsCentred) {e : Fin n → ℚ} (he : �
       by_contra hlt
       have hlt' : α < α₀ := lt_of_le_of_ne hle' (fun h => hlt (h ▸ le_rfl))
       obtain ⟨i, hi⟩ : ∃ i, α i < α₀ i := by
-        by_contra h; push_neg at h; exact hlt (fun i => h i)
+        by_contra h; push Not at h; exact hlt (fun i => h i)
       have hik : (i : ℕ) < k := by
-        by_contra h; push_neg at h; rw [(hs α₀ hα₀).1 i h] at hi; omega
+        by_contra h; push Not at h; rw [(hs α₀ hα₀).1 i h] at hi; omega
       have hwt : Finsupp.weight w α < Finsupp.weight w α₀ := by
         rw [Finsupp.weight_eq_sum, Finsupp.weight_eq_sum]
         apply Finset.sum_lt_sum
@@ -99,83 +100,6 @@ end GradedCI
 end BezoutCounterexample.Principalization
 
 
-namespace BezoutCounterexample.Principalization
-
-open TensorProduct
-
-section Jacobian
-
-variable {R P : Type*} [CommRing R] [CommRing P] [Algebra R P] {m : ℕ}
-
-/-- **Jacobian criterion with a dual system of derivations.** If `P` is formally smooth over `R`
-and `K = (r₁, …, r_m)` admits derivations `Dᵢ : P → P/K` with `Dᵢ rⱼ = δᵢⱼ`, then `P/K` is formally
-smooth over `R`. -/
-theorem formallySmooth_quotient_of_dual [Algebra.FormallySmooth R P] (r : Fin m → P)
-    (D : Fin m → Derivation R P (P ⧸ Ideal.span (Set.range r)))
-    (hD : ∀ i j, D i (r j) = if i = j then 1 else 0) :
-    Algebra.FormallySmooth R (P ⧸ Ideal.span (Set.range r)) := by
-  let Q := P ⧸ Ideal.span (Set.range r)
-  have hsmul : ∀ (p : P) (u : Q), p • u = algebraMap P Q p * u := fun p u => Algebra.smul_def p u
-  rw [Algebra.FormallySmooth.iff_split_injection (P := P) Ideal.Quotient.mk_surjective]
-  set K' := RingHom.ker (algebraMap P Q)
-  have hK : K' = Ideal.span (Set.range r) := Ideal.mk_ker
-  let eK : Q ≃+* P ⧸ K' := Ideal.quotEquivOfEq hK.symm
-  have heK : ∀ p : P, eK (algebraMap P Q p) = Ideal.Quotient.mk K' p :=
-    fun p => Ideal.quotEquivOfEq_mk hK.symm p
-  have hrK : ∀ j, r j ∈ K' := fun j => by rw [hK]; exact Ideal.subset_span ⟨j, rfl⟩
-  let rC : Fin m → K'.Cotangent := fun j => K'.toCotangent ⟨r j, hrK j⟩
-  let l₀ : Ω[P⁄R] →ₗ[P] K'.Cotangent :=
-    { toFun := fun ω => ∑ i, eK ((D i).liftKaehlerDifferential ω) • rC i
-      map_add' := fun ω ω' => by
-        simp only [map_add, add_smul, Finset.sum_add_distrib]
-      map_smul' := fun p ω => by
-        simp only [map_smul, RingHom.id_apply, Finset.smul_sum, hsmul, map_mul, heK, mul_smul]
-        refine Finset.sum_congr rfl fun i _ => ?_
-        rw [← Ideal.Quotient.algebraMap_eq, algebraMap_smul] }
-  let lB : Q →ₗ[P] Ω[P⁄R] →ₗ[P] K'.Cotangent :=
-    LinearMap.mk₂ P (fun u ω => eK u • l₀ ω)
-      (fun u u' ω => by simp only [map_add, add_smul])
-      (fun p u ω => by
-        rw [hsmul, map_mul, heK, mul_smul, ← Ideal.Quotient.algebraMap_eq, algebraMap_smul])
-      (fun u ω ω' => by simp only [map_add, smul_add])
-      (fun p u ω => by rw [map_smul, smul_comm])
-  refine ⟨TensorProduct.lift lB, ?_⟩
-  apply LinearMap.ext
-  intro t
-  obtain ⟨y, rfl⟩ := K'.toCotangent_surjective t
-  rw [LinearMap.comp_apply, KaehlerDifferential.kerCotangentToTensor_toCotangent,
-    TensorProduct.lift.tmul, LinearMap.id_apply]
-  show eK 1 • l₀ (KaehlerDifferential.D R P y) = _
-  rw [map_one, one_smul]
-  show ∑ i, eK ((D i).liftKaehlerDifferential (KaehlerDifferential.D R P y)) • rC i = _
-  simp only [Derivation.liftKaehlerDifferential_comp_D]
-  obtain ⟨y, hy⟩ := y
-  have hy' : y ∈ Ideal.span (Set.range r) := by rw [← hK]; exact hy
-  -- write `y = ∑ cⱼ rⱼ`
-  obtain ⟨cf, hcf⟩ := (Ideal.mem_span_range_iff_exists_fun).1 hy'
-  have hr0 : ∀ j, algebraMap P Q (r j) = 0 := fun j =>
-    (Ideal.Quotient.eq_zero_iff_mem).2 (Ideal.subset_span ⟨j, rfl⟩)
-  have hDy : ∀ i, D i y = algebraMap P Q (cf i) := by
-    intro i
-    rw [← hcf, map_sum]
-    simp only [Derivation.leibniz, hsmul, hr0, mul_zero, zero_add, hD, smul_eq_mul]
-    rw [Finset.sum_eq_single i]
-    · simp
-    · intro b _ hb; rw [if_neg (Ne.symm hb)]; simp
-    · simp
-  simp only [hDy, heK]
-  have : (⟨y, hy⟩ : K') = ∑ i, cf i • (⟨r i, hrK i⟩ : K') := by
-    apply Subtype.ext
-    simp only [Submodule.coe_sum, Submodule.coe_smul, smul_eq_mul]
-    exact hcf.symm
-  rw [this, map_sum]
-  refine Finset.sum_congr rfl fun i _ => ?_
-  rw [map_smul]
-  rfl
-
-end Jacobian
-
-end BezoutCounterexample.Principalization
 
 
 namespace BezoutCounterexample.Principalization
@@ -309,6 +233,7 @@ lemma reesPsi_rel_le : Ideal.span (Set.range (reesRel c w hkn)) ≤
   rintro _ ⟨i, rfl⟩
   exact reesPsi_rel c hF he hd hw hkn i
 
+omit [Algebra ℚ S] in
 lemma aeval_Tinv_coeff (f : Polynomial S) (i : ℕ) :
     (Polynomial.aeval (T (-1) : S[T;T⁻¹]) f).coeff (-(i : ℤ)) = f.coeff i := by
   classical
@@ -319,7 +244,7 @@ lemma aeval_Tinv_coeff (f : Polynomial S) (i : ℕ) :
     rw [T_pow, AddMonoidAlgebra.coeff_smul_apply, T_apply]
     by_cases h : j = i
     · subst h; simp
-    · rw [if_neg (by omega), if_neg h, smul_zero]
+    · rw [ite_eq_right (by omega), ite_eq_right h, smul_zero]
   simp only [hterm]
   rw [Finset.sum_ite_eq']
   split_ifs with h
@@ -327,6 +252,7 @@ lemma aeval_Tinv_coeff (f : Polynomial S) (i : ℕ) :
   · rw [Polynomial.coeff_eq_zero_of_natDegree_lt]
     simp only [Finset.mem_range, not_lt] at h; omega
 
+omit [Algebra ℚ S] in
 lemma aeval_Tinv_injective (f : Polynomial S) (hf : Polynomial.aeval (T (-1) : S[T;T⁻¹]) f = 0) :
     f = 0 := by
   ext i
@@ -377,6 +303,7 @@ variable (c : Chart S n) {e : Fin n → ℚ} {d : ℕ} {w : Fin n → ℕ}
 def evS0 : MvPolynomial (Option (Fin k)) S →ₐ[S] MvPolynomial (Fin k) S :=
   MvPolynomial.aeval (fun o => o.elim 0 X)
 
+omit [Algebra ℚ S] in
 lemma sub_rename_evS0_mem (p : MvPolynomial (Option (Fin k)) S) :
     p - rename some (evS0 p) ∈ Ideal.span {(X none : MvPolynomial (Option (Fin k)) S)} := by
   induction p using MvPolynomial.induction_on with
@@ -391,7 +318,7 @@ lemma sub_rename_evS0_mem (p : MvPolynomial (Option (Fin k)) S) :
     rw [this]
     refine Ideal.add_mem _ (Ideal.mul_mem_right _ _ hp) (Ideal.mul_mem_left _ _ ?_)
     cases o with
-    | none => simp [evS0, Ideal.subset_span]
+    | none => simp [evS0]
     | some i => simp [evS0]
 
 /-- The weight of a multi-index in the first `k` variables. -/
@@ -421,8 +348,8 @@ lemma coeff_reesPsi_rename (q : MvPolynomial (Fin k) S) (j : ℤ) :
   simp only [Subalgebra.coe_val] at h2 ⊢
   rw [h2, ← LaurentPolynomial.C_eq_algebraMap, ← mul_assoc, ← map_mul, coeff_C_mul_T]
   by_cases h : j = (wk hkn w α : ℤ)
-  · rw [if_pos h, if_pos h.symm]
-  · rw [if_neg h, if_neg (Ne.symm h)]
+  · rw [ite_eq_left h, ite_eq_left h.symm]
+  · rw [ite_eq_right h, ite_eq_right (Ne.symm h)]
 
 end ReesStepA
 
@@ -439,7 +366,7 @@ variable {S : Type*} [CommRing S] [Algebra ℚ S] {n : ℕ} {k : ℕ} (hkn : k �
 
 lemma mapDomain_ιk_apply_ge (α : Fin k →₀ ℕ) (j : Fin n) (hj : k ≤ (j : ℕ)) :
     Finsupp.mapDomain (ιk hkn) α j = 0 := by
-  apply Finsupp.mapDomain_notin_range
+  apply Finsupp.mapDomain_of_notMem_range
   rintro ⟨i, rfl⟩
   simp [ιk] at hj; omega
 
@@ -454,7 +381,7 @@ lemma weight_mapDomain_ιk (w : Fin n → ℕ) (α : Fin k →₀ ℕ) :
   | single i m =>
     rw [Finsupp.mapDomain_single, Finsupp.weight_single, wk, Finset.sum_eq_single i]
     · simp [smul_eq_mul]
-    · intro b _ hb; rw [Finsupp.single_apply, if_neg (Ne.symm hb), zero_mul]
+    · intro b _ hb; rw [Finsupp.single_apply, ite_eq_right (Ne.symm hb), zero_mul]
     · simp
 
 lemma prod_mapDomain_ιk {R : Type*} [CommMonoid R] (x : Fin n → R) (α : Fin k →₀ ℕ) :
@@ -468,9 +395,9 @@ lemma prod_mapDomain_ιk {R : Type*} [CommMonoid R] (x : Fin n → R) (α : Fin 
   | single i m =>
     rw [Finsupp.mapDomain_single, Finset.prod_eq_single (ιk hkn i), Finset.prod_eq_single i]
     · simp
-    · intro b _ hb; rw [Finsupp.single_apply, if_neg (Ne.symm hb), pow_zero]
+    · intro b _ hb; rw [Finsupp.single_apply, ite_eq_right (Ne.symm hb), pow_zero]
     · simp
-    · intro b _ hb; rw [Finsupp.single_apply, if_neg (Ne.symm hb), pow_zero]
+    · intro b _ hb; rw [Finsupp.single_apply, ite_eq_right (Ne.symm hb), pow_zero]
     · simp
 
 end ReesStepA2
@@ -541,6 +468,7 @@ variable (c : Chart S n) (hc : c.IsCentred) {e : Fin n → ℚ} {d : ℕ} {w : F
   (hsupp : ∀ i, e i ≠ 0 ↔ (i : ℕ) < k)
 
 include hd hw hsupp in
+omit [IsLocalRing S] [IsNoetherianRing S] in
 lemma C_mem_rel_sup (a : S) (ha : a ∈ Ideal.span (c.x '' {i | (i : ℕ) < k})) :
     (MvPolynomial.C a : MvPolynomial (Option (Fin k)) S) ∈
       Ideal.span (Set.range (reesRel c w hkn)) ⊔ Ideal.span {X none} := by
@@ -552,7 +480,7 @@ lemma C_mem_rel_sup (a : S) (ha : a ∈ Ideal.span (c.x '' {i | (i : ℕ) < k}))
     have hwj : 1 ≤ w j := by
       have h1 := (hsupp j).2 hj
       have h2 := hw j
-      by_contra h; push_neg at h
+      by_contra h; push Not at h
       have : w j = 0 := by omega
       rw [this, Nat.cast_zero, eq_comm, mul_eq_zero] at h2
       rcases h2 with h2 | h2
@@ -734,6 +662,7 @@ variable (c : Chart S n) (hc : c.IsCentred) {e : Fin n → ℚ} {d : ℕ} {w : F
   (hw : ∀ i, (w i : ℚ) = d * e i) {k : ℕ} (hkn : k ≤ n)
   (hsupp : ∀ i, e i ≠ 0 ↔ (i : ℕ) < k)
 
+omit [IsLocalRing S] [IsNoetherianRing S] in
 lemma mapCoeffs_X_mul (δ : Derivation ℚ S S) (a : ℕ) (o : Option (Fin k)) :
     BezoutCounterexample.mapCoeffs δ (X none ^ a * X o : MvPolynomial (Option (Fin k)) S) = 0 := by
   rw [Derivation.leibniz, Derivation.leibniz_pow, BezoutCounterexample.mapCoeffs_X,
@@ -746,8 +675,8 @@ theorem rees_formallySmooth [Algebra.FormallySmooth ℚ S] :
     Algebra.FormallySmooth ℚ (ReesAlg Φ) := by
   classical
   set K₀ := Ideal.span (Set.range (reesRel c w hkn))
-  haveI : Algebra.FormallySmooth S (MvPolynomial (Option (Fin k)) S) := inferInstance
-  haveI : Algebra.FormallySmooth ℚ (MvPolynomial (Option (Fin k)) S) :=
+  have : Algebra.FormallySmooth S (MvPolynomial (Option (Fin k)) S) := inferInstance
+  have : Algebra.FormallySmooth ℚ (MvPolynomial (Option (Fin k)) S) :=
     Algebra.FormallySmooth.comp ℚ S _
   let D : Fin k → Derivation ℚ (MvPolynomial (Option (Fin k)) S)
       (MvPolynomial (Option (Fin k)) S ⧸ K₀) := fun i =>
@@ -762,8 +691,8 @@ theorem rees_formallySmooth [Algebra.FormallySmooth ℚ S] :
     rw [c.d_x]
     by_cases hij : i = j
     · subst hij; simp
-    · rw [if_neg (fun h => hij (ιk_injective hkn h)), if_neg hij]; simp
-  haveI := formallySmooth_quotient_of_dual (R := ℚ) (reesRel c w hkn) D hD
+    · rw [ite_eq_right (fun h => hij (ιk_injective hkn h)), ite_eq_right hij]; simp
+  have := formallySmooth_quotient_of_dual (R := ℚ) (reesRel c w hkn) D hD
   have hker := reesPsi_ker c hc hF he hd hw hkn hsupp
   let e₁ : (MvPolynomial (Option (Fin k)) S ⧸ K₀) ≃ₐ[S] ReesAlg Φ :=
     (Ideal.quotientEquivAlgOfEq S hker.symm).trans

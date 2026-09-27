@@ -1,142 +1,147 @@
 import BezoutCounterexample.Construction
-import BezoutCounterexample.Identities
-import BezoutCounterexample.Principalization.RealPts
 
 /-!
-# Theorem 1.1 (`thm:main`)
+# Lemma 5.3 and Theorem 1.1
 
-Using Proposition 4.6 (`PrincipalizationExtension`, proved in
-`BezoutCounterexample.Principalization.principalizationExtension` by weighted principalization),
-the ring `R` of Construction 5.1 is a countable Bézout domain containing `A₀ = ℚ[x,y]` in which `Δ` is a nonzero nonunit and over
-which the matrix `M` has no Smith normal form. Consequently `R` has characteristic zero and is
-not an elementary divisor domain.
+This file formalizes the end of Section 5 of the paper:
 
-The proof follows the paper: a Smith normal form `U M V = diag(d₁, d₂)` forces `d₁` to be a unit
-(because the entries of `M` generate the unit ideal); all the data then live in some `A_N`, and
-evaluating at the points of `K_N` produces the nowhere vanishing section `z ↦ M(z) V(z) e₁` of
-`L_N`, contradicting (5.2).
+* **Lemma 5.3** (`lem:key-obstruction`, `key_obstruction`): there are no `p, q, u, v, μ, c ∈ R`
+  with `μ (p, q) M (u, v)ᵀ = 1 + Δ c`. The row-matrix-column product `(p, q) M (u, v)ᵀ` is written
+  `![p, q] ᵥ* M ⬝ᵥ ![u, v]` (`Matrix.vecMul` and `dotProduct`).
+* **Theorem 1.1** (`thm:main`, `main_theorem`): there is a countable Bézout domain `R` containing
+  `A₀` (via an injection `ι : A₀ ↪ R`) such that `Δ` is a nonzero nonunit of `R` and `M` has no
+  Smith normal form over `R`; consequently `R` has characteristic zero and is not an elementary
+  divisor domain. For the ring `R` of Construction 5.1 these are `bezout_domain`,
+  `not_hasSmithNormalForm` and `not_isElementaryDivisorDomain`.
+
+The proofs follow the paper: for Lemma 5.3, all six elements lie in some `A_N`, and evaluating at
+the points of `K_N` produces the nowhere-zero section `ξ(z) = M(z) (u(z), v(z))ᵀ` of `L_N`,
+contradicting (5.2); for Theorem 1.1, a Smith normal form `P M Q = diag(d₁, d₂)` forces `d₁` to be a
+unit, and then the first row of `P` and the first column of `Q` contradict Lemma 5.3 with
+`μ = d₁⁻¹` and `c = 0`.
 -/
 
 noncomputable section
 
 namespace BezoutCounterexample
 
-open Set Topology
+open Set Topology Matrix Construction
 
-variable (hPE : CoprimePairPE)
+/-- The product `(p, q) M (u, v)ᵀ`, written out. -/
+lemma vecMul_M_dotProduct {S : Type*} [CommRing S] (φ : A₀ →+* S) (p q u v : S) :
+    ![p, q] ᵥ* (M.map φ) ⬝ᵥ ![u, v] =
+      (p * (1 + φ x) + q * φ y) * u + (p * φ y + q * (1 - φ x)) * v := by
+  simp [Matrix.vecMul, dotProduct, Fin.sum_univ_two, M]
 
-namespace R
+/-- **Lemma 5.3** (`lem:key-obstruction`). There are no elements `p, q, u, v, μ, c ∈ R` such that
+`μ (p, q) M (u, v)ᵀ = 1 + Δ c`.
 
-/-- **Lemma 5.3** (`lem:key-obstruction`), the key obstruction: for no `p, q, u, v, e, c ∈ R` is
-`e · (p, q) M (u, v)ᵀ = 1 + Δ c`.
-(If it were, all these elements would come from some `A_N`, and at the points `z ∈ K_N`,
-where `Δ` vanishes, `z ↦ M(z) (u(z), v(z))ᵀ` would be a nowhere vanishing section of `L_N`.) -/
-theorem no_unit_value_mod (p q u v e c : R hPE) :
-    e * (p * (1 + ι hPE x) * u + p * ι hPE y * v + q * ι hPE y * u + q * (1 - ι hPE x) * v)
-      ≠ 1 + ι hPE Δ * c := by
-  intro hrel
-  obtain ⟨N, w, hw⟩ := exists_of_fin hPE 6 ![p, q, u, v, e, c]
-  set S := stage hPE N
-  set X : G hPE N := S.ι x
-  set Y : G hPE N := S.ι y
-  -- the relation already holds in `A_N`
-  have hrelN : w 4 * (w 0 * (1 + X) * w 2 + w 0 * Y * w 3 + w 1 * Y * w 2 + w 1 * (1 - X) * w 3)
-      = 1 + S.ι Δ * w 5 := by
-    apply of_injective hPE N
-    have hX : of hPE N X = ι hPE x := of_ι hPE N x
-    have hY : of hPE N Y = ι hPE y := of_ι hPE N y
-    have hΔ : of hPE N (S.ι Δ) = ι hPE Δ := of_ι hPE N Δ
-    simp only [map_mul, map_add, map_sub, map_one, hX, hY, hΔ, hw]
+Proof: choose `N` such that all six elements lie in `A_N`; the identity already holds in `A_N`
+because `A_N ↪ R` is injective. At `z ∈ K_N` we have `Δ(z) = 0`, so the vector
+`ξ(z) = M(z) (u(z), v(z))ᵀ ∈ L_N(z)` satisfies `μ(z) (p(z), q(z)) ξ(z) = 1`, hence `ξ(z) ≠ 0`.
+It depends continuously on `z`, so `ξ` is a continuous nowhere-zero section of `L_N`,
+contradicting (5.2). -/
+theorem key_obstruction :
+    ¬ ∃ p q u v μ c : R, μ * (![p, q] ᵥ* (M.map R.ι) ⬝ᵥ ![u, v]) = 1 + R.ι Δ * c := by
+  rintro ⟨p, q, u, v, μ, c, hrel⟩
+  -- all six elements lie in some `A_N`
+  obtain ⟨N, w, hw⟩ := R.exists_of_fin 6 ![p, q, u, v, μ, c]
+  -- the identity already holds in `A_N`
+  have hrelN : w 4 * (![w 0, w 1] ᵥ* (M.map (ι N)) ⬝ᵥ ![w 2, w 3]) = 1 + ι N Δ * w 5 := by
+    apply R.of_injective N
+    have e : ∀ t, R.of N (w t) = ![p, q, u, v, μ, c] t := hw
+    simp only [vecMul_M_dotProduct, map_mul, map_add, map_sub, map_one, R.of_ι, e] at hrel ⊢
     simpa using hrel
-  -- the nowhere vanishing section `z ↦ M(z) (u(z), v(z))ᵀ` of `L_N`
-  apply S.nonorientable
-  refine ⟨fun z => (Mreal (z.1 X) (z.1 Y)).mulVec ![z.1 (w 2), z.1 (w 3)], ?_, fun z => ⟨?_, ?_⟩⟩
-  · have hc : ∀ a : G hPE N, Continuous fun z : S.K => z.1 a :=
-      fun a => (RealPt.continuous_eval a).comp continuous_subtype_val
+  rw [vecMul_M_dotProduct] at hrelN
+  -- the section `ξ(z) = M(z) (u(z), v(z))ᵀ` of `L_N`
+  apply nonorientable N
+  have hc : ∀ a : A N, Continuous fun z : K N => z.1 a :=
+    fun a => (RealPt.continuous_eval a).comp continuous_subtype_val
+  refine ⟨fun z => (Mreal (z.1 (ι N x)) (z.1 (ι N y))).mulVec ![z.1 (w 2), z.1 (w 3)], ?_,
+    fun z => ⟨?_, mem_lineBundle_iff.2 ⟨_, rfl⟩⟩⟩
+  · -- `ξ` is continuous
     refine continuous_pi fun i => ?_
     fin_cases i <;> simp only [Mreal_mulVec] <;> simp <;> fun_prop
-  · intro h0
+  · -- `ξ(z) ≠ 0`, since `μ(z) (p(z), q(z)) ξ(z) = 1`
+    intro h0
     have h := congrArg z.1 hrelN
-    simp only [map_mul, map_add, map_sub, map_one, S.K_circle z.1 z.2, zero_mul,
-      add_zero] at h
+    simp only [map_mul, map_add, map_sub, map_one, Δ_eq_zero N z.2, zero_mul, add_zero] at h
     have h1 := congrFun h0 0
     have h2 := congrFun h0 1
     simp only [Mreal_mulVec, Matrix.cons_val_zero, Matrix.cons_val_one, Pi.zero_apply] at h1 h2
-    have : z.1 (w 0) * ((1 + z.1 X) * z.1 (w 2) + z.1 Y * z.1 (w 3)) +
-        z.1 (w 1) * (z.1 Y * z.1 (w 2) + (1 - z.1 X) * z.1 (w 3)) = 0 := by
-      rw [h1, h2]; ring
-    have h' : z.1 (w 4) * (z.1 (w 0) * ((1 + z.1 X) * z.1 (w 2) + z.1 Y * z.1 (w 3)) +
-        z.1 (w 1) * (z.1 Y * z.1 (w 2) + (1 - z.1 X) * z.1 (w 3))) = 1 := by
+    have : z.1 (w 4) * (z.1 (w 0) * ((1 + z.1 (ι N x)) * z.1 (w 2) + z.1 (ι N y) * z.1 (w 3)) +
+        z.1 (w 1) * (z.1 (ι N y) * z.1 (w 2) + (1 - z.1 (ι N x)) * z.1 (w 3))) = 1 := by
       linear_combination h
-    rw [this, mul_zero] at h'
-    exact zero_ne_one h'
-  · exact ⟨_, rfl⟩
+    rw [h1, h2, mul_zero, mul_zero, add_zero, mul_zero] at this
+    exact zero_ne_one this
 
-/-- The key obstruction: for no `p, q, u, v, e ∈ R` is `e · (p, q) M (u, v)ᵀ = 1`. -/
-theorem no_unit_value (p q u v e : R hPE) :
-    e * (p * (1 + ι hPE x) * u + p * ι hPE y * v + q * ι hPE y * u + q * (1 - ι hPE x) * v)
-      ≠ 1 := by
-  have := no_unit_value_mod hPE p q u v e 0
-  rwa [mul_zero, add_zero] at this
+/-- By (2.1), the entries `1 + x`, `y`, `1 - x` of `M` generate `R`. -/
+theorem span_entries_M_map : (Ideal.span {R.ι (1 + x), R.ι y, R.ι (1 - x)} : Ideal R) = ⊤ := by
+  have h := congrArg (Ideal.map R.ι) span_entries_M
+  rwa [Ideal.map_span, Ideal.map_top, Set.image_insert_eq, Set.image_pair] at h
 
-/-- **Theorem 1.1**: `M` has no Smith normal form over `R`. -/
-theorem not_hasSmithNormalForm : ¬ HasSmithNormalForm (M.map (ι hPE)) := by
-  intro hSNF
-  have hgen : ∀ I : Ideal (R hPE), (∀ i j, (M.map (ι hPE)) i j ∈ I) → I = ⊤ := by
-    intro I hI
-    have h1 : ι hPE (1 + x) ∈ I := by simpa [M] using hI 0 0
-    have h2 : ι hPE (1 - x) ∈ I := by simpa [M] using hI 1 1
-    have h3 : ι hPE (1 + x) + ι hPE (1 - x) = ι hPE (MvPolynomial.C 2) := by
-      rw [← map_add]; congr 1; rw [map_ofNat]; ring
-    have h4 : ι hPE (MvPolynomial.C 2) * ι hPE (MvPolynomial.C (1 / 2)) = 1 := by
-      rw [← map_mul, ← map_mul]; norm_num
-    rw [Ideal.eq_top_iff_one, ← h4, ← h3]
-    exact Ideal.mul_mem_right _ _ (Ideal.add_mem _ h1 h2)
-  obtain ⟨p, q, u, v, e, h⟩ := exists_of_hasSmithNormalForm _ hgen hSNF
-  apply no_unit_value hPE p q u v e
-  simpa [M] using h
+/-- **Theorem 1.1**, the main point: `M` has no Smith normal form over `R`.
 
-/-- **Theorem 1.1**: `R` is not an elementary divisor domain. -/
-theorem not_isElementaryDivisorDomain : ¬ IsElementaryDivisorDomain (R hPE) :=
-  fun h => not_hasSmithNormalForm hPE (h.2 2 2 _)
+Suppose `P M Q = diag(d₁, d₂)` with `P, Q ∈ GL₂(R)` and `d₁ ∣ d₂`. Multiplication by invertible
+matrices preserves the ideal generated by all entries, and by (2.1) the entries of `M` generate `R`;
+thus `(d₁, d₂) = R`. Since `d₁ ∣ d₂`, this ideal is `(d₁)`, so `d₁` is a unit. If `(p, q)` is the
+first row of `P` and `(u, v)ᵀ` the first column of `Q`, then `(p, q) M (u, v)ᵀ = d₁`, so `μ = d₁⁻¹`
+and `c = 0` contradict Lemma 5.3. -/
+theorem not_hasSmithNormalForm : ¬ HasSmithNormalForm (M.map R.ι) := by
+  rintro ⟨G, hMG, hG⟩
+  -- `G = diag(d₁, d₂)` with `d₁ ∣ d₂`
+  obtain ⟨d, hd, hdiv⟩ := (isSmithNormalForm_iff_chain G).1 hG
+  have hd12 : d 0 ∣ d 1 := hdiv 0 (by norm_num)
+  -- `(d₁, d₂) = R`
+  have htop : (Ideal.span {d 0, d 1} : Ideal R) = ⊤ := by
+    have hGmem : ∀ i j, G i j ∈ (Ideal.span {d 0, d 1} : Ideal R) := by
+      intro i j
+      fin_cases i <;> fin_cases j
+      · rw [hd]; exact Ideal.subset_span (by simp)
+      · rw [hd]; simp
+      · rw [hd]; simp
+      · rw [hd]; exact Ideal.subset_span (by simp)
+    have hM := hMG.entry_mem _ hGmem
+    rw [eq_top_iff, ← span_entries_M_map, Ideal.span_le]
+    rintro r (rfl | rfl | rfl)
+    · simpa [M] using hM 0 0
+    · simpa [M] using hM 0 1
+    · simpa [M] using hM 1 1
+  -- since `d₁ ∣ d₂`, `(d₁, d₂) = (d₁)`, so `d₁` is a unit
+  have hunit : IsUnit (d 0) := by
+    have h : (Ideal.span {d 0, d 1} : Ideal R) = Ideal.span {d 0} := by
+      rw [Ideal.span_insert, sup_eq_left.2 (Ideal.span_singleton_le_span_singleton.2 hd12)]
+    rwa [h, Ideal.span_singleton_eq_top] at htop
+  -- the first row `(p, q)` of `P` and the first column `(u, v)ᵀ` of `Q`
+  obtain ⟨P, Q, hPQ⟩ := hMG
+  have h00 : ![(P : Matrix (Fin 2) (Fin 2) R) 0 0, (P : Matrix (Fin 2) (Fin 2) R) 0 1] ᵥ*
+      (M.map R.ι) ⬝ᵥ ![(Q : Matrix (Fin 2) (Fin 2) R) 0 0, (Q : Matrix (Fin 2) (Fin 2) R) 1 0] =
+      d 0 := by
+    have h : ((P : Matrix (Fin 2) (Fin 2) R) * M.map R.ι * Q) 0 0 = d 0 := by
+      rw [hPQ, hd]; simp
+    rw [← h]
+    simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.vecMul, dotProduct]
+    simp only [Matrix.cons_val_zero, Matrix.cons_val_one]
+  obtain ⟨μ, hμ⟩ := hunit.exists_left_inv
+  exact key_obstruction ⟨_, _, _, _, μ, 0, by rw [h00, hμ, mul_zero, add_zero]⟩
 
-end R
+/-- **Theorem 1.1**: `R` is not an elementary divisor domain, since the `2 × 2` matrix `M` has no
+Smith normal form over `R`. -/
+theorem not_isElementaryDivisorDomain : ¬ IsElementaryDivisorDomain R :=
+  fun h => not_hasSmithNormalForm (h.2 2 2 _)
 
-/-- **Theorem 1.1** (`thm:main`), assuming Proposition 4.6 for coprime pairs (`CoprimePairPE`).
+/-- **Theorem 1.1** (`thm:main`). There exists a countable Bézout domain `R` containing `A₀`
+(i.e. with an injective ring homomorphism `ι : A₀ → R`) such that `Δ` is a nonzero nonunit of `R`
+and `M` has no Smith normal form over `R`. Consequently, `R` has characteristic zero and is not an
+elementary divisor domain.
 
-There is a countable Bézout domain `R` containing `A₀ = ℚ[x,y]` (i.e. with an injective ring
-homomorphism `ι : A₀ → R`; equivalently `x` and `y` stay algebraically independent over `ℚ`)
-such that `Δ` is a nonzero nonunit of `R` and `M` has no Smith normal form over `R`.
-Consequently, `R` has characteristic zero and is not an elementary divisor domain. -/
-theorem main_theorem_of_coprimePair (hPE : CoprimePairPE) :
-    ∃ (R : Type) (_ : CommRing R) (_ : IsDomain R) (ι : A₀ →+* R),
-      Countable R ∧ IsBezout R ∧ Function.Injective ι ∧ ι Δ ≠ 0 ∧ ¬ IsUnit (ι Δ) ∧
-      ¬ HasSmithNormalForm (M.map ι) ∧ CharZero R ∧ ¬ IsElementaryDivisorDomain R :=
-  ⟨R hPE, inferInstance, inferInstance, R.ι hPE, inferInstance, inferInstance,
-    R.ι_injective hPE, R.Δ_ne_zero hPE, R.Δ_not_isUnit hPE, R.not_hasSmithNormalForm hPE,
-    inferInstance, R.not_isElementaryDivisorDomain hPE⟩
-
-/-- **Theorem 1.1** (`thm:main`), from Proposition 4.6 (`PrincipalizationExtension`). -/
-theorem main_theorem_of_principalization (hPE : PrincipalizationExtension) :
-    ∃ (R : Type) (_ : CommRing R) (_ : IsDomain R) (ι : A₀ →+* R),
-      Countable R ∧ IsBezout R ∧ Function.Injective ι ∧ ι Δ ≠ 0 ∧ ¬ IsUnit (ι Δ) ∧
-      ¬ HasSmithNormalForm (M.map ι) ∧ CharZero R ∧ ¬ IsElementaryDivisorDomain R :=
-  main_theorem_of_coprimePair hPE.coprimePair
-
-/-- Proposition 4.6 for coprime pairs holds. -/
-theorem coprimePairPE_holds : CoprimePairPE :=
-  Principalization.principalizationExtension.coprimePair
-
-/-- **Theorem 1.1** (`thm:main`), unconditionally.
-
-There is a countable Bézout domain `R` containing `A₀ = ℚ[x,y]` (i.e. with an injective ring
-homomorphism `ι : A₀ → R`) such that `Δ` is a nonzero nonunit of `R` and `M` has no Smith normal
-form over `R`. Consequently, `R` has characteristic zero and is not an elementary divisor
-domain. -/
+The ring is the ring `R` of Construction 5.1: Proposition 5.2 (`bezout_domain`) proves all
+assertions except the failure of Smith normal form, which is `not_hasSmithNormalForm`. -/
 theorem main_theorem :
     ∃ (R : Type) (_ : CommRing R) (_ : IsDomain R) (ι : A₀ →+* R),
       Countable R ∧ IsBezout R ∧ Function.Injective ι ∧ ι Δ ≠ 0 ∧ ¬ IsUnit (ι Δ) ∧
       ¬ HasSmithNormalForm (M.map ι) ∧ CharZero R ∧ ¬ IsElementaryDivisorDomain R :=
-  main_theorem_of_principalization Principalization.principalizationExtension
+  ⟨R, inferInstance, R.isDomain, R.ι, R.countable, R.isBezout, R.ι_injective, R.Δ_ne_zero,
+    R.Δ_not_isUnit, not_hasSmithNormalForm, R.charZero, not_isElementaryDivisorDomain⟩
 
 end BezoutCounterexample

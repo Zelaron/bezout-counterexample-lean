@@ -9,7 +9,7 @@ Theorem 3.3 (1), (2), (5) (`thm:invariant`) of the paper, at a single point.
   admissible marked centre), its uniqueness, and its computation by Method-1 runs.
 * `Chart.card_eq`: all charts on a ring have the same size.
 * `IsInv.mapEquiv`: invariance under isomorphisms; `Chart.mvPolynomial`: polynomial charts.
-* `IsInv.transfer`, `IsInv.transfer_poly`: **smooth invariance** of the invariant.
+* `IsInv.transfer`: **smooth invariance** of the invariant.
 * `IsRun.goodV`, `encW_lt`: Method-1 weights lie in a well-ordered set (termination).
 * `IsInv.eq_zero_of_derivations`: the length bound.
 * `Chart.IsCentred.span_x_isPrime`: initial coordinates of a centred chart generate a prime.
@@ -112,8 +112,8 @@ def Chart.mapEquiv (φ : S ≃ₐ[ℚ] S') (c : Chart S n) : Chart S' n where
   d i := conjDer φ (c.d i)
   d_x i j := by rw [conjDer_apply, c.d_x]; split_ifs <;> simp
   span := by
-    letI : Algebra S S' := (φ : S →+* S').toAlgebra
-    haveI : IsScalarTower ℚ S S' := IsScalarTower.of_algebraMap_eq fun q => by
+    let : Algebra S S' := (φ : S →+* S').toAlgebra
+    have : IsScalarTower ℚ S S' := IsScalarTower.of_algebraMap_eq fun q => by
       show algebraMap ℚ S' q = φ (algebraMap ℚ S q)
       rw [AlgEquiv.commutes]
     rw [eq_top_iff, ← KaehlerDifferential.span_range_derivation, Submodule.span_le]
@@ -164,6 +164,7 @@ lemma MC.Adm.mapEquiv {I : Ideal S} {J : MC S n} (h : J.Adm I) (φ : S ≃ₐ[�
   rw [Chart.mapEquiv_RF]
   exact Ideal.map_mono h
 
+omit [IsLocalRing S] [IsLocalRing S'] in
 lemma map_map_symm (φ : S ≃ₐ[ℚ] S') (I : Ideal S) : (I.map φ).map φ.symm = I := by
   refine le_antisymm ?_ fun a ha => ?_
   · rw [Ideal.map_le_iff_le_comap, Ideal.map_le_iff_le_comap]
@@ -235,21 +236,21 @@ lemma mvD_mvX (c : Chart S n) (i j : Fin (n + r)) :
       rw [mvD_castAdd, mvX_castAdd, BezoutCounterexample.mapCoeffs_C, c.d_x]
       by_cases h : a = b
       · subst h; simp
-      · rw [if_neg h, if_neg (fun h' => h (Fin.castAdd_injective _ _ h')), map_zero]
+      · rw [ite_eq_right h, ite_eq_right (fun h' => h (Fin.castAdd_injective _ _ h')), map_zero]
     | right b =>
       rw [mvD_castAdd, mvX_natAdd, BezoutCounterexample.mapCoeffs_X,
-        if_neg (castAdd_ne_natAdd' r a b)]
+        ite_eq_right (castAdd_ne_natAdd' r a b)]
   | right a =>
     cases j using Fin.addCases with
     | left b =>
-      rw [mvD_natAdd, mvX_castAdd, if_neg (castAdd_ne_natAdd' r b a).symm]
-      simp [pderiv_C]
+      rw [mvD_natAdd, mvX_castAdd, ite_eq_right (castAdd_ne_natAdd' r b a).symm]
+      simp
     | right b =>
       rw [mvD_natAdd, mvX_natAdd]
       simp only [Derivation.restrictScalars_apply, pderiv_X]
       by_cases h : a = b
       · subst h; simp
-      · rw [if_neg (fun h' => h (Fin.natAdd_injective _ _ h')), Pi.single_eq_of_ne' h]
+      · rw [ite_eq_right (fun h' => h (Fin.natAdd_injective _ _ h')), Pi.single_eq_of_ne' h]
 
 lemma span_mvPolynomial (c : Chart S n) :
     Submodule.span (MvPolynomial (Fin r) S) (Set.range fun i : Fin (n + r) =>
@@ -295,7 +296,7 @@ lemma Chart.compat_mvPolynomial (c : Chart S n) :
     | right a =>
       show mvD r c (Fin.natAdd n a) (C f) = 0
       rw [mvD_natAdd]
-      simp [pderiv_C]
+      simp
 
 end MvPoly
 
@@ -368,9 +369,9 @@ lemma pad_antitone_gen {n n' : ℕ} {e : Fin n → ℚ} (he : ∀ i, 0 ≤ e i) 
   intro a b hab
   simp only [pad]
   by_cases hb : (b : ℕ) < n
-  · rw [dif_pos hb, dif_pos (lt_of_le_of_lt (Fin.le_def.1 hab) hb)]
+  · rw [dite_eq_left hb, dite_eq_left (lt_of_le_of_lt (Fin.le_def.1 hab) hb)]
     exact hanti (Fin.le_def.2 (by simpa using Fin.le_def.1 hab))
-  · rw [dif_neg hb]; split_ifs; exact he _; exact le_rfl
+  · rw [dite_eq_right hb]; split_ifs; exact he _; exact le_rfl
 
 section SI
 
@@ -395,7 +396,7 @@ theorem IsInv.transfer {hnn : n ≤ n'} {ψ : S →+* S'}
     refine Chart.RF_congr (fun i hi => ?_) t
     have hin : (i : ℕ) < n := by
       by_contra h
-      exact hi (by simp only [pad]; rw [dif_neg h])
+      exact hi (by simp only [pad]; rw [dite_eq_right h])
     have hi' : i = Fin.castLE hnn ⟨i, hin⟩ := Fin.ext rfl
     apply hx
     rw [hi', hck'.x]
@@ -405,20 +406,6 @@ theorem IsInv.transfer {hnn : n ≤ n'} {ψ : S →+* S'}
   show I.map ψ ≤ c''.RF (pad n' e) 1
   rw [hRF]
   exact (Ideal.map_mono hadm).trans (hck'.map_RF_le e 1)
-
-/-- Smooth invariance for localizations of polynomial rings. -/
-theorem IsInv.transfer_poly {r : ℕ} [Algebra (MvPolynomial (Fin r) S) S']
-    [IsScalarTower ℚ (MvPolynomial (Fin r) S) S']
-    (Q : Ideal (MvPolynomial (Fin r) S)) [Q.IsPrime] [IsLocalization.AtPrime S' Q]
-    (hQ : ∀ a ∈ maximalIdeal S, MvPolynomial.C a ∈ Q) {c : Chart S n} (hc : c.IsCentred)
-    {I : Ideal S} (hI : I ≠ ⊥) (hIm : I ≤ maximalIdeal S) {e : Fin n → ℚ} (he : IsInv I n e) :
-    IsInv (I.map ((algebraMap (MvPolynomial (Fin r) S) S').comp MvPolynomial.C)) (n + r)
-      (pad (n + r) e) := by
-  have hcc := (c.compat_mvPolynomial r).trans
-    ((c.mvPolynomial r).compat_localization (L := S') Q.primeCompl)
-  refine IsInv.transfer (fun a ha => ?_) hc hcc hI hIm he
-  rw [RingHom.comp_apply, IsLocalization.AtPrime.to_map_mem_maximal_iff S' Q]
-  exact hQ a ha
 
 end SI
 
@@ -564,7 +551,7 @@ lemma IsRun.goodV {S : Type*} [CommRing S] [Algebra ℚ S] {n : ℕ} {I : Ideal 
       · exact le_rfl
     · intro i hi
       simp only [nextE]
-      rw [if_neg (by omega), if_neg (by omega)]
+      rw [ite_eq_right (by omega), ite_eq_right (by omega)]
     · intro i hi
       have hden : denPN (ext0 (nextE e j (nextW e j β))) i = denPN (ext0 e) i :=
         denPN_congr fun i' hi' => ext0_nextE_lt e _ (by omega)
@@ -575,7 +562,7 @@ lemma IsRun.goodV {S : Type*} [CommRing S] [Algebra ℚ S] {n : ℕ} {I : Ideal 
         subst hieq
         right
         refine ⟨a, ha, ?_⟩
-        simp only [ext0, dif_pos hj, nextE, lt_irrefl, if_false, if_true]
+        simp only [ext0, dite_eq_left hj, nextE, lt_irrefl, ite_false, ite_true]
         exact hab
 
 lemma IsInv.goodV {S : Type*} [CommRing S] [Algebra ℚ S] [IsLocalRing S] [IsNoetherianRing S]
@@ -604,7 +591,7 @@ def encW (N : ℕ) (v : ℕ → ℚ) : Lex (Fin N → WithTop ℕ) :=
   toLex fun i => if v i = 0 then ⊤ else
     ((⌊((denPN v i).factorial : ℚ) / v i⌋₊ : ℕ) : WithTop ℕ)
 
-lemma encW_eq_of_good {v : ℕ → ℚ} {i a : ℕ} (ha : 0 < a)
+lemma encW_eq_of_good {v : ℕ → ℚ} {i a : ℕ} (_ha : 0 < a)
     (hv : v i = ((denPN v i).factorial : ℚ) / a) :
     ⌊((denPN v i).factorial : ℚ) / v i⌋₊ = a := by
   have hf : (0 : ℚ) < (denPN v i).factorial := by exact_mod_cast Nat.factorial_pos _
@@ -629,12 +616,12 @@ lemma encW_lt {N : ℕ} {v v' : ℕ → ℚ} (hv : GoodV v) (hv' : GoodV v')
     have hden : denPN v j = denPN v' j := denPN_congr fun i hi => hbelow i hi
     have hv'0 : v' j ≠ 0 := fun h => by
       rw [h] at hj; exact absurd hj (not_lt.2 (hv.nonneg j))
-    rw [if_neg hv'0]
+    rw [ite_eq_right hv'0]
     obtain ⟨a', ha', hva'⟩ := (hv' j).resolve_left hv'0
     rw [encW_eq_of_good ha' hva']
     by_cases hv0 : v j = 0
-    · rw [if_pos hv0]; exact WithTop.coe_lt_top _
-    · rw [if_neg hv0]
+    · rw [ite_eq_left hv0]; exact WithTop.coe_lt_top _
+    · rw [ite_eq_right hv0]
       obtain ⟨a, ha, hva⟩ := (hv j).resolve_left hv0
       rw [encW_eq_of_good ha hva]
       rw [hva, hva', hden] at hj
@@ -671,7 +658,7 @@ lemma lam_indW_lt_one {k : ℕ} {β : Fin n →₀ ℕ} :
   · intro h i hi
     by_contra hne
     have h1 : (1 : ℚ) ≤ if (i : ℕ) < k then (β i : ℚ) else 0 := by
-      rw [if_pos hi]; exact_mod_cast Nat.one_le_iff_ne_zero.2 hne
+      rw [ite_eq_left hi]; exact_mod_cast Nat.one_le_iff_ne_zero.2 hne
     have h2 : (if (i : ℕ) < k then (β i : ℚ) else 0) ≤ ∑ j : Fin n, if (j : ℕ) < k then (β j : ℚ) else 0 :=
       Finset.single_le_sum (f := fun j : Fin n => if (j : ℕ) < k then (β j : ℚ) else 0)
         (fun j _ => by split_ifs <;> positivity) (Finset.mem_univ i)
@@ -700,18 +687,18 @@ lemma face_mul (k : ℕ) (f g : MvPowerSeries (Fin n) K) : face k (f * g) = face
       have := congrArg (· i) hp; simp only [Finsupp.add_apply] at this; rw [h i hi] at this; omega
     have h2 : ∀ i : Fin n, (i : ℕ) < k → p.2 i = 0 := fun i hi => by
       have := congrArg (· i) hp; simp only [Finsupp.add_apply] at this; rw [h i hi] at this; omega
-    rw [coeff_face, coeff_face, if_pos h1, if_pos h2]
+    rw [coeff_face, coeff_face, ite_eq_left h1, ite_eq_left h2]
   · symm
     refine Finset.sum_eq_zero fun p hp => ?_
     rw [Finset.HasAntidiagonal.mem_antidiagonal] at hp
     rw [coeff_face, coeff_face]
-    push_neg at h
+    push Not at h
     obtain ⟨i, hi, hne⟩ := h
     by_cases h1 : ∀ i : Fin n, (i : ℕ) < k → p.1 i = 0
     · have h2 : ¬ ∀ i : Fin n, (i : ℕ) < k → p.2 i = 0 := fun h2 => hne (by
         rw [← hp, Finsupp.add_apply, h1 i hi, h2 i hi])
-      rw [if_neg h2, mul_zero]
-    · rw [if_neg h1, zero_mul]
+      rw [ite_eq_right h2, mul_zero]
+    · rw [ite_eq_right h1, zero_mul]
 
 lemma face_add (k : ℕ) (f g : MvPowerSeries (Fin n) K) : face k (f + g) = face k f + face k g := by
   ext β
@@ -723,7 +710,7 @@ lemma face_one (k : ℕ) : face k (1 : MvPowerSeries (Fin n) K) = 1 := by
   rw [coeff_face]
   split_ifs with h
   · rfl
-  · rw [coeff_one, if_neg]
+  · rw [coeff_one, ite_eq_right]
     rintro rfl; exact h fun i _ => rfl
 
 lemma face_zero (k : ℕ) : face k (0 : MvPowerSeries (Fin n) K) = 0 := by
@@ -746,6 +733,7 @@ section Prime
 
 variable {R : Type*} [CommRing R] [Algebra ℚ R] [IsLocalRing R] [IsNoetherianRing R] {n : ℕ}
 
+omit [IsLocalRing R] [IsNoetherianRing R] in
 lemma Chart.RF_indW (c : Chart R n) (k : ℕ) :
     c.RF (indW k) 1 = Ideal.span (c.x '' {i | (i : ℕ) < k}) := by
   classical
@@ -753,7 +741,7 @@ lemma Chart.RF_indW (c : Chart R n) (k : ℕ) :
   · rw [Chart.RF, Ideal.span_le]
     rintro _ ⟨α, h0, hα, rfl⟩
     have : ∃ i : Fin n, (i : ℕ) < k ∧ α i ≠ 0 := by
-      by_contra h; push_neg at h
+      by_contra h; push Not at h
       have : lam (indW k) α < 1 := lam_indW_lt_one.2 fun i hi => h i hi
       linarith
     obtain ⟨i, hi, hne⟩ := this
@@ -763,19 +751,19 @@ lemma Chart.RF_indW (c : Chart R n) (k : ℕ) :
       (Nat.pos_of_ne_zero hne)
   · rw [Ideal.span_le]
     rintro _ ⟨i, hi, rfl⟩
-    simp only [Set.mem_setOf_eq] at hi
+    simp only [Set.mem_ofPred_eq] at hi
     apply Ideal.subset_span
     refine ⟨Finsupp.single i 1, fun j hj => ?_, ?_, ?_⟩
     · by_contra hne
       have : j = i := by
-        by_contra hji; exact hne (by simp [Finsupp.single_apply, Ne.symm hji])
+        by_contra hji; exact hne (by simp [Ne.symm hji])
       subst this
-      simp only [indW, if_pos hi] at hj
+      simp only [indW, ite_eq_left hi] at hj
       norm_num at hj
     · rw [lam_single]; simp [indW, hi]
     · rw [Finset.prod_eq_single i]
       · simp
-      · intro j _ hj; simp [Finsupp.single_apply, Ne.symm hj]
+      · intro j _ hj; simp [Ne.symm hj]
       · simp
 
 lemma Chart.IsCentred.mem_span_x_iff (c : Chart R n) (hc : c.IsCentred) (k : ℕ) (f : R) :
@@ -790,7 +778,7 @@ lemma Chart.IsCentred.mem_span_x_iff (c : Chart R n) (hc : c.IsCentred) (k : ℕ
     · rfl
   · intro h β hβ
     have := congrArg (coeff β) h
-    rw [coeff_faceHom, if_pos (lam_indW_lt_one.1 hβ), map_zero] at this
+    rw [coeff_faceHom, ite_eq_left (lam_indW_lt_one.1 hβ), map_zero] at this
     exact this
 
 /-- **Quotients by initial coordinates of a centred chart are domains**: `(x₀, …, x_{k-1})` is
@@ -802,7 +790,7 @@ theorem Chart.IsCentred.span_x_isPrime (c : Chart R n) (hc : c.IsCentred) (k : �
     rw [hc.mem_span_x_iff] at h1
     have := congrArg (coeff 0) h1
     have h0 : ∀ i : Fin n, (i : ℕ) < k → (0 : Fin n →₀ ℕ) i = 0 := fun _ _ => rfl
-    rw [coeff_faceHom, if_pos h0, map_one, map_zero, coeff_one, if_pos rfl] at this
+    rw [coeff_faceHom, ite_eq_left h0, map_one, map_zero, coeff_one, ite_eq_left rfl] at this
     exact one_ne_zero this
   · rw [hc.mem_span_x_iff, map_mul, map_mul] at hfg
     rcases mul_eq_zero.1 hfg with h | h

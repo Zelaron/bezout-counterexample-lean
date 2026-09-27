@@ -84,11 +84,11 @@ theorem SA.step_run_of (hSA : SA I j J) (hna : ¬ J.Adm I) (βs : Fin n →₀ �
     simp only [compl]
     by_cases h1 : (i' : ℕ) < j
     · have h2 : (i : ℕ) < j := lt_of_le_of_lt (Fin.le_def.1 hii') h1
-      rw [if_pos h1, if_pos h2]; exact J.anti hii'
-    · rw [if_neg h1]
+      rw [ite_eq_left h1, ite_eq_left h2]; exact J.anti hii'
+    · rw [ite_eq_right h1]
       by_cases h2 : (i : ℕ) < j
-      · rw [if_pos h2]; exact hbJ i h2
-      · rw [if_neg h2]
+      · rw [ite_eq_left h2]; exact hbJ i h2
+      · rw [ite_eq_right h2]
   have hc_adm : I ≤ J.c.RF (compl J.e j bp) 1 := by
     intro g hg
     rw [J.centred.mem_RF_iff hc_nonneg]
@@ -137,14 +137,14 @@ theorem SA.step_run_of (hSA : SA I j J) (hna : ¬ J.Adm I) (βs : Fin n →₀ �
     have hle := Fin.le_def.1 hii'
     simp only [hep]
     by_cases h1 : (i' : ℕ) < j
-    · rw [if_pos h1, if_pos (lt_of_le_of_lt hle h1)]; exact J.anti hii'
-    · rw [if_neg h1]
+    · rw [ite_eq_left h1, ite_eq_left (lt_of_le_of_lt hle h1)]; exact J.anti hii'
+    · rw [ite_eq_right h1]
       by_cases h2 : (i' : ℕ) = j
-      · rw [if_pos h2]
+      · rw [ite_eq_left h2]
         by_cases h3 : (i : ℕ) < j
-        · rw [if_pos h3]; exact hbJ i h3
-        · rw [if_neg h3, if_pos (by omega)]
-      · rw [if_neg h2]
+        · rw [ite_eq_left h3]; exact hbJ i h3
+        · rw [ite_eq_right h3, ite_eq_left (by omega)]
+      · rw [ite_eq_right h2]
         split_ifs
         · exact J.nonneg i
         · exact hbp.le
@@ -169,43 +169,43 @@ theorem SA.step_run_of (hSA : SA I j J) (hna : ¬ J.Adm I) (βs : Fin n →₀ �
     show ep i ≠ 0 ↔ (i : ℕ) < j + 1
     simp only [hep]
     by_cases h1 : (i : ℕ) < j
-    · rw [if_pos h1]; exact ⟨fun _ => by omega, fun _ => (hSA.supp i).2 h1⟩
-    · rw [if_neg h1]
+    · rw [ite_eq_left h1]; exact ⟨fun _ => by omega, fun _ => (hSA.supp i).2 h1⟩
+    · rw [ite_eq_right h1]
       by_cases h2 : (i : ℕ) = j
-      · rw [if_pos h2]; exact ⟨fun _ => by omega, fun _ => hbp.ne'⟩
-      · rw [if_neg h2]; exact ⟨fun h => absurd rfl h, fun h => by omega⟩
+      · rw [ite_eq_left h2]; exact ⟨fun _ => by omega, fun _ => hbp.ne'⟩
+      · rw [ite_eq_right h2]; exact ⟨fun h => absurd rfl h, fun h => by omega⟩
   · -- domination by an admissible centre: the completion
     refine ⟨⟨J.c, compl J.e j bp, J.centred, hc_nonneg, hc_anti⟩, hc_adm, fun i hi => ?_⟩
     show compl J.e j bp i = ep i
     simp only [compl, hep]
     by_cases h1 : (i : ℕ) < j
-    · rw [if_pos h1, if_pos h1]
-    · rw [if_neg h1, if_neg h1, if_pos (by omega)]
+    · rw [ite_eq_left h1, ite_eq_left h1]
+    · rw [ite_eq_right h1, ite_eq_right h1, ite_eq_left (by omega)]
   · -- maximality
     intro J' hJ' i hi hbelow
     by_cases h1 : (i : ℕ) < j
-    · have : ep i = J.e i := by simp only [hep, if_pos h1]
+    · have : ep i = J.e i := by simp only [hep, ite_eq_left h1]
       show ep i ≤ J'.e i
       rw [this]
       refine hSA.max J' hJ' i h1 fun i' hi' => ?_
       rw [hbelow i' hi']
       show ep i' = J.e i'
-      simp only [hep, if_pos (lt_trans (Fin.lt_def.1 hi') h1)]
+      simp only [hep, ite_eq_left (lt_trans (Fin.lt_def.1 hi') h1)]
     · have hij : (i : ℕ) = j := by omega
       have hieq : i = jj := Fin.ext hij
       subst hieq
       have hag : ∀ i' : Fin n, (i' : ℕ) < j → J'.e i' = J.e i' := fun i' hi' => by
         rw [hbelow i' (Fin.lt_def.2 hi')]
         show ep i' = J.e i'
-        simp only [hep, if_pos hi']
+        simp only [hep, ite_eq_left hi']
       have := (hnext J' hJ' hag).2
       show ep jj ≤ J'.e jj
-      simp only [hep, if_neg h1, if_pos hij]
+      simp only [hep, ite_eq_right h1, ite_eq_left hij]
       exact this
   · -- domination
     intro J' hJ' hag
     have hag_j : ∀ i : Fin n, (i : ℕ) < j → J'.e i = J.e i := fun i hi => by
-      rw [hag i (by omega)]; show ep i = J.e i; simp only [hep, if_pos hi]
+      rw [hag i (by omega)]; show ep i = J.e i; simp only [hep, ite_eq_left hi]
     have hJ'j : J'.e jj = bp := by
       rw [hag jj (by simp [hjj])]; show ep jj = bp; simp [hep, hjj]
     obtain ⟨c'', hc'', hRF, hx⟩ := hSA.dom J' hJ' hag_j
@@ -215,9 +215,9 @@ theorem SA.step_run_of (hSA : SA I j J) (hna : ¬ J.Adm I) (βs : Fin n →₀ �
       intro i
       by_cases hi : (i : ℕ) < j
       · have := hc''.lowersBy_lt (c := J.c) J'.nonneg J'.anti (fun i' hi' => (hx i' hi').symm) i hi
-        simp only [compl, if_pos hi]
+        simp only [compl, ite_eq_left hi]
         rwa [hag_j i hi] at this
-      · simp only [compl, if_neg hi]
+      · simp only [compl, ite_eq_right hi]
         refine hc''.lowersBy_ge (c := J.c) J'.nonneg (fun i' hi' => (hx i' hi').symm) i (by omega)
           fun m hm => ?_
         rw [← hJ'j]; exact J'.anti (Fin.le_def.2 (by simp only [hjj, Fin.val_mk]; omega))
@@ -232,20 +232,20 @@ theorem SA.step_run_of (hSA : SA I j J) (hna : ¬ J.Adm I) (βs : Fin n →₀ �
     -- a coordinate of `c''` in which `xb` has a linear term
     obtain ⟨m, hm, hmnm⟩ : ∃ m : Fin n, j ≤ (m : ℕ) ∧ c''.d m xb ∉ maximalIdeal R := by
       by_contra hcon
-      push_neg at hcon
+      push Not at hcon
       apply hdl_nm
       rw [c''.eq_sum (J.c.d l), Derivation.sum_apply']
       refine Ideal.sum_mem _ fun m _ => ?_
       rw [Derivation.smul_apply, smul_eq_mul]
       by_cases hmj : (m : ℕ) < j
-      · rw [hx m hmj, J.c.d_x, if_neg (fun h => by rw [h] at hl; omega), zero_mul]
+      · rw [hx m hmj, J.c.d_x, ite_eq_right (fun h => by rw [h] at hl; omega), zero_mul]
         exact zero_mem _
       · exact Ideal.mul_mem_left _ _ (hcon m (by omega))
     have hJ'm : J'.e m = bp := by
       refine le_antisymm ?_ ?_
       · rw [← hJ'j]; exact J'.anti (Fin.le_def.2 (by simp only [hjj, Fin.val_mk]; omega))
       · by_contra hlt'
-        push_neg at hlt'
+        push Not at hlt'
         have := (hc''.mem_RF_iff J'.nonneg bp xb).1 hxb_RF (Finsupp.single m 1) (by
           rw [lam_single]; simpa using hlt')
         rw [Chart.coeff_tau_eq_zero_iff, Chart.Dv_single_one] at this
@@ -291,10 +291,6 @@ instance : IsScalarTower ℚ B[X] B[T;T⁻¹] := IsScalarTower.of_algebraMap_eq 
 /-- The chart `(x, T)` on `B[T, T⁻¹]`. -/
 def Chart.laurent (c : Chart B n) : Chart B[T;T⁻¹] (n + 1) :=
   c.polynomial.localization (Submonoid.powers (X : B[X]))
-
-lemma Chart.laurent_x_castSucc (c : Chart B n) (i : Fin n) :
-    c.laurent.x (Fin.castSucc i) = LaurentPolynomial.C (c.x i) := by
-  simp [Chart.laurent]
 
 lemma Chart.laurent_x_last (c : Chart B n) : c.laurent.x (Fin.last n) = T 1 := by
   simp [Chart.laurent]
@@ -358,11 +354,11 @@ lemma derivation_T_of_one {D : Derivation ℚ B[T;T⁻¹] B[T;T⁻¹]} (h : D (T
 
 lemma Chart.laurent_d_castSucc_T (c : Chart B n) (i : Fin n) (m : ℤ) :
     c.laurent.d (Fin.castSucc i) (T m) = 0 :=
-  derivation_T_of (by rw [← c.laurent_x_last, c.laurent.d_x, if_neg (Fin.castSucc_lt_last i).ne]) m
+  derivation_T_of (by rw [← c.laurent_x_last, c.laurent.d_x, ite_eq_right (Fin.castSucc_lt_last i).ne]) m
 
 lemma Chart.laurent_d_last_T (c : Chart B n) (m : ℤ) :
     c.laurent.d (Fin.last n) (T m) = (m : B[T;T⁻¹]) * T (m - 1) :=
-  derivation_T_of_one (by rw [← c.laurent_x_last, c.laurent.d_x, if_pos rfl]) m
+  derivation_T_of_one (by rw [← c.laurent_x_last, c.laurent.d_x, ite_eq_left rfl]) m
 
 lemma Chart.laurent_d_last_C (c : Chart B n) (b : B) :
     c.laurent.d (Fin.last n) (LaurentPolynomial.C b) = 0 := by
@@ -385,13 +381,15 @@ section LaurentCoeff
 
 variable {B : Type*} [CommRing B] [Algebra ℚ B] {n : ℕ}
 
+omit [Algebra ℚ B] in
 lemma coeff_C_mul_T (a : B) (m j : ℤ) :
     (LaurentPolynomial.C a * T m : B[T;T⁻¹]).coeff j = if j = m then a else 0 := by
   rw [← single_eq_C_mul_T, AddMonoidAlgebra.coeff_single, Finsupp.single_apply]
   by_cases h : j = m
   · subst h; simp
-  · rw [if_neg (Ne.symm h), if_neg h]
+  · rw [ite_eq_right (Ne.symm h), ite_eq_right h]
 
+omit [Algebra ℚ B] in
 lemma coeff_T_mul (p : B[T;T⁻¹]) (m j : ℤ) : (T m * p).coeff j = p.coeff (j - m) := by
   induction p using LaurentPolynomial.induction_on' with
   | add p q hp hq => rw [mul_add, AddMonoidAlgebra.coeff_add, Finsupp.add_apply, hp, hq,
@@ -420,8 +418,8 @@ lemma Chart.laurent_d_last_coeff (c : Chart B n) (p : B[T;T⁻¹]) (j : ℤ) :
       smul_eq_mul, ← mul_assoc, mul_comm (LaurentPolynomial.C a), ← map_intCast
       (LaurentPolynomial.C : B →+* B[T;T⁻¹]), ← map_mul, coeff_C_mul_T, coeff_C_mul_T]
     by_cases h : j = m - 1
-    · rw [if_pos h, if_pos (by omega), h]; ring_nf
-    · rw [if_neg h, if_neg (by omega), mul_zero]
+    · rw [ite_eq_left h, ite_eq_left (by omega), h]; ring_nf
+    · rw [ite_eq_right h, ite_eq_right (by omega), mul_zero]
 
 end LaurentCoeff
 
@@ -441,15 +439,15 @@ lemma Chart.d_mono_mem_RF (c : Chart B n) (e : Fin n → ℚ) (i : Fin n) :
     have hβ : ∀ l, e l = 0 → β l = 0 := fun l hl => by
       have := hα l hl; simp only [Finsupp.add_apply] at this; omega
     have hej : e j ≠ 0 := fun h => by
-      have := hα j h; simp [Finsupp.single_apply] at this
+      have := hα j h; simp at this
     rw [prod_pow_add_single, Derivation.leibniz, smul_eq_mul, smul_eq_mul, c.d_x]
     refine add_mem ?_ ?_
     · by_cases hij : i = j
       · subst hij
-        rw [if_pos rfl, mul_one]
+        rw [ite_eq_left rfl, mul_one]
         refine Ideal.subset_span ⟨β, hβ, ?_, rfl⟩
         rw [lam_add, lam_single]; simp
-      · rw [if_neg hij, mul_zero]; exact zero_mem _
+      · rw [ite_eq_right hij, mul_zero]; exact zero_mem _
     · have h1 := ih hβ
       have h2 := c.x_mem_RF e j hej
       have := c.RF_mul_le e _ _ (Ideal.mul_mem_mul h2 h1)
@@ -483,6 +481,7 @@ section Rees
 
 variable {B : Type*} [CommRing B] [Algebra ℚ B] {n : ℕ}
 
+omit [Algebra ℚ B] in
 lemma coeff_C_mul' (a : B) (p : B[T;T⁻¹]) (m : ℤ) :
     (LaurentPolynomial.C a * p).coeff m = a * p.coeff m := by
   induction p using LaurentPolynomial.induction_on' with
@@ -519,8 +518,7 @@ def ReesAlg (Φ : WFil B) : Subalgebra B B[T;T⁻¹] where
 
 variable {Φ : WFil B}
 
-lemma mem_ReesAlg {p : B[T;T⁻¹]} : p ∈ ReesAlg Φ ↔ ∀ j, p.coeff j ∈ Φ.F j := Iff.rfl
-
+omit [Algebra ℚ B] in
 lemma C_mul_T_mem_ReesAlg {f : B} {j : ℤ} (hf : f ∈ Φ.F j) :
     LaurentPolynomial.C f * T j ∈ ReesAlg Φ := by
   intro m
@@ -536,9 +534,6 @@ lemma chartFil_mul (c : Chart B n) (e : Fin n → ℚ) (d : ℕ) (a b : ℤ) :
     chartFil c e d a * chartFil c e d b ≤ chartFil c e d (a + b) := by
   refine (c.RF_mul_le e _ _).trans (le_of_eq ?_)
   unfold chartFil; congr 1; push_cast; ring
-
-lemma chartFil_zero (c : Chart B n) {e : Fin n → ℚ} (he : ∀ i, 0 ≤ e i) (d : ℕ) :
-    chartFil c e d 0 = ⊤ := c.RF_of_nonpos he (by simp)
 
 /-- The weighted Euler operator `E = ∑ wᵢ xᵢ ∂ᵢ`. -/
 def eulerD (c : Chart B n) (w : Fin n → ℕ) : Derivation ℚ B B :=
@@ -558,11 +553,11 @@ lemma eulerD_mono (c : Chart B n) (w : Fin n → ℕ) :
   · rw [prod_pow_add_single, Derivation.leibniz, ih, smul_eq_mul, smul_eq_mul]
     have hx : eulerD c w (c.x j) = (w j : B) * c.x j := by
       rw [eulerD_apply, Finset.sum_eq_single j]
-      · rw [c.d_x, if_pos rfl, mul_one]
-      · intro b _ hb; rw [c.d_x, if_neg hb, mul_zero]
+      · rw [c.d_x, ite_eq_left rfl, mul_one]
+      · intro b _ hb; rw [c.d_x, ite_eq_right hb, mul_zero]
       · simp
     rw [hx, map_add, Finsupp.weight_single]
-    push_cast; ring
+    push_cast; ring_nf
 
 /-- **Weighted Euler lemma**: `(E - m)` raises the weight of `𝓕_{m/d}` by `1/d`. -/
 lemma eulerD_sub_mem (c : Chart B n) {e : Fin n → ℚ} {d : ℕ} (hd : 0 < d) {w : Fin n → ℕ}
@@ -690,7 +685,7 @@ lemma reesDs_coeff (c : Chart B n) (w : Fin n → ℕ) (p : B[T;T⁻¹]) (j : �
     smul_eq_mul, coeff_T_mul, c.laurent_d_last_coeff]
   congr 2
   · push_cast; ring
-  · ring
+  · ring_nf
 
 variable {e : Fin n → ℚ} {d : ℕ} {w : Fin n → ℕ} {Φ : WFil B}
 
@@ -769,12 +764,11 @@ variable (c : Chart B n) {e : Fin n → ℚ} {d : ℕ} {w : Fin n → ℕ}
 
 lemma eulerD_x (w : Fin n → ℕ) (b : Fin n) : eulerD c w (c.x b) = (w b : B) * c.x b := by
   rw [eulerD_apply, Finset.sum_eq_single b]
-  · rw [c.d_x, if_pos rfl, mul_one]
-  · intro a _ hab; rw [c.d_x, if_neg hab, mul_zero]
+  · rw [c.d_x, ite_eq_left rfl, mul_one]
+  · intro a _ hab; rw [c.d_x, ite_eq_right hab, mul_zero]
   · simp
 
-lemma eulerD_one (w : Fin n → ℕ) : eulerD c w 1 = 0 := Derivation.map_one_eq_zero _
-
+omit [Algebra ℚ B] in
 lemma coeff_one_laurent (j : ℤ) : (1 : B[T;T⁻¹]).coeff j = if j = 0 then 1 else 0 := by
   rw [← T_zero, T_apply]; simp [eq_comm]
 
@@ -814,12 +808,12 @@ lemma reesDer_reesX (i j : Fin (n + 1)) :
   | last =>
     cases j using Fin.lastCases with
     | last =>
-      rw [reesDer_last, reesX_last, reesDs_coeff, if_pos rfl, h1, coeff_one_laurent, T_apply]
+      rw [reesDer_last, reesX_last, reesDs_coeff, ite_eq_left rfl, h1, coeff_one_laurent, T_apply]
       by_cases hm : m = 0
-      · subst hm; simp [eulerD_one]
-      · rw [if_neg (by omega), if_neg hm]; simp
+      · subst hm; simp
+      · rw [ite_eq_right (by omega), ite_eq_right hm]; simp
     | cast b =>
-      rw [reesDer_last, reesX_castSucc, reesDs_coeff, if_neg (Fin.castSucc_lt_last b).ne', h0',
+      rw [reesDer_last, reesX_castSucc, reesDs_coeff, ite_eq_right (Fin.castSucc_lt_last b).ne', h0',
         coeff_C_mul_T]
       split_ifs with h
       · rw [eulerD_x, h]; push_cast; simp
@@ -827,18 +821,18 @@ lemma reesDer_reesX (i j : Fin (n + 1)) :
   | cast a =>
     cases j using Fin.lastCases with
     | last =>
-      rw [reesDer_castSucc, reesX_last, reesDu_coeff, if_neg (Fin.castSucc_lt_last a).ne, h0',
+      rw [reesDer_castSucc, reesX_last, reesDu_coeff, ite_eq_right (Fin.castSucc_lt_last a).ne, h0',
         T_apply]
       split_ifs <;> simp
     | cast b =>
       rw [reesDer_castSucc, reesX_castSucc, reesDu_coeff, coeff_C_mul_T]
       by_cases hab : a = b
       · subst hab
-        rw [if_pos rfl, h1, coeff_one_laurent]
+        rw [ite_eq_left rfl, h1, coeff_one_laurent]
         by_cases hm : m = 0
         · subst hm; simp [c.d_x_self]
-        · rw [if_neg (by omega), if_neg hm, map_zero]
-      · rw [if_neg (fun h => hab (Fin.castSucc_injective _ h)), h0']
+        · rw [ite_eq_right (by omega), ite_eq_right hm, map_zero]
+      · rw [ite_eq_right (fun h => hab (Fin.castSucc_injective _ h)), h0']
         split_ifs
         · rw [c.d_x_ne hab]; simp
         · simp
@@ -886,6 +880,7 @@ variable (c : Chart B n) {e : Fin n → ℚ} {d : ℕ} {w : Fin n → ℕ}
   {Φ : WFil B} (hF : ∀ j, Φ.F j = chartFil c e d j) (he : ∀ i, 0 ≤ e i) (hd : 0 < d)
   (hw : ∀ i, (w i : ℚ) = d * e i)
 
+omit [Algebra ℚ B] in
 lemma prod_T_eq {ι : Type*} (s : Finset ι) (f : ι → ℤ) :
     ∏ i ∈ s, (T (f i) : B[T;T⁻¹]) = T (∑ i ∈ s, f i) := by
   classical
@@ -971,13 +966,12 @@ theorem reesX_span :
           apply Subtype.ext
           show LaurentPolynomial.C (∏ i, c.x i ^ α i) * T j = _
           rw [Subalgebra.coe_mul, SubmonoidClass.coe_pow, reesX_last, T_pow,
-            SubmonoidClass.coe_finset_prod]
+            SubmonoidClass.coe_finsetProd]
           simp only [SubmonoidClass.coe_pow, reesX_castSucc, mul_pow, T_pow, ← map_pow]
           rw [Finset.prod_mul_distrib, ← map_prod, prod_T_eq, mul_assoc, ← T_add]
           congr 2
           have : ((Finsupp.weight w α : ℕ) : ℤ) = ∑ i, ((α i : ℕ) : ℤ) * ((w i : ℕ) : ℤ) := by
             rw [Finsupp.weight_eq_sum]; push_cast; rfl
-          push_cast at this ⊢
           linarith
         rw [this]
         exact hmul _ _ (hprod _ _ fun i _ => hpow _ _ (hX _)) (hpow _ _ (hX _))
@@ -1008,7 +1002,7 @@ theorem reesX_span :
       (⟨LaurentPolynomial.C ((p : B[T;T⁻¹]).coeff j) * T j,
         C_mul_T_mem_ReesAlg (p.2 j)⟩ : ReesAlg Φ) := by
     apply Subtype.ext
-    rw [AddSubmonoidClass.coe_finset_sum]
+    rw [AddSubmonoidClass.coe_finsetSum]
     conv_lhs => rw [← AddMonoidAlgebra.sum_coeff_single (p : B[T;T⁻¹])]
     rw [Finsupp.sum]
     refine Finset.sum_congr rfl fun j _ => ?_
@@ -1053,7 +1047,7 @@ variable {B : Type*} [CommRing B] [Algebra ℚ B] [IsLocalRing B] {Φ : WFil B}
 def vtx (hpos : ∀ j : ℤ, 0 < j → Φ.F j ≤ maximalIdeal B) : ReesAlg Φ →+* ResidueField B where
   toFun p := residue B ((p : B[T;T⁻¹]).coeff 0)
   map_one' := by
-    rw [show ((1 : ReesAlg Φ) : B[T;T⁻¹]) = 1 from rfl, coeff_one_laurent, if_pos rfl, map_one]
+    rw [show ((1 : ReesAlg Φ) : B[T;T⁻¹]) = 1 from rfl, coeff_one_laurent, ite_eq_left rfl, map_one]
   map_mul' p q := by
     classical
     rw [show ((p * q : ReesAlg Φ) : B[T;T⁻¹]) = (p : B[T;T⁻¹]) * q from rfl,
@@ -1061,7 +1055,7 @@ def vtx (hpos : ∀ j : ℤ, 0 < j → Φ.F j ≤ maximalIdeal B) : ReesAlg Φ �
     simp only [Finsupp.sum, map_sum]
     rw [Finset.sum_eq_single (0 : ℤ), Finset.sum_eq_single (0 : ℤ)]
     · simp
-    · intro b _ hb; rw [if_neg (by simpa using hb), map_zero]
+    · intro b _ hb; rw [ite_eq_right (by simpa using hb), map_zero]
     · intro h; simp only [Finsupp.mem_support_iff, not_not] at h; simp [h]
     · intro a _ ha
       refine Finset.sum_eq_zero fun b _ => ?_
@@ -1080,13 +1074,14 @@ def vtx (hpos : ∀ j : ℤ, 0 < j → Φ.F j ≤ maximalIdeal B) : ReesAlg Φ �
     rw [show ((p + q : ReesAlg Φ) : B[T;T⁻¹]) = (p : B[T;T⁻¹]) + q from rfl,
       AddMonoidAlgebra.coeff_add, Finsupp.add_apply, map_add]
 
+omit [Algebra ℚ B] in
 lemma vtx_surjective (hpos : ∀ j : ℤ, 0 < j → Φ.F j ≤ maximalIdeal B) :
     Function.Surjective (vtx hpos) := by
   intro a
   obtain ⟨b, rfl⟩ := residue_surjective a
   refine ⟨algebraMap B (ReesAlg Φ) b, ?_⟩
   show residue B ((algebraMap B B[T;T⁻¹] b).coeff 0) = residue B b
-  rw [← LaurentPolynomial.C_eq_algebraMap, C_apply, if_pos rfl]
+  rw [← LaurentPolynomial.C_eq_algebraMap, C_apply, ite_eq_left rfl]
 
 /-- The vertex point `P₀` over the closed point of `B`. -/
 def vertex (hpos : ∀ j : ℤ, 0 < j → Φ.F j ≤ maximalIdeal B) : Ideal (ReesAlg Φ) :=
@@ -1096,6 +1091,7 @@ instance vertex_isMaximal (hpos : ∀ j : ℤ, 0 < j → Φ.F j ≤ maximalIdeal
     (vertex hpos).IsMaximal :=
   RingHom.ker_isMaximal_of_surjective _ (vtx_surjective hpos)
 
+omit [Algebra ℚ B] in
 lemma mem_vertex (hpos : ∀ j : ℤ, 0 < j → Φ.F j ≤ maximalIdeal B) (p : ReesAlg Φ) :
     p ∈ vertex hpos ↔ (p : B[T;T⁻¹]).coeff 0 ∈ maximalIdeal B := by
   rw [vertex, RingHom.mem_ker]
@@ -1117,12 +1113,13 @@ variable (c : Chart B n) {e : Fin n → ℚ} {d : ℕ} {w : Fin n → ℕ}
   {Φ : WFil B} (hF : ∀ j, Φ.F j = chartFil c e d j) (he : ∀ i, 0 ≤ e i) (hd : 0 < d)
   (hw : ∀ i, (w i : ℚ) = d * e i)
 
+omit [Algebra ℚ B] in
 /-- Decomposition into homogeneous components. -/
 lemma rees_decomp (p : ReesAlg Φ) : p = ∑ j ∈ (p : B[T;T⁻¹]).coeff.support,
     (⟨LaurentPolynomial.C ((p : B[T;T⁻¹]).coeff j) * T j,
       C_mul_T_mem_ReesAlg (p.2 j)⟩ : ReesAlg Φ) := by
   apply Subtype.ext
-  rw [AddSubmonoidClass.coe_finset_sum]
+  rw [AddSubmonoidClass.coe_finsetSum]
   conv_lhs => rw [← AddMonoidAlgebra.sum_coeff_single (p : B[T;T⁻¹])]
   rw [Finsupp.sum]
   refine Finset.sum_congr rfl fun j _ => ?_
@@ -1149,13 +1146,12 @@ lemma rees_mono_eq (α : Fin n →₀ ℕ) (j : ℤ) (m : ℕ) (hm : (Finsupp.we
   apply Subtype.ext
   show LaurentPolynomial.C (∏ i, c.x i ^ α i) * T j = _
   rw [Subalgebra.coe_mul, SubmonoidClass.coe_pow, reesX_last, T_pow,
-    SubmonoidClass.coe_finset_prod]
+    SubmonoidClass.coe_finsetProd]
   simp only [SubmonoidClass.coe_pow, reesX_castSucc, mul_pow, T_pow, ← map_pow]
   rw [Finset.prod_mul_distrib, ← map_prod, prod_T_eq, mul_assoc, ← T_add]
   congr 2
   have : ((Finsupp.weight w α : ℕ) : ℤ) = ∑ i, ((α i : ℕ) : ℤ) * ((w i : ℕ) : ℤ) := by
     rw [Finsupp.weight_eq_sum]; push_cast; rfl
-  push_cast at this ⊢
   linarith
 
 /-- The Rees algebra is generated by the Rees coordinates. -/
@@ -1301,7 +1297,7 @@ theorem vertex_eq_span (hc : c.IsCentred) :
         rw [rees_mono_eq c hF he hd hw α j m hm hf]
         refine Ideal.mul_mem_right _ _ ?_
         obtain ⟨i, hi⟩ : ∃ i, α i ≠ 0 := by
-          by_contra h; push_neg at h
+          by_contra h; push Not at h
           have : Finsupp.weight w α = 0 := by
             rw [Finsupp.weight_eq_sum]; exact Finset.sum_eq_zero fun i _ => by rw [h i, zero_smul]
           omega
@@ -1334,7 +1330,7 @@ theorem vertex_eq_span (hc : c.IsCentred) :
     rintro _ ⟨i, rfl⟩
     rw [SetLike.mem_coe, mem_vertex]
     cases i using Fin.lastCases with
-    | last => rw [reesX_last, T_apply, if_neg (by norm_num)]; exact zero_mem _
+    | last => rw [reesX_last, T_apply, ite_eq_right (by norm_num)]; exact zero_mem _
     | cast i =>
       rw [reesX_castSucc, coeff_C_mul_T]
       split_ifs
@@ -1372,8 +1368,9 @@ theorem reesLoc_isCentred (hc : c.IsCentred) : (reesLocChart c hF he hd hw hc).I
         rw [Ideal.map_span, ← Set.range_comp]; rfl
 
 include c hF he hd hw in
+omit [IsLocalRing B] in
 theorem rees_noetherian [IsNoetherianRing B] : IsNoetherianRing (ReesAlg Φ) := by
-  haveI := rees_finiteType c hF he hd hw
+  have := rees_finiteType c hF he hd hw
   exact Algebra.FiniteType.isNoetherianRing B _
 
 end ReesLoc
@@ -1401,7 +1398,7 @@ theorem reesChart_D_hom (γ : Fin n →₀ ℕ) (f : B) (j : ℤ)
   | hs β i ih =>
     rw [pushIdx_add_single, Chart.D_add_single, reesChart_d, castLE_succ_eq, reesDer_castSucc, ih,
       reesDu_C_mul_T, Chart.D_add_single, map_add, Finsupp.weight_single]
-    congr 2; push_cast; ring
+    congr 2; push_cast; ring_nf
 
 end ReesDeriv
 

@@ -35,9 +35,6 @@ lemma lderLin_single (δ : Derivation ℚ B B) (n : ℤ) (a : B) :
   show AddMonoidAlgebra.ofCoeff (Finsupp.mapRange δ δ.map_zero (Finsupp.single n a)) = _
   rw [Finsupp.mapRange_single]; rfl
 
-lemma lderLin_coeff (δ : Derivation ℚ B B) (p : B[T;T⁻¹]) (j : ℤ) :
-    (lderLin δ p).coeff j = δ (p.coeff j) := rfl
-
 end LDer
 
 end BezoutCounterexample.Principalization
@@ -200,7 +197,7 @@ lemma deriv_monom_mem_RF {e : Fin n → ℚ} (D : Derivation ℚ S S)
     have hprod : ∏ j, c.x j ^ (Finsupp.single i k) j = c.x i ^ k := by
       rw [Finset.prod_eq_single i]
       · simp
-      · intro l _ hl; rw [Finsupp.single_apply, if_neg (Ne.symm hl), pow_zero]
+      · intro l _ hl; rw [Finsupp.single_apply, ite_eq_right (Ne.symm hl), pow_zero]
       · simp
     rw [hprod, lam_single]
     rcases Nat.eq_zero_or_pos k with rfl | hk
@@ -217,7 +214,7 @@ lemma deriv_monom_mem_RF {e : Fin n → ℚ} (D : Derivation ℚ S S)
       have hprod' : ∏ j, c.x j ^ (Finsupp.single i (k - 1)) j = c.x i ^ (k - 1) := by
         rw [Finset.prod_eq_single i]
         · simp
-        · intro l _ hl; rw [Finsupp.single_apply, if_neg (Ne.symm hl), pow_zero]
+        · intro l _ hl; rw [Finsupp.single_apply, ite_eq_right (Ne.symm hl), pow_zero]
         · simp
       rwa [hprod'] at this
     have h2 := c.RF_mul_le e ((k - 1 : ℕ) * e i) (e i) (Ideal.mul_mem_mul h1 (hD i hei))
@@ -262,7 +259,7 @@ theorem deriv_mem_compF (δ : Derivation ℚ A A) (hδ : ∀ f ∈ I, δ f ∈ I
   rw [mem_compF] at hf ⊢
   intro 𝔪 _ h𝔭𝔪
   obtain ⟨hI𝔪, n, e, he, -⟩ := mem_maxLocus_of_minimal hI hmax h𝔭 𝔪 h𝔭𝔪
-  haveI : IsNoetherianRing (Localization.AtPrime 𝔪) :=
+  have : IsNoetherianRing (Localization.AtPrime 𝔪) :=
     IsLocalization.isNoetherianRing 𝔪.primeCompl _ inferInstance
   obtain ⟨J, -, -⟩ := he.1
   obtain ⟨k, ck, hrun, hadm, hck, hsupp⟩ :=
@@ -303,9 +300,6 @@ def reesRestr (D : Derivation ℚ B[T;T⁻¹] B[T;T⁻¹]) (hD : ∀ p ∈ ReesA
     exact D.map_smul q _)
   map_one_eq_zero' := Subtype.ext D.map_one_eq_zero
   leibniz' p q := Subtype.ext (D.leibniz (p : B[T;T⁻¹]) q)
-
-lemma reesRestr_coe (D : Derivation ℚ B[T;T⁻¹] B[T;T⁻¹]) (hD) (p : ReesAlg Φ) :
-    (reesRestr Φ D hD p : B[T;T⁻¹]) = D p := rfl
 
 /-- The lift `∑ fⱼ Tʲ ↦ ∑ δ(fⱼ) Tʲ` of a derivation stabilizing the filtration. -/
 def reesLift (δ : Derivation ℚ B B) (hδ : ∀ j, ∀ f ∈ Φ.F j, δ f ∈ Φ.F j) :
@@ -398,10 +392,6 @@ lemma jEuler_algebraMap (D : Derivation ℚ R R) (w : Fin (r + 1) → ℤ) (hD) 
     jEuler y D w hD (algebraMap R (J y) a) = algebraMap R (J y) (D a) :=
   Jou.liftDer_algebraMap _ _ _ a
 
-lemma jEuler_σ (D : Derivation ℚ R R) (w : Fin (r + 1) → ℤ) (hD) (i : Fin (r + 1)) :
-    jEuler y D w hD (σ y i) = -(w i • σ y i) :=
-  Jou.liftDer_σ _ _ _ i
-
 /-- The values of the vertical derivation `θ_{l,b} = y_{b'} ∂/∂σ_l - y_l ∂/∂σ_{b'}`. -/
 def thetaV (l : Fin (r + 1)) (b : Fin r) (i : Fin (r + 1)) : J y :=
   if i = l then algebraMap R (J y) (y (l.succAbove b))
@@ -413,7 +403,7 @@ def jTheta (l : Fin (r + 1)) (b : Fin r) : Derivation ℚ (J y) (J y) :=
     simp only [Derivation.zero_apply, map_zero, mul_zero, zero_add]
     rw [Fintype.sum_eq_add l (l.succAbove b) (Fin.succAbove_ne l b).symm (fun i hi => by
       simp [thetaV, hi.1, hi.2])]
-    simp only [thetaV, if_pos rfl, if_neg (Fin.succAbove_ne l b), ite_true]
+    simp only [thetaV, ite_eq_right (Fin.succAbove_ne l b), ite_true]
     ring)
 
 lemma jTheta_algebraMap (l : Fin (r + 1)) (b : Fin r) (a : R) :
@@ -457,18 +447,19 @@ lemma det_extLoc (𝔪 : Ideal A) [𝔪.IsPrime] {m : ℕ} (δ : Fin m → Deriv
 
 variable [IsDomain A] [Algebra.Smooth ℚ A] [IsNoetherianRing A]
 
+omit [Algebra.Smooth ℚ A] in
 /-- **The length bound**: under `VertOK` and `DimOK`, invariants are supported below `N`. -/
 theorem invAt_eq_zero_of_ok {I : Ideal A} (hI : I ≠ ⊥) {m N : ℕ} (hV : VertOK I m)
     (hD : DimOK I m N) (𝔪 : Ideal A) [h𝔪 : 𝔪.IsMaximal] (hI𝔪 : I ≤ 𝔪) {v : ℕ → ℚ}
     (hv : InvAt I 𝔪 v) (i : ℕ) (hi : N ≤ i) : v i = 0 := by
   obtain ⟨n, e, he, rfl⟩ := hv
-  haveI : IsNoetherianRing (Localization.AtPrime 𝔪) :=
+  have : IsNoetherianRing (Localization.AtPrime 𝔪) :=
     IsLocalization.isNoetherianRing 𝔪.primeCompl _ inferInstance
   obtain ⟨J, -, -⟩ := he.1
   have hn : n ≤ N + m := hD 𝔪 hI𝔪 n ⟨J.c⟩
   obtain ⟨δ, y, hδ, hdet⟩ := hV 𝔪 h𝔪 hI𝔪
   by_cases hin : i < n
-  · simp only [ext0, dif_pos hin]
+  · simp only [ext0, dite_eq_left hin]
     refine IsInv.eq_zero_of_derivations (Iloc_ne_bot hI 𝔪) (Iloc_le hI𝔪) he J.c J.centred
       (fun j => extLoc (S := Localization.AtPrime 𝔪) 𝔪.primeCompl (δ j))
       (fun j f hf => deriv_mem_map (algebraMap A _) _ (δ j) (fun r => extLoc_algebraMap _ _ r)
@@ -476,7 +467,7 @@ theorem invAt_eq_zero_of_ok {I : Ideal A} (hI : I ≠ ⊥) {m N : ℕ} (hV : Ver
       (fun l => algebraMap A _ (y l)) ?_ ⟨i, hin⟩ (by simp; omega)
     rw [det_extLoc]
     exact IsLocalization.map_units (Localization.AtPrime 𝔪) (⟨_, hdet⟩ : 𝔪.primeCompl)
-  · simp only [ext0, dif_neg hin]
+  · simp only [ext0, dite_eq_right hin]
 
 end LengthBound
 
@@ -507,7 +498,7 @@ theorem rees_chart_card {B : Type} [CommRing B] [IsDomain B] [Algebra ℚ B] (Φ
     (hneg : ∀ j : ℤ, j ≤ 0 → Φ.F j = ⊤) (𝔪 : Ideal B) [𝔪.IsPrime] {nA : ℕ}
     (cA : Chart (Localization.AtPrime 𝔪) nA) (P : Ideal (ReesAlg Φ)) [P.IsPrime] {n : ℕ}
     (c : Chart (Localization.AtPrime P) n) : n = nA + 1 := by
-  haveI : (⊥ : Ideal (ReesAlg Φ)).IsPrime := Ideal.isPrime_bot
+  have : (⊥ : Ideal (ReesAlg Φ)).IsPrime := Ideal.isPrime_bot
   have hs0 : reesS Φ hneg ∉ (⊥ : Ideal (ReesAlg Φ)) := by
     rw [Ideal.mem_bot]
     intro h
@@ -552,6 +543,7 @@ def famY : Fin m ⊕ Fin (r + 1) → J y :=
   Sum.elim (fun j => algebraMap A (J y) (yA j))
     (Fin.cons (algebraMap R (J y) (y l)) (fun b => σ y (l.succAbove b)))
 
+omit [IsScalarTower ℚ A R] in
 theorem det_fam (δ : Fin m → Derivation ℚ A A)
     (hDR : ∀ j a, DR j (algebraMap A R a) = algebraMap A R (δ j a))
     (hEA : ∀ a, E (algebraMap A R a) = 0) :
@@ -585,7 +577,7 @@ theorem det_fam (δ : Fin m → Derivation ℚ A A)
       cases a' using Fin.cases with
       | zero => rw [Fin.cons_zero, jTheta_algebraMap]
       | succ c =>
-        rw [Fin.cons_succ, jTheta_σ, thetaV, if_neg (Fin.succAbove_ne l c), if_neg]
+        rw [Fin.cons_succ, jTheta_σ, thetaV, ite_eq_right (Fin.succAbove_ne l c), ite_eq_right]
         intro hc
         have := (Fin.succAbove_right_inj).1 hc
         subst this
@@ -599,9 +591,9 @@ theorem det_fam (δ : Fin m → Derivation ℚ A A)
     · rw [← Fin.prod_const]
       refine Finset.prod_congr rfl fun b _ => ?_
       simp only [Matrix.toBlocks₂₂, Matrix.of_apply, M, famD, famY, Sum.elim_inr, Fin.cons_succ]
-      rw [jTheta_σ, thetaV, if_neg (Fin.succAbove_ne l b), if_pos rfl]
+      rw [jTheta_σ, thetaV, ite_eq_right (Fin.succAbove_ne l b), ite_eq_left rfl]
   rw [← Matrix.fromBlocks_toBlocks M, h21, Matrix.det_fromBlocks_zero₂₁, h11, ← RingHom.map_det,
-    Matrix.det_of_upperTriangular htri, hdiag]
+    Matrix.det_of_isUpperTriangular htri, hdiag]
 
 end DetGeneric
 
@@ -632,19 +624,19 @@ include hd hw hπ0 in
 theorem torsor_dimOK {m N : ℕ} (hD : DimOK I m N) :
     DimOK (torsorI hI hmax h𝔭 hd hπ) (m + (nGen hI hmax h𝔭 d + 1)) N := by
   intro Q _ hIQ n ⟨c⟩
-  haveI : Algebra.FiniteType A (ReesAlg (compFil hI hmax h𝔭 d)) :=
+  have : Algebra.FiniteType A (ReesAlg (compFil hI hmax h𝔭 d)) :=
     reesAlg_finiteType hI hmax h𝔭 d hd hw
-  haveI : Algebra.FiniteType ℚ (ReesAlg (compFil hI hmax h𝔭 d)) :=
+  have : Algebra.FiniteType ℚ (ReesAlg (compFil hI hmax h𝔭 d)) :=
     Algebra.FiniteType.trans (S := A) inferInstance inferInstance
-  haveI : Algebra.Smooth ℚ (ReesAlg (compFil hI hmax h𝔭 d)) := rees_smooth hI hmax h𝔭 hd hw
-  haveI : IsDomain (Torsor hI hmax h𝔭 d hπ) := torsor_isDomain hI hmax h𝔭 hπ hπ0
-  haveI : Algebra.FiniteType ℚ (Torsor hI hmax h𝔭 d hπ) := torsor_finiteType hI hmax h𝔭 hd hw hπ
+  have : Algebra.Smooth ℚ (ReesAlg (compFil hI hmax h𝔭 d)) := rees_smooth hI hmax h𝔭 hd hw
+  have : IsDomain (Torsor hI hmax h𝔭 d hπ) := torsor_isDomain hI hmax h𝔭 hπ hπ0
+  have : Algebra.FiniteType ℚ (Torsor hI hmax h𝔭 d hπ) := torsor_finiteType hI hmax h𝔭 hd hw hπ
   have hI𝔪 := le_comap_of_torsorI hI hmax h𝔭 hd hπ Q hIQ
-  haveI : (Q.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ))).IsMaximal :=
+  have : (Q.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ))).IsMaximal :=
     comap_isMaximal_of_finiteType Q
   obtain ⟨nA, ⟨cA⟩⟩ := exists_chart_atPrime (Q.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ)))
   have hnA : nA ≤ N + m := hD _ hI𝔪 nA ⟨cA⟩
-  obtain ⟨l, hl⟩ := exists_torsorY_not_mem hI hmax h𝔭 hd hw hπ Q
+  obtain ⟨l, hl⟩ := exists_torsorY_not_mem hI hmax h𝔭 hπ Q
   obtain ⟨nP, ⟨cP⟩⟩ := exists_chart_atPrime
     (Q.comap (algebraMap (ReesAlg (compFil hI hmax h𝔭 d)) (Torsor hI hmax h𝔭 d hπ)))
   have hnP : nP = nA + 1 := rees_chart_card _ (fun j hj => compFil_F_nonpos hI hmax h𝔭 d hj) _ cA _ cP
@@ -679,21 +671,22 @@ lemma torsorY_euler (i : Fin (nGen hI hmax h𝔭 d + 1)) :
 
 include hd hw hπ0 in
 set_option maxHeartbeats 2000000 in
+omit hπ0 in
 /-- **Vertical derivations on the torsor.** -/
 theorem torsor_vertOK {m : ℕ} (hV : VertOK I m) :
     VertOK (torsorI hI hmax h𝔭 hd hπ) (m + (nGen hI hmax h𝔭 d + 1)) := by
   classical
   intro Q hQ hIQ
-  haveI : Algebra.FiniteType ℚ (Torsor hI hmax h𝔭 d hπ) := torsor_finiteType hI hmax h𝔭 hd hw hπ
+  have : Algebra.FiniteType ℚ (Torsor hI hmax h𝔭 d hπ) := torsor_finiteType hI hmax h𝔭 hd hw hπ
   have hI𝔪 := le_comap_of_torsorI hI hmax h𝔭 hd hπ Q hIQ
-  haveI : (Q.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ))).IsMaximal :=
+  have : (Q.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ))).IsMaximal :=
     comap_isMaximal_of_finiteType Q
   obtain ⟨δ, yA, hδ, hdet⟩ := hV _ inferInstance hI𝔪
   have hδF : ∀ j, ∀ i, ∀ f ∈ (compFil hI hmax h𝔭 d).F i, δ j f ∈ (compFil hI hmax h𝔭 d).F i :=
     fun j i f hf => by
       rw [compFil_F] at hf ⊢
       exact deriv_mem_compF hI hmax h𝔭 (δ j) (hδ j) _ hf
-  obtain ⟨l, hl⟩ := exists_torsorY_not_mem hI hmax h𝔭 hd hw hπ Q
+  obtain ⟨l, hl⟩ := exists_torsorY_not_mem hI hmax h𝔭 hπ Q
   set y := torsorY hI hmax h𝔭 d hπ
   set DR : Fin m → Derivation ℚ (ReesAlg (compFil hI hmax h𝔭 d)) (ReesAlg (compFil hI hmax h𝔭 d)) :=
     fun j => reesLift _ (δ j) (hδF j)

@@ -29,31 +29,36 @@ namespace Loc
 abbrev alg {M N : Submonoid A} (h : M ≤ N) : Algebra (Localization M) (Localization N) :=
   localizationAlgebraOfSubmonoidLe (Localization M) (Localization N) M N h
 
+omit [IsDomain A] [Algebra ℚ A] in
 lemma tower {M N : Submonoid A} (h : M ≤ N) :
     letI := alg h; IsScalarTower A (Localization M) (Localization N) :=
   localization_isScalarTower_of_submonoid_le _ _ M N h
 
+omit [IsDomain A] [Algebra ℚ A] in
 lemma isLoc {M N : Submonoid A} (h : M ≤ N) :
     letI := alg h; IsLocalization (N.map (algebraMap A (Localization M))) (Localization N) := by
-  letI := alg h
-  haveI := tower h
+  let := alg h
+  have := tower h
   exact isLocalization_of_submonoid_le _ _ M N h
 
 /-- The transition map `M⁻¹A → N⁻¹A`. -/
 def map {M N : Submonoid A} (h : M ≤ N) : Localization M →+* Localization N :=
   letI := alg h; algebraMap (Localization M) (Localization N)
 
+omit [IsDomain A] [Algebra ℚ A] in
 lemma map_algebraMap {M N : Submonoid A} (h : M ≤ N) (a : A) :
     map h (algebraMap A (Localization M) a) = algebraMap A (Localization N) a := by
-  letI := alg h
-  haveI := tower h
+  let := alg h
+  have := tower h
   exact (IsScalarTower.algebraMap_apply A (Localization M) (Localization N) a).symm
 
+omit [IsDomain A] [Algebra ℚ A] in
 lemma map_comp {M N P : Submonoid A} (h₁ : M ≤ N) (h₂ : N ≤ P) :
     (map h₂).comp (map h₁) = map (h₁.trans h₂) := by
   refine IsLocalization.ringHom_ext M (RingHom.ext fun a => ?_)
   simp only [RingHom.comp_apply, map_algebraMap]
 
+omit [IsDomain A] [Algebra ℚ A] in
 lemma map_apply_comp {M N P : Submonoid A} (h₁ : M ≤ N) (h₂ : N ≤ P) (x : Localization M) :
     map h₂ (map h₁ x) = map (h₁.trans h₂) x := by
   rw [← map_comp h₁ h₂]; rfl
@@ -67,15 +72,18 @@ def transport {M N : Submonoid A} (h : M ≤ N) (c : Chart (Localization M) n) :
   haveI := isLoc h
   c.localization (N.map (algebraMap A (Localization M)))
 
+omit [IsDomain A] in
 @[simp] lemma transport_x {M N : Submonoid A} (h : M ≤ N) (c : Chart (Localization M) n) (i : Fin n) :
     (transport h c).x i = map h (c.x i) := rfl
 
+omit [IsDomain A] in
 lemma transport_d {M N : Submonoid A} (h : M ≤ N) (c : Chart (Localization M) n) (i : Fin n)
     (f : Localization M) : (transport h c).d i (map h f) = map h (c.d i f) := by
-  letI := alg h
-  haveI := isLoc h
+  let := alg h
+  have := isLoc h
   exact Chart.localization_d _ c i f
 
+omit [IsDomain A] in
 lemma transport_trans {M N P : Submonoid A} (h₁ : M ≤ N) (h₂ : N ≤ P)
     (c : Chart (Localization M) n) :
     transport h₂ (transport h₁ c) = transport (h₁.trans h₂) c :=
@@ -94,19 +102,23 @@ variable {A : Type} [CommRing A] [IsDomain A] [Algebra ℚ A]
 
 namespace Loc
 
+omit [IsDomain A] [Algebra ℚ A] in
 lemma le_sup_powers {M N : Submonoid A} (h : M ≤ N) {s : A} (hs : s ∈ N) :
     M ⊔ Submonoid.powers s ≤ N :=
   sup_le h ((Submonoid.powers_le).2 hs)
 
+omit [IsDomain A] [Algebra ℚ A] in
 lemma mem_sup_powers (M : Submonoid A) (s : A) : s ∈ M ⊔ Submonoid.powers s :=
   Submonoid.mem_sup_right (Submonoid.mem_powers s)
 
+omit [IsDomain A] [Algebra ℚ A] in
 lemma map_mk' {M N : Submonoid A} (h : M ≤ N) (r : A) (t : M) :
     map h (mk' (Localization M) r t) = mk' (Localization N) r ⟨t, h t.2⟩ := by
   rw [IsLocalization.eq_mk'_iff_mul_eq]
   simp only
   rw [← map_algebraMap h, ← map_algebraMap h, ← map_mul, IsLocalization.mk'_spec]
 
+omit [IsDomain A] [Algebra ℚ A] in
 lemma map_injective {M N : Submonoid A} (h : M ≤ N) (hN : N ≤ nonZeroDivisors A) :
     Function.Injective (map h) := by
   intro x y hxy
@@ -119,6 +131,7 @@ lemma map_injective {M N : Submonoid A} (h : M ≤ N) (hN : N ≤ nonZeroDivisor
   congr 1
   exact hinj hxy
 
+omit [IsDomain A] [Algebra ℚ A] in
 /-- Spreading an element. -/
 lemma spread_elt {M N : Submonoid A} (h : M ≤ N) (a : Localization N) :
     ∃ (s : A) (hs : s ∈ N) (a' : Localization (M ⊔ Submonoid.powers s)),
@@ -139,7 +152,7 @@ open IsLocalization
 variable {A : Type} [CommRing A] [IsDomain A] [Algebra ℚ A] {n : ℕ}
 
 lemma pushIdx_refl (β : Fin n →₀ ℕ) : pushIdx (le_refl n) β = β := by
-  simp [pushIdx, Fin.castLE_refl, Finsupp.mapDomain_id]
+  simp [pushIdx, Fin.castLE_refl]
 
 lemma pad_refl (e : Fin n → ℚ) : pad n e = e := by
   funext i; simp [pad, i.2]
@@ -148,21 +161,25 @@ namespace Loc
 
 variable {M N : Submonoid A}
 
+omit [IsDomain A] in
 lemma compat_transport (h : M ≤ N) (c : Chart (Localization M) n) :
     Compat (le_refl n) (map h) c (transport h c) :=
   ⟨fun i => by simp, fun i f => by simpa using transport_d h c i f,
     fun i hi => absurd i.2 (by omega)⟩
 
+omit [IsDomain A] in
 lemma transport_D (h : M ≤ N) (c : Chart (Localization M) n) (β : Fin n →₀ ℕ)
     (f : Localization M) : (transport h c).D β (map h f) = map h (c.D β f) := by
   have := (compat_transport h c).D β f
   rwa [pushIdx_refl] at this
 
+omit [IsDomain A] in
 lemma transport_Dv (h : M ≤ N) (c : Chart (Localization M) n) (β : Fin n →₀ ℕ)
     (f : Localization M) : (transport h c).Dv β (map h f) = map h (c.Dv β f) := by
   have := (compat_transport h c).Dv β f
   rwa [pushIdx_refl] at this
 
+omit [IsDomain A] in
 lemma map_RF (h : M ≤ N) (c : Chart (Localization M) n) (e : Fin n → ℚ) (t : ℚ) :
     (c.RF e t).map (map h) = (transport h c).RF e t := by
   rw [Chart.RF, Chart.RF, Ideal.map_span]
@@ -173,6 +190,7 @@ lemma map_RF (h : M ≤ N) (c : Chart (Localization M) n) (e : Fin n → ℚ) (t
   · rintro ⟨α, h0, ht, rfl⟩
     exact ⟨_, ⟨α, h0, ht, rfl⟩, by simp [map_prod, map_pow]⟩
 
+omit [IsDomain A] in
 lemma transport_nextChart (h : M ≤ N) (c : Chart (Localization M) n) (jj l : Fin n)
     (g : Localization M) (u : (Localization M)ˣ) (hu : c.d l g = u) :
     transport h (nextChart c jj l g u hu) =
@@ -200,6 +218,7 @@ namespace Loc
 /-- `M` is controlled by `g`: at every prime not containing `g`, `M` consists of units. -/
 def Ctrl (M : Submonoid A) (g : A) : Prop := ∀ (P : Ideal A) [P.IsPrime], g ∉ P → M ≤ P.primeCompl
 
+omit [IsDomain A] [Algebra ℚ A] in
 lemma Ctrl.sup_powers {M : Submonoid A} {g : A} (h : Ctrl M g) (s : A) :
     Ctrl (M ⊔ Submonoid.powers s) (g * s) := by
   intro P _ hgs
@@ -207,12 +226,11 @@ lemma Ctrl.sup_powers {M : Submonoid A} {g : A} (h : Ctrl M g) (s : A) :
   have hs : s ∉ P := fun hs => hgs (P.mul_mem_left _ hs)
   exact sup_le (h P hg) ((Submonoid.powers_le).2 hs)
 
-lemma Ctrl.mono {M M' : Submonoid A} {g : A} (h : Ctrl M' g) (hle : M ≤ M') : Ctrl M g :=
-  fun P _ hg => hle.trans (h P hg)
-
+omit [IsDomain A] [Algebra ℚ A] in
 lemma ctrl_powers (g : A) : Ctrl (Submonoid.powers g) g :=
-  fun P _ hg => (Submonoid.powers_le).2 hg
+  fun _P _ hg => (Submonoid.powers_le).2 hg
 
+omit [IsDomain A] [Algebra ℚ A] in
 lemma map_mem_map_trans {M₁ M₂ M₃ : Submonoid A} (h₁ : M₁ ≤ M₂) (h₂ : M₂ ≤ M₃)
     (J : Ideal (Localization M₁)) {x : Localization M₂} (hx : x ∈ J.map (map h₁)) :
     map h₂ x ∈ J.map (map (h₁.trans h₂)) := by
@@ -221,14 +239,15 @@ lemma map_mem_map_trans {M₁ M₂ M₃ : Submonoid A} (h₁ : M₁ ≤ M₂) (h
 
 variable {M N : Submonoid A}
 
+omit [IsDomain A] [Algebra ℚ A] in
 /-- Spreading membership in an extended ideal. -/
 lemma spread_mem_map (h : M ≤ N) (hN : N ≤ nonZeroDivisors A) (J : Ideal (Localization M))
     (x : Localization M) (hx : map h x ∈ J.map (map h)) :
-    ∃ (s : A) (hs : s ∈ N), map (le_sup_left : M ≤ M ⊔ Submonoid.powers s) x ∈
+    ∃ (s : A) (_hs : s ∈ N), map (le_sup_left : M ≤ M ⊔ Submonoid.powers s) x ∈
       J.map (map (le_sup_left : M ≤ M ⊔ Submonoid.powers s)) := by
-  letI := alg h
-  haveI := tower h
-  haveI := isLoc h
+  let := alg h
+  have := tower h
+  have := isLoc h
   have hx' : algebraMap (Localization M) (Localization N) x ∈
       J.map (algebraMap (Localization M) (Localization N)) := hx
   rw [IsLocalization.mem_map_algebraMap_iff (N.map (algebraMap A (Localization M)))] at hx'
@@ -270,13 +289,16 @@ structure Ext (M N M' : Submonoid A) : Prop where
   le₂ : M' ≤ N
   ctrl : ∃ t ∈ N, ∀ g, Ctrl M g → Ctrl M' (g * t)
 
+omit [IsDomain A] [Algebra ℚ A] in
 lemma Ext.refl {M N : Submonoid A} (h : M ≤ N) : Ext M N M :=
   ⟨le_rfl, h, 1, N.one_mem, fun g hg => by rwa [mul_one]⟩
 
+omit [IsDomain A] [Algebra ℚ A] in
 lemma Ext.sup_powers {M N : Submonoid A} (h : M ≤ N) {s : A} (hs : s ∈ N) :
     Ext M N (M ⊔ Submonoid.powers s) :=
-  ⟨le_sup_left, le_sup_powers h hs, s, hs, fun g hg => hg.sup_powers s⟩
+  ⟨le_sup_left, le_sup_powers h hs, s, hs, fun _g hg => hg.sup_powers s⟩
 
+omit [IsDomain A] [Algebra ℚ A] in
 lemma Ext.trans {M N M₁ M₂ : Submonoid A} (h₁ : Ext M N M₁) (h₂ : Ext M₁ N M₂) : Ext M N M₂ := by
   obtain ⟨t₁, ht₁, hc₁⟩ := h₁.ctrl
   obtain ⟨t₂, ht₂, hc₂⟩ := h₂.ctrl
@@ -285,6 +307,7 @@ lemma Ext.trans {M N M₁ M₂ : Submonoid A} (h₁ : Ext M N M₁) (h₂ : Ext 
 
 variable {M N : Submonoid A}
 
+omit [IsDomain A] [Algebra ℚ A] in
 /-- Spreading containment of an extended ideal. -/
 lemma spread_ideal_le [IsNoetherianRing A] (h : M ≤ N) (hN : N ≤ nonZeroDivisors A)
     (I : Ideal A) (J : Ideal (Localization M))
@@ -318,6 +341,7 @@ lemma spread_ideal_le [IsNoetherianRing A] (h : M ≤ N) (hN : N ≤ nonZeroDivi
   rintro _ ⟨a, ha, rfl⟩
   exact hmem a ha
 
+omit [IsDomain A] [Algebra ℚ A] in
 /-- Spreading an element of an extended ideal. -/
 lemma spread_mem_ideal (h : M ≤ N) (I : Ideal A) {f : Localization N}
     (hf : f ∈ I.map (algebraMap A (Localization N))) :
@@ -331,6 +355,7 @@ lemma spread_mem_ideal (h : M ≤ N) (I : Ideal A) {f : Localization N}
   · rw [map_mk', IsLocalization.mk'_eq_iff_eq_mul]
     exact heq.symm
 
+omit [IsDomain A] [Algebra ℚ A] in
 /-- Spreading a unit. -/
 lemma spread_unit (h : M ≤ N) (hN : N ≤ nonZeroDivisors A) (u : (Localization N)ˣ) :
     ∃ M', ∃ hE : Ext M N M', ∃ u' : (Localization M')ˣ, map hE.le₂ u' = u := by
@@ -346,6 +371,7 @@ lemma spread_unit (h : M ≤ N) (hN : N ≤ nonZeroDivisors A) (u : (Localizatio
   change map hE₂.le₂ (map hE₂.le₁ a) = u
   rw [map_apply_comp, ha]
 
+omit [IsDomain A] [Algebra ℚ A] in
 /-- Spreading the unit property. -/
 lemma spread_isUnit (h : M ≤ N) (hN : N ≤ nonZeroDivisors A) {x : Localization M}
     (hx : IsUnit (map h x)) :
@@ -374,7 +400,7 @@ lemma MC.ext' {R : Type*} [CommRing R] [Algebra ℚ R] [IsLocalRing R] {n : ℕ}
 variable {A : Type} [CommRing A] [IsDomain A] [Algebra ℚ A] [IsNoetherianRing A]
   (𝔪 : Ideal A) [𝔪.IsMaximal] {n : ℕ} (I : Ideal A)
 
-omit [IsNoetherianRing A] in
+omit [IsNoetherianRing A] [IsDomain A] [Algebra ℚ A] in
 lemma Loc.map_map_algebraMap {M N : Submonoid A} (h : M ≤ N) (J : Ideal A) :
     (J.map (algebraMap A (Localization M))).map (Loc.map h) =
       J.map (algebraMap A (Localization N)) := by

@@ -1,8 +1,8 @@
 import BezoutCounterexample.Principalization.Induction
-import BezoutCounterexample.RealCompact
+import BezoutCounterexample.RealPoints
 
 /-!
-# Real points of the torsor and the proof of Proposition 4.6
+# Real points of the torsor
 
 The compact set `K' ⊆ U(ℝ)` is the weighted sphere bundle
 `{w | w ∈ K over A, s ≥ 0, ∑ yₗ^{Eₗ} = 1, σₗ = yₗ^{Eₗ-1}}` with `Eₗ = 2 d!/jₗ`.
@@ -11,7 +11,8 @@ The compact set `K' ⊆ U(ℝ)` is the weighted sphere bundle
 * Off `V(𝔭)` the fibre is the single point `ptA` (`eq_ptA`).
 * Over `V(𝔭)` the fibre is the continuous image `LocPres.Gamma` of `ℝᵏ ∖ {0}`, `k ≥ 2`, via the
   local presentation of the Rees algebra (`LocPres.fib_eq`, `fib_connected`).
-* `torsorRealPts`, and hence `principalizationExtension`: **Proposition 4.6**.
+* The monotone surjection `K' → K` itself is assembled in `Strong.lean` (`torsorK_monotone`)
+  and in `BezoutCounterexample/SphereBundle.lean` (Lemma 4.5).
 -/
 
 noncomputable section
@@ -93,31 +94,36 @@ variable {B : Type*} [CommRing B] [Algebra ℚ B] (Φ : WFil B)
 def reesPt (z : B →+* ℝ) (t : ℝˣ) : RealPt (ReesAlg Φ) :=
   RealPt.ofHom ((LaurentPolynomial.eval₂ z t).comp (ReesAlg Φ).val.toRingHom)
 
+omit [Algebra ℚ B] in
 lemma reesPt_apply (z : B →+* ℝ) (t : ℝˣ) (p : ReesAlg Φ) :
     reesPt Φ z t p = LaurentPolynomial.eval₂ z t (p : B[T;T⁻¹]) := rfl
 
+omit [Algebra ℚ B] in
 lemma reesPt_algebraMap (z : B →+* ℝ) (t : ℝˣ) (b : B) :
     reesPt Φ z t (algebraMap B (ReesAlg Φ) b) = z b := by
   rw [reesPt_apply]
   show LaurentPolynomial.eval₂ z t (algebraMap B B[T;T⁻¹] b) = z b
   rw [← LaurentPolynomial.C_eq_algebraMap, eval₂_C]
 
+omit [Algebra ℚ B] in
 lemma reesPt_C_mul_T (z : B →+* ℝ) (t : ℝˣ) {j : ℤ} {g : B} (hg : g ∈ Φ.F j) :
     reesPt Φ z t ⟨LaurentPolynomial.C g * T j, C_mul_T_mem_ReesAlg hg⟩ = z g * ((t ^ j : ℝˣ) : ℝ) := by
   rw [reesPt_apply]
   exact eval₂_C_mul_T _ _ g j
 
 include hneg in
+omit [Algebra ℚ B] in
 lemma reesPt_s (z : B →+* ℝ) (t : ℝˣ) : reesPt Φ z t (reesS Φ hneg) = ((t⁻¹ : ℝˣ) : ℝ) := by
   rw [reesPt_apply, reesS_coe, eval₂_T]
   simp
 
 include hneg in
+omit [Algebra ℚ B] in
 /-- **Off the exceptional divisor, a real point is determined by its restriction and `s`.** -/
 theorem reesPt_eq (w : RealPt (ReesAlg Φ)) (hw : w (reesS Φ hneg) ≠ 0) :
     w = reesPt Φ ((RealPt.toHom w).comp (algebraMap B (ReesAlg Φ)))
       (Units.mk0 (w (reesS Φ hneg)) hw)⁻¹ := by
-  haveI := isLocalization_away_s Φ hneg
+  have := isLocalization_away_s Φ hneg
   have hu : IsUnit ((RealPt.toHom w) (reesS Φ hneg)) := isUnit_iff_ne_zero.2 hw
   set L : B[T;T⁻¹] →+* ℝ := IsLocalization.Away.lift (reesS Φ hneg) hu
   have hL : ∀ p : ReesAlg Φ, L (p : B[T;T⁻¹]) = w p := fun p =>
@@ -163,11 +169,9 @@ abbrev gdeg (l : Fin (nGen hI hmax h𝔭 d + 1)) : ℕ := (genDeg hI hmax h𝔭 
 /-- The even exponents `2 d! / jₗ` of the weighted sphere. -/
 abbrev sphE (l : Fin (nGen hI hmax h𝔭 d + 1)) : ℕ := 2 * (d.factorial / gdeg hI hmax h𝔭 l)
 
-include hd in
 lemma gdeg_pos (l) : 0 < gdeg hI hmax h𝔭 (d := d) l := by
   have := genDeg_pos hI hmax h𝔭 d l; simp only [gdeg]; omega
 
-include hd in
 lemma gdeg_cast (l) : ((gdeg hI hmax h𝔭 (d := d) l : ℕ) : ℤ) = genDeg hI hmax h𝔭 d l := by
   have := genDeg_pos hI hmax h𝔭 d l; simp only [gdeg]; omega
 
@@ -176,7 +180,7 @@ lemma gdeg_mul_sphE (l) : gdeg hI hmax h𝔭 (d := d) l * sphE hI hmax h𝔭 l =
   have hle : gdeg hI hmax h𝔭 (d := d) l ≤ d := by
     have := genDeg_le hI hmax h𝔭 d (by omega) l; simp only [gdeg]; omega
   have hdvd : gdeg hI hmax h𝔭 (d := d) l ∣ d.factorial :=
-    Nat.dvd_factorial (gdeg_pos hI hmax h𝔭 hd l) hle
+    Nat.dvd_factorial (gdeg_pos hI hmax h𝔭 l) hle
   simp only [sphE]
   rw [mul_left_comm, Nat.mul_div_cancel' hdvd]
 
@@ -189,18 +193,17 @@ lemma sphE_pos (l) : 0 < sphE hI hmax h𝔭 (d := d) l := by
 
 lemma sphE_even (l) : Even (sphE hI hmax h𝔭 (d := d) l) := even_two_mul _
 
-include hd in
 /-- `s^{jₗ} yₗ = gₗ` in the Rees algebra. -/
 lemma torsorY_mul_s_pow (l : Fin (nGen hI hmax h𝔭 d + 1)) :
     torsorY hI hmax h𝔭 d hπ l *
-      reesS (compFil hI hmax h𝔭 d) (fun j hj => compFil_F_nonpos hI hmax h𝔭 d hj) ^
+      reesS (compFil hI hmax h𝔭 d) (fun _j hj => compFil_F_nonpos hI hmax h𝔭 d hj) ^
         gdeg hI hmax h𝔭 l =
       algebraMap A (ReesAlg (compFil hI hmax h𝔭 d)) (genCoeff hI hmax h𝔭 d π l) := by
   apply Subtype.ext
   show (LaurentPolynomial.C (genCoeff hI hmax h𝔭 d π l) * T (genDeg hI hmax h𝔭 d l)) *
     ((reesS (compFil hI hmax h𝔭 d) (fun j hj => compFil_F_nonpos hI hmax h𝔭 d hj) ^
       gdeg hI hmax h𝔭 l : ReesAlg (compFil hI hmax h𝔭 d)) : A[T;T⁻¹]) = algebraMap A A[T;T⁻¹] _
-  rw [reesS_pow_coe, gdeg_cast hI hmax h𝔭 hd, mul_assoc, ← T_add, add_neg_cancel, T_zero,
+  rw [reesS_pow_coe, gdeg_cast hI hmax h𝔭, mul_assoc, ← T_add, add_neg_cancel, T_zero,
     mul_one, LaurentPolynomial.C_eq_algebraMap]
 
 /-- The image of a torsor generator in `U`. -/
@@ -223,7 +226,7 @@ lemma s_pow_eq (w : RealPt (Torsor hI hmax h𝔭 d hπ))
       w (yU hI hmax h𝔭 hπ l) * w (torsorS hI hmax h𝔭 hπ) ^ gdeg hI hmax h𝔭 l := by
     intro l
     rw [IsScalarTower.algebraMap_apply A (ReesAlg (compFil hI hmax h𝔭 d)),
-      ← torsorY_mul_s_pow hI hmax h𝔭 hd hπ l, map_mul, map_pow, map_mul, map_pow]
+      ← torsorY_mul_s_pow hI hmax h𝔭 hπ l, map_mul, map_pow, map_mul, map_pow]
   rw [← mul_one (w (torsorS hI hmax h𝔭 hπ) ^ (2 * d.factorial)), ← hsph, Finset.mul_sum]
   refine Finset.sum_congr rfl fun l _ => ?_
   rw [h1, mul_pow, ← pow_mul, gdeg_mul_sphE hI hmax h𝔭 hd, mul_comm]
@@ -355,11 +358,11 @@ theorem torsorK_isCompact {K : Set (RealPt A)} (hK : IsCompact K) :
       isClosed_le continuous_const (RealPt.continuous_eval _)
     have h3 : IsClosed {w : RealPt (Torsor hI hmax h𝔭 d hπ) |
         ∑ l, w (yU hI hmax h𝔭 hπ l) ^ sphE hI hmax h𝔭 l = 1} :=
-      isClosed_eq (continuous_finset_sum _ fun l _ => (RealPt.continuous_eval _).pow _)
+      isClosed_eq (continuous_finsetSum _ fun l _ => (RealPt.continuous_eval _).pow _)
         continuous_const
     have h4 : IsClosed {w : RealPt (Torsor hI hmax h𝔭 d hπ) | ∀ l,
         w (σ (torsorY hI hmax h𝔭 d hπ) l) = w (yU hI hmax h𝔭 hπ l) ^ (sphE hI hmax h𝔭 l - 1)} := by
-      simp only [Set.setOf_forall]
+      simp only [Set.ofPred_forall]
       exact isClosed_iInter fun l =>
         isClosed_eq (RealPt.continuous_eval _) ((RealPt.continuous_eval _).pow _)
     exact h1.inter (h2.inter (h3.inter h4))
@@ -428,12 +431,11 @@ def ptA_R (z : RealPt A) (hz : 0 < gNorm hI hmax h𝔭 d π z) :
     RealPt (ReesAlg (compFil hI hmax h𝔭 d)) :=
   reesPt _ (RealPt.toHom z) (Units.mk0 (gRoot hI hmax h𝔭 d π z) (gRoot_pos hI hmax h𝔭 hz).ne')⁻¹
 
-include hd in
 lemma ptA_R_y (z : RealPt A) (hz : 0 < gNorm hI hmax h𝔭 d π z) (l) :
     ptA_R hI hmax h𝔭 z hz (torsorY hI hmax h𝔭 d hπ l) =
       z (genCoeff hI hmax h𝔭 d π l) * (gRoot hI hmax h𝔭 d π z ^ gdeg hI hmax h𝔭 l)⁻¹ := by
   rw [ptA_R, torsorY, reesPt_C_mul_T _ _ _ (genCoeff_mem hI hmax h𝔭 d hπ l),
-    ← gdeg_cast hI hmax h𝔭 hd l, zpow_natCast,
+    ← gdeg_cast hI hmax h𝔭 l, zpow_natCast,
     Units.val_pow_eq_pow_val, Units.val_inv_eq_inv_val, Units.val_mk0, inv_pow]
   rfl
 
@@ -441,7 +443,7 @@ include hd in
 lemma ptA_R_sph (z : RealPt A) (hz : 0 < gNorm hI hmax h𝔭 d π z) :
     ∑ l, ptA_R hI hmax h𝔭 z hz (torsorY hI hmax h𝔭 d hπ l) ^ sphE hI hmax h𝔭 l = 1 := by
   have hcpow := gRoot_pow hI hmax h𝔭 (d := d) (π := π) z
-  simp_rw [ptA_R_y hI hmax h𝔭 hd hπ z hz, mul_pow, inv_pow, ← pow_mul,
+  simp_rw [ptA_R_y hI hmax h𝔭 hπ z hz, mul_pow, inv_pow, ← pow_mul,
     gdeg_mul_sphE hI hmax h𝔭 hd, ← Finset.sum_mul, hcpow]
   exact mul_inv_cancel₀ hz.ne'
 
@@ -593,7 +595,7 @@ theorem LocPres.nonempty (z : RealPt A) (hz : ∀ g ∈ 𝔭, z g = 0) :
     rw [RingHom.mem_ker, map_one] at this
     exact one_ne_zero this
   obtain ⟨𝔪, h𝔪, h𝔮𝔪⟩ := Ideal.exists_le_maximal 𝔮 h𝔮
-  haveI := h𝔪
+  have := h𝔪
   have h𝔭𝔪 : 𝔭 ≤ 𝔪 := fun g hg => h𝔮𝔪 (by rw [RingHom.mem_ker]; exact hz g hg)
   obtain ⟨hI𝔪, hv⟩ := mem_maxLocus_of_minimal hI hmax h𝔭 𝔪 h𝔭𝔪
   obtain ⟨D⟩ := LocData.nonempty hI 𝔪 hI𝔪 hv
@@ -614,11 +616,11 @@ theorem LocPres.nonempty (z : RealPt A) (hz : ∀ g ∈ 𝔭, z g = 0) :
     D.inv.nonneg, fun i => D.inv.le_one (Iloc_le hI𝔪) i, hsupp', hev, fun h1 => ?_, w, fun i => by rw [hw' i, hev i], fun j => ?_, z𝔪, hz𝔪, ?_⟩⟩
   · have hv1 := congrFun D.hv 1
     by_cases hn : 1 < D.n
-    · simp only [ext0, dif_pos hn] at hv1
+    · simp only [ext0, dite_eq_left hn] at hv1
       have hne : D.ek ⟨1, hn⟩ ≠ 0 := by rw [hv1]; exact h1
       have h2 : (1 : ℕ) < D.k := (D.supp ⟨1, hn⟩).1 hne
       simp only [k']; omega
-    · simp only [ext0, dif_neg hn] at hv1
+    · simp only [ext0, dite_eq_right hn] at hv1
       exact absurd hv1.symm h1
   · rw [compFil_loc_F hI hmax h𝔭 d 𝔪 h𝔭𝔪, D.cRF_eq_transport hI]; rfl
   · have h1 := D.map_p
@@ -626,7 +628,7 @@ theorem LocPres.nonempty (z : RealPt A) (hz : ∀ g ∈ 𝔭, z g = 0) :
     rw [h1, LocData.P]
     congr 2
     ext i
-    simp only [Set.mem_setOf_eq]
+    simp only [Set.mem_ofPred_eq]
     have := i.2; omega
 
 end BezoutCounterexample.Principalization
@@ -690,7 +692,7 @@ lemma LocPres.ev_kills (u : Fin P.k → ℝ) :
 def LocPres.psiPt (u : Fin P.k → ℝ) :
     ReesAlg ((compFil hI hmax h𝔭 d).loc (Localization.AtPrime P.𝔪)) →+* ℝ :=
   (Ideal.Quotient.lift _ (P.ev hI hmax h𝔭 u)
-    (fun a ha => (RingHom.mem_ker).1 (P.ev_kills hI hmax h𝔭 hd hz u ha))).comp
+    (fun _a ha => (RingHom.mem_ker).1 (P.ev_kills hI hmax h𝔭 hd hz u ha))).comp
     (RingHom.quotientKerEquivOfSurjective (P.psi_surj hI hmax h𝔭 hd)).symm.toRingHom
 
 lemma LocPres.psiPt_psi (u : Fin P.k → ℝ) (p) :
@@ -745,7 +747,7 @@ lemma LocPres.Psi_algebraMap (u : Fin P.k → ℝ) (a : A) :
 
 lemma LocPres.reesMap_s :
     reesMap (compFil hI hmax h𝔭 d) (Localization.AtPrime P.𝔪)
-        (reesS _ (fun j hj => compFil_F_nonpos hI hmax h𝔭 d hj)) =
+        (reesS _ (fun _j hj => compFil_F_nonpos hI hmax h𝔭 d hj)) =
       P.psi hI hmax h𝔭 hd (X none) := by
   rw [LocPres.psi, reesPsi, aeval_X]
   apply Subtype.ext
@@ -756,7 +758,7 @@ lemma LocPres.reesMap_s :
   exact this
 
 lemma LocPres.Psi_s (u : Fin P.k → ℝ) :
-    P.Psi hI hmax h𝔭 hd hz u (reesS _ (fun j hj => compFil_F_nonpos hI hmax h𝔭 d hj)) = 0 := by
+    P.Psi hI hmax h𝔭 hd hz u (reesS _ (fun _j hj => compFil_F_nonpos hI hmax h𝔭 d hj)) = 0 := by
   rw [LocPres.Psi_apply, LocPres.reesMap_s hI hmax h𝔭 hd P, LocPres.psiPt_psi, LocPres.ev,
     eval₂Hom_X']
   rfl
@@ -802,10 +804,10 @@ variable {I : Ideal A} (hI : I ≠ ⊥) {v₀ : ℕ → ℚ}
 /-- **Every real point over `z` on the exceptional divisor is some `Ψ(u)`.** -/
 theorem LocPres.eq_Psi (wR : RealPt (ReesAlg (compFil hI hmax h𝔭 d)))
     (hA : ∀ a, wR (algebraMap A _ a) = z a)
-    (hs : wR (reesS _ (fun j hj => compFil_F_nonpos hI hmax h𝔭 d hj)) = 0) :
+    (hs : wR (reesS _ (fun _j hj => compFil_F_nonpos hI hmax h𝔭 d hj)) = 0) :
     ∃ u, wR = P.Psi hI hmax h𝔭 hd hz u := by
-  letI := (reesMap (compFil hI hmax h𝔭 d) (Localization.AtPrime P.𝔪)).toAlgebra
-  haveI hloc := reesMap_isLocalization (compFil hI hmax h𝔭 d) (Localization.AtPrime P.𝔪)
+  let := (reesMap (compFil hI hmax h𝔭 d) (Localization.AtPrime P.𝔪)).toAlgebra
+  have hloc := reesMap_isLocalization (compFil hI hmax h𝔭 d) (Localization.AtPrime P.𝔪)
     P.𝔪.primeCompl (Ideal.primeCompl_le_nonZeroDivisors P.𝔪)
   have hunit : ∀ m : P.𝔪.primeCompl.map (algebraMap A (ReesAlg (compFil hI hmax h𝔭 d))),
       IsUnit ((RealPt.toHom wR) (m : ReesAlg (compFil hI hmax h𝔭 d))) := by
@@ -912,7 +914,7 @@ theorem LocPres.psiPt_scale (c : ℝ) (u : Fin P.k → ℝ) (j : ℕ) {g : Local
         (∏ i, reesX P.c P.hF P.he hd P.hw (Fin.castSucc i) ^ α i) *
           reesX P.c P.hF P.he hd P.hw (Fin.last P.n) ^ (wα - j) := by
       apply Subtype.ext
-      rw [Subalgebra.coe_mul, SubmonoidClass.coe_finset_prod, SubmonoidClass.coe_pow, reesX_last]
+      rw [Subalgebra.coe_mul, SubmonoidClass.coe_finsetProd, SubmonoidClass.coe_pow, reesX_last]
       simp only [SubmonoidClass.coe_pow, reesX_castSucc, mul_pow, T_pow, Finset.prod_mul_distrib,
         ← map_pow, ← map_prod, prod_T_eq, mul_assoc, ← T_add]
       congr 2
@@ -1000,7 +1002,7 @@ theorem LocPres.Psi_scale_y (c : ℝ) (u : Fin P.k → ℝ) (l : Fin (nGen hI hm
       c ^ gdeg hI hmax h𝔭 l * P.Psi hI hmax h𝔭 hd hz u (torsorY hI hmax h𝔭 d hπ l) := by
   set g' := algebraMap A (Localization.AtPrime P.𝔪) (genCoeff hI hmax h𝔭 d π l)
   have hg : g' ∈ chartFil P.c P.e d (gdeg hI hmax h𝔭 l) := by
-    rw [← P.hF, gdeg_cast hI hmax h𝔭 hd]
+    rw [← P.hF, gdeg_cast hI hmax h𝔭]
     exact Ideal.mem_map_of_mem _ (genCoeff_mem hI hmax h𝔭 d hπ l)
   have hmem : LaurentPolynomial.C g' * T (gdeg hI hmax h𝔭 l) ∈
       ReesAlg ((compFil hI hmax h𝔭 d).loc (Localization.AtPrime P.𝔪)) :=
@@ -1010,7 +1012,7 @@ theorem LocPres.Psi_scale_y (c : ℝ) (u : Fin P.k → ℝ) (l : Fin (nGen hI hm
     rw [reesMap_coe]
     show lmap _ (LaurentPolynomial.C (genCoeff hI hmax h𝔭 d π l) * T (genDeg hI hmax h𝔭 d l)) =
       LaurentPolynomial.C g' * T (gdeg hI hmax h𝔭 l)
-    rw [lmap_C_mul_T, gdeg_cast hI hmax h𝔭 hd]
+    rw [lmap_C_mul_T, gdeg_cast hI hmax h𝔭]
   rw [LocPres.Psi_apply, LocPres.Psi_apply, hmap]
   exact P.psiPt_scale hI hmax h𝔭 hd hz c u _ hg hmem
 
@@ -1146,7 +1148,7 @@ lemma LocPres.phi_pos {u : Fin P.k → ℝ} (hu : u ≠ 0) : 0 < P.phi hI hmax h
   exact pow_eq_zero_iff (sphE_pos hI hmax h𝔭 hd l).ne' |>.1 h0
 
 lemma LocPres.continuous_phi : Continuous (P.phi hI hmax h𝔭 hd hz hπ) :=
-  continuous_finset_sum _ fun l _ =>
+  continuous_finsetSum _ fun _l _ =>
     ((RealPt.continuous_eval _).comp (P.continuous_Psi hI hmax h𝔭 hd hz)).pow _
 
 /-- The normalizing factor. -/
@@ -1325,7 +1327,7 @@ theorem fib_connected (hk2 : v₀ 1 ≠ 0) {K : Set (RealPt A)} (hzK : z ∈ K) 
     IsConnected (torsorFib hI hmax h𝔭 hπ K z) := by
   obtain ⟨P⟩ := LocPres.nonempty hI hmax h𝔭 hw z hz
   rw [P.fib_eq hI hmax h𝔭 hd hw hπ hz hzK]
-  haveI : ConnectedSpace ({0}ᶜ : Set (Fin P.k → ℝ)) :=
+  have : ConnectedSpace ({0}ᶜ : Set (Fin P.k → ℝ)) :=
     isConnected_iff_connectedSpace.1 (isConnected_compl_singleton_of_one_lt_rank (by
       rw [rank_fin_fun]; exact_mod_cast (P.hk2 hk2 : 2 ≤ P.k)) 0)
   exact isConnected_range (P.continuous_Gamma hI hmax h𝔭 hd hz hπ)
@@ -1361,7 +1363,7 @@ variable {I : Ideal A} (hI : I ≠ ⊥) {v₀ : ℕ → ℚ}
   {𝔭 : Ideal A} (h𝔭 : 𝔭 ∈ (locusIdeal I v₀).minimalPrimes) {d : ℕ} (hd : 0 < d)
   (hw : ∀ i, ∃ w : ℕ, (w : ℚ) = d * v₀ i) {π : A} (hπ : π ∈ (compFil hI hmax h𝔭 d).F 1)
 
-include hd hw hπ in
+include hd hw in
 lemma kills_of_gNorm_zero {z : RealPt A} (h0 : gNorm hI hmax h𝔭 d π z = 0) : ∀ g ∈ 𝔭, z g = 0 := by
   have hl : ∀ l, z (genCoeff hI hmax h𝔭 d π l) = 0 := fun l => by
     have := (Finset.sum_eq_zero_iff_of_nonneg (fun l _ =>
@@ -1377,51 +1379,4 @@ lemma kills_of_gNorm_zero {z : RealPt A} (h0 : gNorm hI hmax h𝔭 d π z = 0) :
     exact hl l
   exact fun g hg => hle hg
 
-/-- **Real points of the torsor**: the weighted sphere bundle is compact and maps onto `K` with
-connected fibres. -/
-theorem torsorRealPts : TorsorRealPts := by
-  intro A _ _ _ _ _ I hI v₀ hmax 𝔭 h𝔭 d hd hw π hπ hπ0 hk2 K hK
-  refine ⟨torsorK hI hmax h𝔭 hπ K, torsorK_isCompact hI hmax h𝔭 hd hw hπ hK, ?_⟩
-  have hmaps : Set.MapsTo (RealPt.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ)))
-      (torsorK hI hmax h𝔭 hπ K) K := fun w hw => hw.1
-  refine ⟨hmaps, ⟨?_, ?_, ?_⟩⟩
-  · exact ((RealPt.continuous_comap _).comp continuous_subtype_val).subtype_mk _
-  · rintro ⟨z, hzK⟩
-    rcases (gNorm_nonneg hI hmax h𝔭 (d := d) (π := π) z).lt_or_eq with hpos | h0
-    · exact ⟨⟨ptA hI hmax h𝔭 hd hπ z hpos, ptA_mem hI hmax h𝔭 hd hπ K hzK hpos⟩,
-        Subtype.ext (ptA_comap hI hmax h𝔭 hd hπ z hpos)⟩
-    · have hz := kills_of_gNorm_zero hI hmax h𝔭 hd hw hπ h0.symm
-      obtain ⟨P⟩ := LocPres.nonempty hI hmax h𝔭 hw z hz
-      have hk : 0 < P.k := by have := P.hk2 hk2; omega
-      set u : ({0}ᶜ : Set (Fin P.k → ℝ)) := ⟨fun _ => 1, fun h => by
-        have := congrFun h ⟨0, hk⟩; simp at this⟩
-      exact ⟨⟨P.Gamma hI hmax h𝔭 hd hz hπ u, P.Gamma_mem hI hmax h𝔭 hd hz hπ hzK u⟩,
-        Subtype.ext (P.Gamma_comap hI hmax h𝔭 hd hz hπ u)⟩
-  · rintro ⟨z, hzK⟩
-    apply isConnected_restrict_fiber
-    show IsConnected (torsorFib hI hmax h𝔭 hπ K z)
-    rcases (gNorm_nonneg hI hmax h𝔭 (d := d) (π := π) z).lt_or_eq with hpos | h0
-    · have : torsorFib hI hmax h𝔭 hπ K z = {ptA hI hmax h𝔭 hd hπ z hpos} := by
-        ext w
-        constructor
-        · rintro ⟨hwK, hwz⟩
-          exact eq_ptA hI hmax h𝔭 hd hπ K hwK hwz hpos
-        · rintro rfl
-          exact ⟨ptA_mem hI hmax h𝔭 hd hπ K hzK hpos, ptA_comap hI hmax h𝔭 hd hπ z hpos⟩
-      rw [this]
-      exact isConnected_singleton
-    · exact fib_connected hI hmax h𝔭 hd hw hπ (kills_of_gNorm_zero hI hmax h𝔭 hd hw hπ h0.symm)
-        hk2 hzK
-
 end BezoutCounterexample.Principalization
-
-namespace BezoutCounterexample.Principalization
-
-/-- **Proposition 4.6** (`PrincipalizationExtension`): every nonzero ideal of a smooth factorial
-`ℚ`-domain becomes principal in a tower of smooth factorial domains, with a monotone surjection of
-compact sets of real points. -/
-theorem principalizationExtension : PrincipalizationExtension :=
-  principalizationExtension_of torsorRealPts
-
-end BezoutCounterexample.Principalization
-

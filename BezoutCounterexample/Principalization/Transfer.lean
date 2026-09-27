@@ -98,11 +98,11 @@ theorem SA.step_run (hSA : SA I j J) (hna : ¬ J.Adm I) :
     simp only [compl]
     by_cases h1 : (i' : ℕ) < j
     · have h2 : (i : ℕ) < j := lt_of_le_of_lt (Fin.le_def.1 hii') h1
-      rw [if_pos h1, if_pos h2]; exact J.anti hii'
-    · rw [if_neg h1]
+      rw [ite_eq_left h1, ite_eq_left h2]; exact J.anti hii'
+    · rw [ite_eq_right h1]
       by_cases h2 : (i : ℕ) < j
-      · rw [if_pos h2]; exact hbJ i h2
-      · rw [if_neg h2]
+      · rw [ite_eq_left h2]; exact hbJ i h2
+      · rw [ite_eq_right h2]
   have hc_adm : I ≤ J.c.RF (compl J.e j bp) 1 := by
     intro g hg
     rw [J.centred.mem_RF_iff hc_nonneg]
@@ -152,14 +152,14 @@ theorem SA.step_run (hSA : SA I j J) (hna : ¬ J.Adm I) :
     have hle := Fin.le_def.1 hii'
     simp only [hep]
     by_cases h1 : (i' : ℕ) < j
-    · rw [if_pos h1, if_pos (lt_of_le_of_lt hle h1)]; exact J.anti hii'
-    · rw [if_neg h1]
+    · rw [ite_eq_left h1, ite_eq_left (lt_of_le_of_lt hle h1)]; exact J.anti hii'
+    · rw [ite_eq_right h1]
       by_cases h2 : (i' : ℕ) = j
-      · rw [if_pos h2]
+      · rw [ite_eq_left h2]
         by_cases h3 : (i : ℕ) < j
-        · rw [if_pos h3]; exact hbJ i h3
-        · rw [if_neg h3, if_pos (by omega)]
-      · rw [if_neg h2]
+        · rw [ite_eq_left h3]; exact hbJ i h3
+        · rw [ite_eq_right h3, ite_eq_left (by omega)]
+      · rw [ite_eq_right h2]
         split_ifs
         · exact J.nonneg i
         · exact hbp.le
@@ -184,43 +184,43 @@ theorem SA.step_run (hSA : SA I j J) (hna : ¬ J.Adm I) :
     show ep i ≠ 0 ↔ (i : ℕ) < j + 1
     simp only [hep]
     by_cases h1 : (i : ℕ) < j
-    · rw [if_pos h1]; exact ⟨fun _ => by omega, fun _ => (hSA.supp i).2 h1⟩
-    · rw [if_neg h1]
+    · rw [ite_eq_left h1]; exact ⟨fun _ => by omega, fun _ => (hSA.supp i).2 h1⟩
+    · rw [ite_eq_right h1]
       by_cases h2 : (i : ℕ) = j
-      · rw [if_pos h2]; exact ⟨fun _ => by omega, fun _ => hbp.ne'⟩
-      · rw [if_neg h2]; exact ⟨fun h => absurd rfl h, fun h => by omega⟩
+      · rw [ite_eq_left h2]; exact ⟨fun _ => by omega, fun _ => hbp.ne'⟩
+      · rw [ite_eq_right h2]; exact ⟨fun h => absurd rfl h, fun h => by omega⟩
   · -- domination by an admissible centre: the completion
     refine ⟨⟨J.c, compl J.e j bp, J.centred, hc_nonneg, hc_anti⟩, hc_adm, fun i hi => ?_⟩
     show compl J.e j bp i = ep i
     simp only [compl, hep]
     by_cases h1 : (i : ℕ) < j
-    · rw [if_pos h1, if_pos h1]
-    · rw [if_neg h1, if_neg h1, if_pos (by omega)]
+    · rw [ite_eq_left h1, ite_eq_left h1]
+    · rw [ite_eq_right h1, ite_eq_right h1, ite_eq_left (by omega)]
   · -- maximality
     intro J' hJ' i hi hbelow
     by_cases h1 : (i : ℕ) < j
-    · have : ep i = J.e i := by simp only [hep, if_pos h1]
+    · have : ep i = J.e i := by simp only [hep, ite_eq_left h1]
       show ep i ≤ J'.e i
       rw [this]
       refine hSA.max J' hJ' i h1 fun i' hi' => ?_
       rw [hbelow i' hi']
       show ep i' = J.e i'
-      simp only [hep, if_pos (lt_trans (Fin.lt_def.1 hi') h1)]
+      simp only [hep, ite_eq_left (lt_trans (Fin.lt_def.1 hi') h1)]
     · have hij : (i : ℕ) = j := by omega
       have hieq : i = jj := Fin.ext hij
       subst hieq
       have hag : ∀ i' : Fin n, (i' : ℕ) < j → J'.e i' = J.e i' := fun i' hi' => by
         rw [hbelow i' (Fin.lt_def.2 hi')]
         show ep i' = J.e i'
-        simp only [hep, if_pos hi']
+        simp only [hep, ite_eq_left hi']
       have := (hnext J' hJ' hag).2
       show ep jj ≤ J'.e jj
-      simp only [hep, if_neg h1, if_pos hij]
+      simp only [hep, ite_eq_right h1, ite_eq_left hij]
       exact this
   · -- domination
     intro J' hJ' hag
     have hag_j : ∀ i : Fin n, (i : ℕ) < j → J'.e i = J.e i := fun i hi => by
-      rw [hag i (by omega)]; show ep i = J.e i; simp only [hep, if_pos hi]
+      rw [hag i (by omega)]; show ep i = J.e i; simp only [hep, ite_eq_left hi]
     have hJ'j : J'.e jj = bp := by
       rw [hag jj (by simp [hjj])]; show ep jj = bp; simp [hep, hjj]
     obtain ⟨c'', hc'', hRF, hx⟩ := hSA.dom J' hJ' hag_j
@@ -230,9 +230,9 @@ theorem SA.step_run (hSA : SA I j J) (hna : ¬ J.Adm I) :
       intro i
       by_cases hi : (i : ℕ) < j
       · have := hc''.lowersBy_lt (c := J.c) J'.nonneg J'.anti (fun i' hi' => (hx i' hi').symm) i hi
-        simp only [compl, if_pos hi]
+        simp only [compl, ite_eq_left hi]
         rwa [hag_j i hi] at this
-      · simp only [compl, if_neg hi]
+      · simp only [compl, ite_eq_right hi]
         refine hc''.lowersBy_ge (c := J.c) J'.nonneg (fun i' hi' => (hx i' hi').symm) i (by omega)
           fun m hm => ?_
         rw [← hJ'j]; exact J'.anti (Fin.le_def.2 (by simp only [hjj, Fin.val_mk]; omega))
@@ -247,20 +247,20 @@ theorem SA.step_run (hSA : SA I j J) (hna : ¬ J.Adm I) :
     -- a coordinate of `c''` in which `xb` has a linear term
     obtain ⟨m, hm, hmnm⟩ : ∃ m : Fin n, j ≤ (m : ℕ) ∧ c''.d m xb ∉ maximalIdeal R := by
       by_contra hcon
-      push_neg at hcon
+      push Not at hcon
       apply hdl_nm
       rw [c''.eq_sum (J.c.d l), Derivation.sum_apply']
       refine Ideal.sum_mem _ fun m _ => ?_
       rw [Derivation.smul_apply, smul_eq_mul]
       by_cases hmj : (m : ℕ) < j
-      · rw [hx m hmj, J.c.d_x, if_neg (fun h => by rw [h] at hl; omega), zero_mul]
+      · rw [hx m hmj, J.c.d_x, ite_eq_right (fun h => by rw [h] at hl; omega), zero_mul]
         exact zero_mem _
       · exact Ideal.mul_mem_left _ _ (hcon m (by omega))
     have hJ'm : J'.e m = bp := by
       refine le_antisymm ?_ ?_
       · rw [← hJ'j]; exact J'.anti (Fin.le_def.2 (by simp only [hjj, Fin.val_mk]; omega))
       · by_contra hlt'
-        push_neg at hlt'
+        push Not at hlt'
         have := (hc''.mem_RF_iff J'.nonneg bp xb).1 hxb_RF (Finsupp.single m 1) (by
           rw [lam_single]; simpa using hlt')
         rw [Chart.coeff_tau_eq_zero_iff, Chart.Dv_single_one] at this
@@ -372,7 +372,7 @@ lemma lam_pad (e : Fin n → ℚ) (β : Fin n →₀ ℕ) : lam (pad n' e) (push
 lemma tailSum_push (j : ℕ) (β : Fin n →₀ ℕ) : tailSum j (pushIdx hnn β) = tailSum j β := by
   simp only [tailSum, Finset.sum_filter]
   rw [sum_castLE hnn _ fun i hi => by rw [pushIdx_apply_ge hnn β i hi]; simp]
-  simp only [Fin.coe_castLE, pushIdx_apply]
+  simp only [Fin.val_castLE, pushIdx_apply]
 
 lemma fact_push (β : Fin n →₀ ℕ) :
     ∏ i : Fin n', (pushIdx hnn β i).factorial = ∏ i : Fin n, (β i).factorial := by
@@ -424,7 +424,7 @@ lemma swap_castLE (hnn : n ≤ n') (a b i : Fin n) :
   · subst h1; simp
   · by_cases h2 : i = b
     · subst h2; simp [h1]
-    · rw [if_neg (fun h => h1 (hinj h)), if_neg (fun h => h2 (hinj h)), if_neg h1, if_neg h2]
+    · rw [ite_eq_right (fun h => h1 (hinj h)), ite_eq_right (fun h => h2 (hinj h)), ite_eq_right h1, ite_eq_right h2]
 
 lemma Compat.hu' {ψ : S →+* R'} {c : Chart S n} {c' : Chart R' n'} (h : Compat hnn ψ c c')
     {l : Fin n} {g : S} {u : Sˣ} (hu : c.d l g = u) :
@@ -445,17 +445,17 @@ lemma Compat.nextChart {ψ : S →+* R'} {c : Chart S n} {c' : Chart R' n'} (h :
     · rw [Chart.replace_x_ne _ _ _ _ _ (fun h' => hm (hinj h')), Chart.replace_x_ne _ _ _ _ _ hm, h.x]
   · simp only [Principalization.nextChart, Chart.reindex_d, swap_castLE, Chart.replace]
     by_cases hm : Equiv.swap jj l i = l
-    · rw [if_pos (congrArg _ hm), if_pos hm]
+    · rw [ite_eq_left (congrArg _ hm), ite_eq_left hm]
       simp only [Derivation.smul_apply, smul_eq_mul, map_mul, h.d]
       rfl
-    · rw [if_neg (fun h' => hm (hinj h')), if_neg hm]
+    · rw [ite_eq_right (fun h' => hm (hinj h')), ite_eq_right hm]
       simp only [Derivation.coe_sub, Pi.sub_apply, Derivation.smul_apply, smul_eq_mul, map_sub,
         map_mul, h.d]
       rfl
   · have h1 : i ≠ Fin.castLE hnn jj := fun h' => by rw [h'] at hi; simp at hi; omega
     have h2 : i ≠ Fin.castLE hnn l := fun h' => by rw [h'] at hi; simp at hi; omega
     simp only [Principalization.nextChart, Chart.reindex_d, Equiv.swap_apply_of_ne_of_ne h1 h2,
-      Chart.replace, if_neg h2, Derivation.coe_sub, Pi.sub_apply, Derivation.smul_apply,
+      Chart.replace, ite_eq_right h2, Derivation.coe_sub, Pi.sub_apply, Derivation.smul_apply,
       smul_eq_mul, h.d_extra i hi, mul_zero, zero_mul, sub_zero]
 
 end BezoutCounterexample.Principalization
@@ -489,13 +489,13 @@ lemma pad_zero_ge {e : Fin n → ℚ} {j : ℕ} (hsupp : ∀ i : Fin n, j ≤ (i
 lemma pad_nextE_lt {e : Fin n → ℚ} {j : ℕ} {b : ℚ} (i : Fin n') (hi : (i : ℕ) < j) :
     pad n' (nextE e j b) i = pad n' e i := by
   by_cases h : (i : ℕ) < n
-  · simp only [pad, dif_pos h, nextE, Fin.val_mk, if_pos hi]
-  · simp only [pad, dif_neg h]
+  · simp only [pad, dite_eq_left h, nextE, ite_eq_left hi]
+  · simp only [pad, dite_eq_right h]
 
 lemma pad_nextE_eq {e : Fin n → ℚ} {j : ℕ} {b : ℚ} (hj : j < n) (i : Fin n') (hi : (i : ℕ) = j) :
     pad n' (nextE e j b) i = b := by
   have h : (i : ℕ) < n := by omega
-  simp only [pad, dif_pos h, nextE, Fin.val_mk, if_neg (show ¬ (i : ℕ) < j by omega), if_pos hi]
+  simp only [pad, dite_eq_left h, nextE, ite_eq_right (show ¬ (i : ℕ) < j by omega), ite_eq_left hi]
 
 /-- The bound on the lowering by the derivations of a chart agreeing with `c''` below `j`. -/
 lemma lowers_compl {c' c'' : Chart R' n'} (hc'' : c''.IsCentred) {J' : MC R' n'} {j : ℕ}
@@ -506,8 +506,8 @@ lemma lowers_compl {c' c'' : Chart R' n'} (hc'' : c''.IsCentred) {J' : MC R' n'}
   intro i
   by_cases hi : (i : ℕ) < j
   · have := hc''.lowersBy_lt (c := c') J'.nonneg J'.anti (fun i' hi' => (hagree i' hi').symm) i hi
-    simp only [compl, if_pos hi]; rwa [he i hi] at this
-  · simp only [compl, if_neg hi]
+    simp only [compl, ite_eq_left hi]; rwa [he i hi] at this
+  · simp only [compl, ite_eq_right hi]
     exact hc''.lowersBy_ge (c := c') J'.nonneg (fun i' hi' => (hagree i' hi').symm) i (by omega) hb
 
 end BezoutCounterexample.Principalization
@@ -564,7 +564,7 @@ theorem TI.step {ψ : S →+* R'} {I : Ideal S} {j : ℕ} {c : Chart S n} {e : F
         rw [hbelow i' (Fin.lt_def.2 (by omega)), pad_nextE_lt i' hi']
       obtain ⟨c'', hc'', hRF, hx⟩ := hT.dom J' hJ' hag
       by_contra hlt
-      push_neg at hlt
+      push Not at hlt
       have hlow := lowers_compl (c' := c') hc'' hx hag (b := J'.e i) fun m hm =>
         J'.anti (Fin.le_def.2 (by omega))
       have hmem := Chart.D_mem_RF_of_lowersBy c'' c' J'.e _ hlow (pushIdx hnn β) 1 (ψ f)
@@ -599,20 +599,20 @@ theorem TI.step {ψ : S →+* R'} {I : Ideal S} {j : ℕ} {c : Chart S n} {e : F
       rw [hdl]; exact notMem_maximalIdeal.2 ((Units.isUnit u).map ψ)
     obtain ⟨m, hm, hmnm⟩ : ∃ m : Fin n', j ≤ (m : ℕ) ∧ c''.d m xb' ∉ maximalIdeal R' := by
       by_contra hcon
-      push_neg at hcon
+      push Not at hcon
       apply hdl_nm
       rw [c''.eq_sum (c'.d (Fin.castLE hnn l)), Derivation.sum_apply']
       refine Ideal.sum_mem _ fun m _ => ?_
       rw [Derivation.smul_apply, smul_eq_mul]
       by_cases hmj : (m : ℕ) < j
-      · rw [hx m hmj, c'.d_x, if_neg (fun h => by rw [← h] at hmj; simp at hmj; omega), zero_mul]
+      · rw [hx m hmj, c'.d_x, ite_eq_right (fun h => by rw [← h] at hmj; simp at hmj; omega), zero_mul]
         exact zero_mem _
       · exact Ideal.mul_mem_left _ _ (hcon m (by omega))
     have hJ'm : J'.e m = b := by
       refine le_antisymm ?_ ?_
       · rw [← hJ'j]; exact J'.anti (Fin.le_def.2 (by omega))
       · by_contra hlt'
-        push_neg at hlt'
+        push Not at hlt'
         have := (hc''.mem_RF_iff J'.nonneg b xb').1 hxb_RF (Finsupp.single m 1) (by
           rw [lam_single]; simpa using hlt')
         rw [Chart.coeff_tau_eq_zero_iff, Chart.Dv_single_one] at this
@@ -652,7 +652,7 @@ variable {S : Type*} [CommRing S] [Algebra ℚ S] {R' : Type*} [CommRing R'] [Al
 
 lemma nextE_zero_ge {e : Fin n → ℚ} {j : ℕ} (b : ℚ) (i : Fin n) (hi : j + 1 ≤ (i : ℕ)) :
     nextE e j b i = 0 := by
-  simp only [nextE, if_neg (show ¬ (i : ℕ) < j by omega), if_neg (show ¬ (i : ℕ) = j by omega)]
+  simp only [nextE, ite_eq_right (show ¬ (i : ℕ) < j by omega), ite_eq_right (show ¬ (i : ℕ) = j by omega)]
 
 /-- Runs keep the weights supported below the stage. -/
 lemma IsRun.supp {I : Ideal S} {j : ℕ} {c : Chart S n} {e : Fin n → ℚ} {k : ℕ} {ck : Chart S n}
@@ -675,11 +675,12 @@ theorem IsRun.transfer {ψ : S →+* R'} {I : Ideal S} {j : ℕ} {c : Chart S n}
     exact ih (fun i hi => nextE_zero_ge _ i hi) _
       (hT.step hj hsupp f hf β l hl hβl hlam hN hunit u hu)
 
+omit [IsNoetherianRing R'] in
 /-- The transfer invariant holds at stage `0` for compatible charts. -/
 lemma TI.zero {ψ : S →+* R'} {I : Ideal S} {c : Chart S n} {c' : Chart R' n'}
     (h : Compat hnn ψ c c') : TI hnn ψ I 0 c 0 c' :=
-  ⟨h, fun _ _ i hi => absurd hi (Nat.not_lt_zero _),
-    fun J' _ _ => ⟨J'.c, J'.centred, fun _ => rfl, fun i hi => absurd hi (Nat.not_lt_zero _)⟩⟩
+  ⟨h, fun _ _ _i hi => absurd hi (Nat.not_lt_zero _),
+    fun J' _ _ => ⟨J'.c, J'.centred, fun _ => rfl, fun _i hi => absurd hi (Nat.not_lt_zero _)⟩⟩
 
 /-- **Transfer theorem.** A Method-1 run for `I` on `S`, transported along `ψ : S → R'` with a
 compatible chart, bounds the admissible marked centres of `I R'` from below (lexicographically in

@@ -100,7 +100,7 @@ include hπ0 in
 lemma torsorY_zero_ne : torsorY hI hmax h𝔭 d hπ 0 ≠ 0 := by
   intro h
   have := congrArg (fun p : ReesAlg (compFil hI hmax h𝔭 d) => (p : A[T;T⁻¹]).coeff 1) h
-  simp only [torsorY, genCoeff, genDeg, Fin.cons_zero, coeff_C_mul_T, if_pos rfl] at this
+  simp only [torsorY, genCoeff, genDeg, Fin.cons_zero, coeff_C_mul_T] at this
   exact hπ0 (by simpa using this)
 
 include hπ0 in
@@ -108,11 +108,12 @@ theorem torsor_isDomain : IsDomain (Torsor hI hmax h𝔭 d hπ) :=
   Jou.isDomain (torsorY_zero_ne hI hmax h𝔭 hπ hπ0)
 
 omit [Algebra.Smooth ℚ A] [IsNoetherianRing A] in
+omit [IsDomain A] [Algebra ℚ A] in
 lemma rees_algebraMap_injective (Φ : WFil A) : Function.Injective (algebraMap A (ReesAlg Φ)) := by
   intro a b h
   have := congrArg (fun p : ReesAlg Φ => (p : A[T;T⁻¹]).coeff 0) h
   simp only [Subalgebra.coe_algebraMap, ← LaurentPolynomial.C_eq_algebraMap,
-    LaurentPolynomial.C_apply, if_pos rfl] at this
+    LaurentPolynomial.C_apply] at this
   exact this
 
 include hπ0 in
@@ -138,19 +139,19 @@ variable {I : Ideal A} (hI : I ≠ ⊥) {v₀ : ℕ → ℚ}
 include hd hw
 
 theorem torsor_finiteType : Algebra.FiniteType ℚ (Torsor hI hmax h𝔭 d hπ) := by
-  haveI := reesAlg_finiteType hI hmax h𝔭 d hd hw
-  haveI : Algebra.FiniteType ℚ (ReesAlg (compFil hI hmax h𝔭 d)) :=
+  have := reesAlg_finiteType hI hmax h𝔭 d hd hw
+  have : Algebra.FiniteType ℚ (ReesAlg (compFil hI hmax h𝔭 d)) :=
     Algebra.FiniteType.trans (S := A) inferInstance inferInstance
-  haveI : Algebra.FiniteType (ReesAlg (compFil hI hmax h𝔭 d)) (Torsor hI hmax h𝔭 d hπ) :=
+  have : Algebra.FiniteType (ReesAlg (compFil hI hmax h𝔭 d)) (Torsor hI hmax h𝔭 d hπ) :=
     inferInstance
   exact Algebra.FiniteType.trans (S := ReesAlg (compFil hI hmax h𝔭 d)) inferInstance inferInstance
 
 include hI hmax h𝔭 in
 /-- **The torsor is smooth over `ℚ`.** -/
 theorem torsor_smooth : Algebra.Smooth ℚ (Torsor hI hmax h𝔭 d hπ) := by
-  haveI := rees_smooth hI hmax h𝔭 hd hw
-  haveI := Jou.formallySmooth (torsorY hI hmax h𝔭 d hπ)
-  haveI := torsor_finiteType hI hmax h𝔭 hd hw hπ
+  have := rees_smooth hI hmax h𝔭 hd hw
+  have := Jou.formallySmooth (torsorY hI hmax h𝔭 d hπ)
+  have := torsor_finiteType hI hmax h𝔭 hd hw hπ
   refine ⟨Algebra.FormallySmooth.comp ℚ (ReesAlg (compFil hI hmax h𝔭 d)) _, ?_⟩
   exact Algebra.FinitePresentation.of_finiteType.1 inferInstance
 
@@ -168,6 +169,7 @@ variable {B : Type*} [CommRing B] [Algebra ℚ B] [IsDomain B]
 /-- Reduction of Laurent polynomials modulo `b`. -/
 abbrev lred (b : B) : B[T;T⁻¹] →+* (B ⧸ Ideal.span {b})[T;T⁻¹] := lmap (Ideal.Quotient.mk _)
 
+omit [IsDomain B] [Algebra ℚ B] in
 lemma ker_lred (b : B) : RingHom.ker (lred b) = Ideal.span {LaurentPolynomial.C b} := by
   classical
   apply le_antisymm
@@ -193,20 +195,10 @@ lemma ker_lred (b : B) : RingHom.ker (lred b) = Ideal.span {LaurentPolynomial.C 
     ext j
     rw [lmap_coeff, LaurentPolynomial.C_apply]
     split_ifs
-    · simp [Ideal.Quotient.eq_zero_iff_mem, Ideal.mem_span_singleton_self]
+    · simp
     · simp
 
-lemma lred_surjective (b : B) : Function.Surjective (lred b) := by
-  intro p
-  induction p using LaurentPolynomial.induction_on' with
-  | add p q hp hq =>
-    obtain ⟨p', rfl⟩ := hp
-    obtain ⟨q', rfl⟩ := hq
-    exact ⟨p' + q', map_add _ _ _⟩
-  | C_mul_T l a =>
-    obtain ⟨a', rfl⟩ := Ideal.Quotient.mk_surjective a
-    exact ⟨LaurentPolynomial.C a' * T l, lmap_C_mul_T _ _ _⟩
-
+omit [IsDomain B] [Algebra ℚ B] in
 /-- A prime of `B` stays prime in `B[T^±]`. -/
 theorem prime_C_laurent {b : B} (hb : Prime b) : Prime (LaurentPolynomial.C b : B[T;T⁻¹]) := by
   have hb0 : (LaurentPolynomial.C b : B[T;T⁻¹]) ≠ 0 := by
@@ -215,7 +207,7 @@ theorem prime_C_laurent {b : B} (hb : Prime b) : Prime (LaurentPolynomial.C b : 
     simp [LaurentPolynomial.C_apply] at this
     exact hb.ne_zero this
   rw [← Ideal.span_singleton_prime hb0, ← ker_lred]
-  haveI : IsDomain (B ⧸ Ideal.span {b}) :=
+  have : IsDomain (B ⧸ Ideal.span {b}) :=
     (Ideal.Quotient.isDomain_iff_prime _).2 ((Ideal.span_singleton_prime hb.ne_zero).2 hb)
   exact RingHom.ker_isPrime _
 
@@ -275,7 +267,7 @@ given `π ∈ 𝔭`. -/
 theorem exists_gen_not_dvd (hk2 : v₀ 1 ≠ 0) {π : A} (hπ : π ∈ 𝔭) :
     ∃ g ∈ gensF hI hmax h𝔭 d 1, ¬ π ∣ g := by
   by_contra hall
-  push_neg at hall
+  push Not at hall
   have hle : 𝔭 ≤ Ideal.span {π} := by
     have h1 : (compFil hI hmax h𝔭 d).F 1 = 𝔭 := by
       rw [compFil_F, show ((1 : ℤ) : ℚ) / d = 1 / d by push_cast; ring,
@@ -283,9 +275,9 @@ theorem exists_gen_not_dvd (hk2 : v₀ 1 ≠ 0) {π : A} (hπ : π ∈ 𝔭) :
     rw [← h1, ← span_gensF, Ideal.span_le]
     intro g hg
     exact Ideal.mem_span_singleton.2 (hall g hg)
-  haveI := h𝔭.1.1
+  have := h𝔭.1.1
   obtain ⟨𝔪, h𝔪, h𝔭𝔪⟩ := Ideal.exists_le_maximal 𝔭 (Ideal.IsPrime.ne_top ‹_›)
-  haveI := h𝔪
+  have := h𝔪
   have hZ := mem_maxLocus_of_minimal hI hmax h𝔭 𝔪 h𝔭𝔪
   obtain ⟨D⟩ := LocData.nonempty hI 𝔪 hZ.1 hZ.2
   have hp : 𝔭 = D.p := D.eq_p_of_minimal h𝔭 h𝔭𝔪
@@ -294,7 +286,7 @@ theorem exists_gen_not_dvd (hk2 : v₀ 1 ≠ 0) {π : A} (hπ : π ∈ 𝔭) :
     by_contra h
     apply hk2
     rw [← D.hv]
-    simp only [ext0]; rw [dif_neg (by omega)]
+    simp only [ext0]; rw [dite_eq_right (by omega)]
   have hk : 1 < D.k := by
     have := (D.supp ⟨1, hn⟩).1 (by
       have := congrFun D.hv 1
@@ -342,7 +334,7 @@ omit hd hw in
 lemma VertexData.k_pos {𝔪 : Ideal A} [𝔪.IsMaximal]
     (D : VertexData hI hmax h𝔭 (d := d) (v₀ := v₀) 𝔪) : 0 < D.k := by
   by_contra h
-  push_neg at h
+  push Not at h
   have hz : ∀ i, D.J.e i = 0 := fun i => by
     by_contra hne; have := (D.hsupp i).1 hne; omega
   have hbot : D.J.RF 1 = ⊥ := by
@@ -356,10 +348,10 @@ lemma VertexData.k_pos {𝔪 : Ideal A} [𝔪.IsMaximal]
 /-- **Some generator is not in the next filtration step.** -/
 theorem exists_gen_not_mem : ∃ j : ℤ, 1 ≤ j ∧ j ≤ d ∧
     ∃ g ∈ gensF hI hmax h𝔭 d j, g ∉ (compFil hI hmax h𝔭 d).F (j + 1) := by
-  haveI := h𝔭.1.1
+  have := h𝔭.1.1
   obtain ⟨𝔪, h𝔪, h𝔭𝔪⟩ := Ideal.exists_le_maximal 𝔭 (Ideal.IsPrime.ne_top ‹_›)
-  haveI := h𝔪
-  obtain ⟨D⟩ := VertexData.nonempty hI hmax h𝔭 hd hw 𝔪 h𝔭𝔪
+  have := h𝔪
+  obtain ⟨D⟩ := VertexData.nonempty hI hmax h𝔭 hw 𝔪 h𝔭𝔪
   have hk := D.k_pos
   set i₀ : Fin D.n := ⟨D.k - 1, by have := D.hkn; omega⟩
   have hei : D.J.e i₀ ≠ 0 := (D.hsupp i₀).2 (by simp [i₀]; omega)
@@ -377,7 +369,7 @@ theorem exists_gen_not_mem : ∃ j : ℤ, 1 ≤ j ∧ j ≤ d ∧
     exact_mod_cast this
   refine ⟨w₀, by exact_mod_cast hw1, by exact_mod_cast hwd, ?_⟩
   by_contra hall
-  push_neg at hall
+  push Not at hall
   have hle : (compFil hI hmax h𝔭 d).F w₀ ≤ (compFil hI hmax h𝔭 d).F (w₀ + 1) := by
     rw [← span_gensF, Ideal.span_le]
     intro g hg; exact hall g hg
@@ -426,7 +418,7 @@ lemma F_one_ne_top : (compFil hI hmax h𝔭 d).F 1 ≠ ⊤ := by
 include hd hw in
 /-- **The exceptional divisor of the Rees algebra is prime.** -/
 theorem rees_s_prime :
-    (Ideal.span {reesS (compFil hI hmax h𝔭 d) (fun j hj => compFil_F_nonpos hI hmax h𝔭 d hj)}).IsPrime := by
+    (Ideal.span {reesS (compFil hI hmax h𝔭 d) (fun _j hj => compFil_F_nonpos hI hmax h𝔭 d hj)}).IsPrime := by
   refine span_s_isPrime _ _ (F_one_ne_top hI hmax h𝔭 hd hw) fun a b x y hx hx1 hy hy1 => ?_
   have := compFil_mul_not_mem hI hmax h𝔭 hd hw hx hx1 hy hy1
   push_cast at this ⊢
@@ -436,10 +428,10 @@ include hd hw in
 /-- **`s` is prime in the torsor.** -/
 theorem torsor_s_prime (hπ0 : π ≠ 0) :
     Prime (algebraMap (ReesAlg (compFil hI hmax h𝔭 d)) (Torsor hI hmax h𝔭 d hπ)
-      (reesS (compFil hI hmax h𝔭 d) (fun j hj => compFil_F_nonpos hI hmax h𝔭 d hj))) := by
+      (reesS (compFil hI hmax h𝔭 d) (fun _j hj => compFil_F_nonpos hI hmax h𝔭 d hj))) := by
   set R := ReesAlg (compFil hI hmax h𝔭 d)
   set s := reesS (compFil hI hmax h𝔭 d) (fun j hj => compFil_F_nonpos hI hmax h𝔭 d hj)
-  haveI := torsor_isDomain hI hmax h𝔭 hπ hπ0
+  have := torsor_isDomain hI hmax h𝔭 hπ hπ0
   have hs0 : algebraMap R (Torsor hI hmax h𝔭 d hπ) s ≠ 0 := by
     intro h
     have hinj := Jou.algebraMap_injective (torsorY_zero_ne hI hmax h𝔭 hπ hπ0)
@@ -447,8 +439,8 @@ theorem torsor_s_prime (hπ0 : π ≠ 0) :
     have := congrArg (fun p : R => (p : A[T;T⁻¹]).coeff (-1)) this
     simp [s, reesS_coe] at this
   rw [← Ideal.span_singleton_prime hs0, ← Ideal.Quotient.isDomain_iff_prime]
-  haveI : (Ideal.span {s}).IsPrime := rees_s_prime hI hmax h𝔭 hd hw
-  haveI : IsDomain (R ⧸ Ideal.span {s}) := (Ideal.Quotient.isDomain_iff_prime _).2 inferInstance
+  have : (Ideal.span {s}).IsPrime := rees_s_prime hI hmax h𝔭 hd hw
+  have : IsDomain (R ⧸ Ideal.span {s}) := (Ideal.Quotient.isDomain_iff_prime _).2 inferInstance
   -- a generator not divisible by `s`
   obtain ⟨j, hj1, hjd, g, hg, hgF⟩ := exists_gen_not_mem hI hmax h𝔭 hd hw
   obtain ⟨l, hl1, hl2⟩ := exists_index hI hmax h𝔭 (π := π) hj1 hjd hg
@@ -458,9 +450,9 @@ theorem torsor_s_prime (hπ0 : π ≠ 0) :
     intro hall
     apply hgF
     have := hall j
-    simp only [torsorY, hl1, hl2, coeff_C_mul_T, if_pos rfl] at this
+    simp only [torsorY, hl1, hl2, coeff_C_mul_T] at this
     exact this
-  haveI := Jou.isDomain (c := Ideal.Quotient.mk (Ideal.span {s}) ∘ torsorY hI hmax h𝔭 d hπ) (l := l) hl
+  have := Jou.isDomain (c := Ideal.Quotient.mk (Ideal.span {s}) ∘ torsorY hI hmax h𝔭 d hπ) (l := l) hl
   exact (Jou.quotEquiv (torsorY hI hmax h𝔭 d hπ) s).toMulEquiv.isDomain_iff.2 inferInstance
 
 end BezoutCounterexample.Principalization
@@ -502,18 +494,18 @@ theorem torsor_ufd (hk2 : v₀ 1 ≠ 0) (hπp : Prime π) (hπ𝔭 : π ∈ 𝔭
   set R := ReesAlg (compFil hI hmax h𝔭 d)
   set s := reesS (compFil hI hmax h𝔭 d) (fun j hj => compFil_F_nonpos hI hmax h𝔭 d hj)
   set y := torsorY hI hmax h𝔭 d hπ
-  haveI := torsor_isDomain hI hmax h𝔭 hπ hπp.ne_zero
-  haveI : Algebra.FiniteType ℚ (Torsor hI hmax h𝔭 d hπ) := torsor_finiteType hI hmax h𝔭 hd hw hπ
-  haveI : IsNoetherianRing (Torsor hI hmax h𝔭 d hπ) := Algebra.FiniteType.isNoetherianRing ℚ _
-  haveI : IsLocalization.Away s A[T;T⁻¹] := isLocalization_away_s _ _
+  have := torsor_isDomain hI hmax h𝔭 hπ hπp.ne_zero
+  have : Algebra.FiniteType ℚ (Torsor hI hmax h𝔭 d hπ) := torsor_finiteType hI hmax h𝔭 hd hw hπ
+  have : IsNoetherianRing (Torsor hI hmax h𝔭 d hπ) := Algebra.FiniteType.isNoetherianRing ℚ _
+  have : IsLocalization.Away s A[T;T⁻¹] := isLocalization_away_s _ _
   -- the Jouanolou ring over `A[T^±]`
   set c : Fin (nGen hI hmax h𝔭 d + 1) → A[T;T⁻¹] := algebraMap R A[T;T⁻¹] ∘ y
-  letI : Algebra (Torsor hI hmax h𝔭 d hπ) (Jou.J c) := (Jou.map (algebraMap R A[T;T⁻¹]) y).toAlgebra
-  haveI hloc : IsLocalization ((Submonoid.powers s).map (algebraMap R (Jou.J y))) (Jou.J c) :=
+  let : Algebra (Torsor hI hmax h𝔭 d hπ) (Jou.J c) := (Jou.map (algebraMap R A[T;T⁻¹]) y).toAlgebra
+  have hloc : IsLocalization ((Submonoid.powers s).map (algebraMap R (Jou.J y))) (Jou.J c) :=
     Jou.isLocalization_map y (Submonoid.powers s)
-  haveI : IsLocalization.Away (algebraMap R (Torsor hI hmax h𝔭 d hπ) s) (Jou.J c) := by
+  have : IsLocalization.Away (algebraMap R (Torsor hI hmax h𝔭 d hπ) s) (Jou.J c) := by
     rw [Submonoid.map_powers] at hloc; exact hloc
-  haveI : UniqueFactorizationMonoid A[T;T⁻¹] := laurent_ufd
+  have : UniqueFactorizationMonoid A[T;T⁻¹] := laurent_ufd
   -- the prime generator `π T`
   have hc0 : Prime (c 0) := by
     have : c 0 = LaurentPolynomial.C π * T 1 := by
@@ -538,9 +530,9 @@ theorem torsor_ufd (hk2 : v₀ 1 ≠ 0) (hπp : Prime π) (hπ𝔭 : π ∈ 𝔭
         _ = LaurentPolynomial.C π * q * (T 1 * T (-1)) := by ring
         _ = LaurentPolynomial.C π * q := by rw [hT, mul_one]
     have h2 := congrArg (fun p : A[T;T⁻¹] => p.coeff 0) h1
-    simp only [LaurentPolynomial.C_apply, if_pos rfl, coeff_C_mul'] at h2
+    simp only [LaurentPolynomial.C_apply, coeff_C_mul'] at h2
     exact ⟨q.coeff 0, h2⟩
-  haveI : UniqueFactorizationMonoid (Jou.J c) := Jou.ufd hc0 hnd
+  have : UniqueFactorizationMonoid (Jou.J c) := Jou.ufd hc0 hnd
   exact BezoutCounterexample.UniqueFactorizationMonoid.of_isLocalization_away
     (torsor_s_prime hI hmax h𝔭 hd hw hπ hπp.ne_zero) (Jou.J c)
 

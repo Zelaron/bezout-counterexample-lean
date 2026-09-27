@@ -32,7 +32,7 @@ def basis : Module.Basis (Fin n) R Ω[R⁄ℚ] :=
       intro g hg i
       have := congrArg (c.d i).liftKaehlerDifferential hg
       simp only [map_sum, map_smul, Derivation.liftKaehlerDifferential_comp_D, c.d_x, smul_eq_mul,
-        mul_ite, mul_one, mul_zero, Finset.sum_ite_eq, Finset.mem_univ, if_true, map_zero] at this
+        mul_ite, mul_one, mul_zero, Finset.sum_ite_eq, Finset.mem_univ, ite_true, map_zero] at this
       exact this)
     (by rw [c.span])
 
@@ -97,7 +97,7 @@ theorem isCentred_of_mem [IsNoetherianRing R] [Algebra.FormallySmooth ℚ R]
       intro i
       rw [Derivation.leibniz, smul_eq_mul, smul_eq_mul, c.d_x, mul_ite, mul_one, mul_zero]
     rw [hr', map_sub, map_sum]
-    simp only [this, Finset.sum_add_distrib, Finset.sum_ite_eq, Finset.mem_univ, if_true]
+    simp only [this, Finset.sum_add_distrib, Finset.sum_ite_eq, Finset.mem_univ, ite_true]
     rw [sub_add_cancel_left]
     exact neg_mem (Ideal.sum_mem _ fun i _ => Ideal.mul_mem_right _ _ (hx i))
   have h2 : r' ∈ maximalIdeal R ^ 2 := by

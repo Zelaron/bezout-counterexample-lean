@@ -3,8 +3,8 @@ import BezoutCounterexample.Principalization.RealPts
 /-!
 # Proposition 4.6, strengthened (Remark 4.7)
 
-The principalization of `principalizationExtension` has more properties than Proposition 4.6
-states (`principalizationExtension_strong`):
+The principalization extension of Proposition 4.6 can be chosen with more properties than
+Proposition 4.6 states (`principalizationExtension_strong`):
 
 * (a) `K' → K` is injective over `K ∖ V(I)(ℝ)` (`InjAway`) and restricts to a homeomorphism there
   (`isHomeomorph_away`). The fibres of the weighted sphere bundle over points that do not kill the
@@ -16,7 +16,8 @@ states (`principalizationExtension_strong`):
   (`torsor_formallySmooth_away`).
 * (c) `IA' = tA'` where `t` is a unit times a product of primes `p` with `IA' ⊆ pA'`.
 
-The induction is the one in `Induction.lean`; `StepPropS` and `PrincConclS` carry the extra
+The induction (divisorial and torsor steps, termination measure `measureW` of `Induction.lean`)
+is that of the proof of Proposition 4.6; `StepPropS` and `PrincConclS` carry the extra
 properties (`princ_of_stepS`, `stepPropS`).
 -/
 
@@ -281,7 +282,7 @@ variable {I : Ideal A} (hI : I ≠ ⊥) {v₀ : ℕ → ℚ}
   (hw : ∀ i, ∃ w : ℕ, (w : ℚ) = d * v₀ i) {π : A} (hπ : π ∈ (compFil hI hmax h𝔭 d).F 1)
 
 include hd hw in
-/-- The weighted sphere bundle maps monotonically onto `K` (the content of `torsorRealPts`). -/
+/-- The weighted sphere bundle maps monotonically onto `K` (Lemma 4.5). -/
 theorem torsorK_monotone (hk2 : v₀ 1 ≠ 0) (K : Set (RealPt A)) :
     IsMonotoneSurjOn (RealPt.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ)))
       (torsorK hI hmax h𝔭 hπ K) K := by
@@ -293,7 +294,7 @@ theorem torsorK_monotone (hk2 : v₀ 1 ≠ 0) (K : Set (RealPt A)) :
     rcases (gNorm_nonneg hI hmax h𝔭 (d := d) (π := π) z).lt_or_eq with hpos | h0
     · exact ⟨⟨ptA hI hmax h𝔭 hd hπ z hpos, ptA_mem hI hmax h𝔭 hd hπ K hzK hpos⟩,
         Subtype.ext (ptA_comap hI hmax h𝔭 hd hπ z hpos)⟩
-    · have hz := kills_of_gNorm_zero hI hmax h𝔭 hd hw hπ h0.symm
+    · have hz := kills_of_gNorm_zero hI hmax h𝔭 hd hw h0.symm
       obtain ⟨P⟩ := LocPres.nonempty hI hmax h𝔭 hw z hz
       have hk : 0 < P.k := by have := P.hk2 hk2; omega
       set u : ({0}ᶜ : Set (Fin P.k → ℝ)) := ⟨fun _ => 1, fun h => by
@@ -313,7 +314,7 @@ theorem torsorK_monotone (hk2 : v₀ 1 ≠ 0) (K : Set (RealPt A)) :
           exact ⟨ptA_mem hI hmax h𝔭 hd hπ K hzK hpos, ptA_comap hI hmax h𝔭 hd hπ z hpos⟩
       rw [this]
       exact isConnected_singleton
-    · exact fib_connected hI hmax h𝔭 hd hw hπ (kills_of_gNorm_zero hI hmax h𝔭 hd hw hπ h0.symm)
+    · exact fib_connected hI hmax h𝔭 hd hw hπ (kills_of_gNorm_zero hI hmax h𝔭 hd hw h0.symm)
         hk2 hzK
 
 include hd hw in
@@ -326,7 +327,7 @@ theorem torsorK_injAway (hI𝔭 : I ≤ 𝔭) (K : Set (RealPt A)) :
     rcases (gNorm_nonneg hI hmax h𝔭 (d := d) (π := π)
       (RealPt.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ)) w₁)).lt_or_eq with hpos | h0
     · exact hpos
-    · exact absurd (kills_of_gNorm_zero hI hmax h𝔭 hd hw hπ h0.symm a (hI𝔭 ha)) ha0
+    · exact absurd (kills_of_gNorm_zero hI hmax h𝔭 hd hw h0.symm a (hI𝔭 ha)) ha0
   rw [eq_ptA hI hmax h𝔭 hd hπ K hw₁ rfl hz, eq_ptA hI hmax h𝔭 hd hπ K hw₂ h.symm hz]
 
 include hd hw in
@@ -443,7 +444,7 @@ theorem stepPropS (N : ℕ) : StepPropS N := by
   · -- the divisorial case
     obtain ⟨a, ha0, ha⟩ := hgood.zero_eq h0
     have h𝔭π := div_eq_span hI hmax h𝔭 h0 hk2 hπp hπ𝔭
-    have hle := div_le_span_pow hI hmax h𝔭 hd hw h0 hk2 hπp hπ𝔭 ha
+    have hle := div_le_span_pow hI hmax h𝔭 hd h0 hk2 hπp hπ𝔭 ha
     refine ⟨A, AlgHom.id ℚ A, K, divI I π a, π ^ a, m, Function.injective_id, ?_,
       divI_ne_bot hI, hK, IsMonotoneSurjOn.id' K, div_vertOK hI hmax h𝔭 hd hw h𝔭π ha0 hV,
       div_dimOK hD, ?_, injAway_id I K, smoothAway_id I⟩
@@ -462,12 +463,12 @@ theorem stepPropS (N : ℕ) : StepPropS N := by
       torsorI hI hmax h𝔭 hd hπ, torsorS hI hmax h𝔭 hπ ^ d, m + (nGen hI hmax h𝔭 d + 1),
       torsor_injective hI hmax h𝔭 hπ hπp.ne_zero, ?_, torsorI_ne_bot hI hmax h𝔭 hd hπ hπp.ne_zero,
       torsorK_isCompact hI hmax h𝔭 hd hw hπ hK, torsorK_monotone hI hmax h𝔭 hd hw hπ hk2 K,
-      torsor_vertOK hI hmax h𝔭 hd hw hπ hπp.ne_zero hV,
+      torsor_vertOK hI hmax h𝔭 hd hw hπ hV,
       torsor_dimOK hI hmax h𝔭 hd hw hπ hπp.ne_zero hD, ?_,
       torsorK_injAway hI hmax h𝔭 hd hw hπ hI𝔭 K, torsor_smoothAway hI hmax h𝔭 hd hw hπ hI𝔭⟩
     · exact torsor_map_eq hI hmax h𝔭 hd hπ
     · exact hmeas (torsorI_ne_bot hI hmax h𝔭 hd hπ hπp.ne_zero)
-        (torsor_vertOK hI hmax h𝔭 hd hw hπ hπp.ne_zero hV)
+        (torsor_vertOK hI hmax h𝔭 hd hw hπ hV)
         (torsor_dimOK hI hmax h𝔭 hd hw hπ hπp.ne_zero hD)
         (by intro Q _ hQ v hv; exact torsor_inv_ge hI hmax h𝔭 hd hw hπ hπp.ne_zero Q hQ hv)
         (fun _ => torsor_count hI hmax h𝔭 hd hw hπ hπp.ne_zero)

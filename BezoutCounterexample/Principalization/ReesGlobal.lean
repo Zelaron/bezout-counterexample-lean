@@ -32,9 +32,11 @@ def WFil.loc : WFil L where
 /-- The coefficientwise map of Laurent polynomials. -/
 abbrev lmap {L : Type*} [CommRing L] (f : B →+* L) : B[T;T⁻¹] →+* L[T;T⁻¹] := AddMonoidAlgebra.mapRingHom ℤ f
 
+omit [Algebra ℚ B] in
 lemma lmap_coeff {L : Type*} [CommRing L] (f : B →+* L) (p : B[T;T⁻¹]) (j : ℤ) : (lmap f p).coeff j = f (p.coeff j) :=
   AddMonoidAlgebra.coeff_mapRingHom f p j
 
+omit [Algebra ℚ B] in
 lemma lmap_C_mul_T {L : Type*} [CommRing L] [Algebra ℚ L] (f : B →+* L) (b : B) (j : ℤ) :
     lmap f (LaurentPolynomial.C b * T j) = LaurentPolynomial.C (f b) * T j := by
   ext m
@@ -57,18 +59,20 @@ def reesMap : ReesAlg Φ →+* ReesAlg (Φ.loc L) :=
       rw [lmap_coeff]
       exact Ideal.mem_map_of_mem _ (p.2 j))
 
+omit [Algebra ℚ L] [Algebra ℚ B] in
 lemma reesMap_coe (p : ReesAlg Φ) :
     (reesMap Φ L p : L[T;T⁻¹]) = lmap (algebraMap B L) p := rfl
 
 variable [IsDomain B] (M : Submonoid B) [IsLocalization M L]
 
+omit [IsDomain B] [Algebra ℚ L] [Algebra ℚ B] in
 /-- **The extended Rees algebra localizes**: `(Φ-Rees) ⊗ M⁻¹B` is the Rees algebra of the
 localized filtration. -/
 theorem reesMap_isLocalization (hM : M ≤ nonZeroDivisors B) :
     @IsLocalization _ _ (M.map (algebraMap B (ReesAlg Φ))) (ReesAlg (Φ.loc L)) _
       (reesMap Φ L).toAlgebra := by
   classical
-  letI : Algebra (ReesAlg Φ) (ReesAlg (Φ.loc L)) := (reesMap Φ L).toAlgebra
+  let : Algebra (ReesAlg Φ) (ReesAlg (Φ.loc L)) := (reesMap Φ L).toAlgebra
   have hinjB : Function.Injective (algebraMap B L) := IsLocalization.injective L hM
   have hmapB : ∀ b : B, algebraMap (ReesAlg Φ) (ReesAlg (Φ.loc L))
       (algebraMap B (ReesAlg Φ) b) = algebraMap L _ (algebraMap B L b) := by
@@ -114,7 +118,7 @@ theorem reesMap_isLocalization (hM : M ≤ nonZeroDivisors B) :
     split_ifs with hj
     · rw [map_mul, ← hm j, map_prod, mul_comm, mul_assoc]
       congr 1
-      rw [Submonoid.coe_finset_prod, map_prod, ← Finset.mul_prod_erase S _ hj]
+      rw [Submonoid.coe_finsetProd, map_prod, ← Finset.mul_prod_erase S _ hj]
     · have : (z : L[T;T⁻¹]).coeff j = 0 := Finsupp.notMem_support_iff.1 hj
       rw [this, mul_zero, map_zero]
   · intro x y hxy
@@ -140,6 +144,7 @@ open IsLocalRing IsLocalization LaurentPolynomial
 variable {A : Type} [CommRing A] [IsDomain A] [Algebra ℚ A] [Algebra.Smooth ℚ A]
   [IsNoetherianRing A]
 
+omit [IsDomain A] [Algebra ℚ A] [Algebra.Smooth ℚ A] [IsNoetherianRing A] in
 /-- Local–global principle for ideals of a domain. -/
 lemma Ideal.le_of_forall_map {J J' : Ideal A}
     (h : ∀ (𝔪 : Ideal A) [𝔪.IsMaximal], J.map (algebraMap A (Localization.AtPrime 𝔪)) ≤
@@ -153,7 +158,7 @@ lemma Ideal.le_of_forall_map {J J' : Ideal A}
     have := Submodule.mem_colon.1 this x (Ideal.mem_span_singleton_self x)
     simpa using this
   obtain ⟨𝔪, h𝔪, hle⟩ := Ideal.exists_le_maximal _ hcol
-  haveI := h𝔪
+  have := h𝔪
   have h1 := h 𝔪 (Ideal.mem_map_of_mem _ hx)
   rw [IsLocalization.algebraMap_mem_map_algebraMap_iff 𝔪.primeCompl] at h1
   obtain ⟨m, hm, hmx⟩ := h1
@@ -219,7 +224,7 @@ lemma IsInv.le_one {S : Type*} [CommRing S] [Algebra ℚ S] [IsLocalRing S] {I :
   have h1 := hmin J₁ hadm
   have h0 : J.e ⟨0, lt_of_le_of_lt (Nat.zero_le _) i.2⟩ ≤ 1 := by
     by_contra hlt
-    push_neg at hlt
+    push Not at hlt
     refine absurd h1 (not_le.2 ⟨⟨0, lt_of_le_of_lt (Nat.zero_le _) i.2⟩, fun j hj => ?_, hlt⟩)
     exact absurd hj (Nat.not_lt_zero _)
   exact (J.anti (Fin.le_def.2 (Nat.zero_le _))).trans h0
@@ -258,7 +263,7 @@ theorem compFil_le_iSup {j : ℤ} (hj : (d : ℤ) < j) :
         (by exact_mod_cast hd)
       linarith
     obtain ⟨i, hi⟩ : ∃ i, α i ≠ 0 := by
-      by_contra h; push_neg at h; exact hα0 (Finsupp.ext h)
+      by_contra h; push Not at h; exact hα0 (Finsupp.ext h)
     have hei : J.e i ≠ 0 := fun h => hi (h0 i h)
     have hv : J.e i = v₀ i := by
       rw [← hev, hJe, ext0_apply]
@@ -284,7 +289,7 @@ theorem compFil_le_iSup {j : ℤ} (hj : (d : ℤ) < j) :
       simp only [Finsupp.add_apply, pow_add, Finset.prod_mul_distrib]
       rw [mul_comm, Finset.prod_eq_single i]
       · simp
-      · intro l _ hl; simp [Finsupp.single_apply, Ne.symm hl]
+      · intro l _ hl; simp [Ne.symm hl]
       · simp
     have hlamβ : lam J.e β = lam J.e α - J.e i := by
       rw [hαβ, lam_add, lam_single]; ring
@@ -416,7 +421,7 @@ theorem C_mul_T_mem_adjoin (j : ℤ) (f : A) (hf : f ∈ (compFil hI hmax h𝔭 
       intro j hj f hf
       by_cases hjd : j ≤ d
       · exact base j hjd f hf
-      · push_neg at hjd
+      · push Not at hjd
         rw [← hMj]
         have hsup := compFil_le_iSup hI hmax h𝔭 hd hw hjd hf
         refine (iSup₂_le fun l hl => ?_ : _ ≤ Mj j) hsup
@@ -471,9 +476,9 @@ instance laurent_tower {B : Type*} [CommRing B] : IsScalarTower B (Polynomial B)
 /-- Laurent polynomials over a formally smooth `ℚ`-algebra are formally smooth. -/
 instance laurent_formallySmooth {B : Type*} [CommRing B] [Algebra ℚ B] [Algebra.FormallySmooth ℚ B] :
     Algebra.FormallySmooth ℚ B[T;T⁻¹] := by
-  haveI : Algebra.FormallySmooth (Polynomial B) B[T;T⁻¹] :=
+  have : Algebra.FormallySmooth (Polynomial B) B[T;T⁻¹] :=
     Algebra.FormallySmooth.of_isLocalization (Submonoid.powers (Polynomial.X : Polynomial B))
-  haveI : Algebra.FormallySmooth B B[T;T⁻¹] := Algebra.FormallySmooth.comp B (Polynomial B) B[T;T⁻¹]
+  have : Algebra.FormallySmooth B B[T;T⁻¹] := Algebra.FormallySmooth.comp B (Polynomial B) B[T;T⁻¹]
   exact Algebra.FormallySmooth.comp ℚ B B[T;T⁻¹]
 
 variable {A : Type} [CommRing A] [IsDomain A] [Algebra ℚ A] [Algebra.Smooth ℚ A]
@@ -493,7 +498,7 @@ theorem reesLoc_formallySmooth (𝔪 : Ideal A) [𝔪.IsMaximal] :
   · have hZ := mem_maxLocus_of_minimal hI hmax h𝔭 𝔪 h𝔭𝔪
     obtain ⟨n, e, ⟨⟨J, hJ, hJe⟩, hmin⟩, hev⟩ := hZ.2
     have hJi : IsInv (Iloc I 𝔪) n J.e := ⟨⟨J, hJ, rfl⟩, by rw [hJe]; exact hmin⟩
-    haveI := residueField_isIntegral 𝔪
+    have := residueField_isIntegral 𝔪
     obtain ⟨k, ck, hrun, -, -, hsupp⟩ := hJi.exists_run (Iloc_ne_bot hI 𝔪) (Iloc_le hZ.1) J.c
       J.centred
     have hkn : k ≤ n := hrun.stage_le (Nat.zero_le _)
@@ -531,8 +536,8 @@ include hI hmax h𝔭 hd hw
 
 theorem rees_finitePresentation :
     Algebra.FinitePresentation ℚ (ReesAlg (compFil hI hmax h𝔭 d)) := by
-  haveI := reesAlg_finiteType hI hmax h𝔭 d hd hw
-  haveI : Algebra.FiniteType ℚ (ReesAlg (compFil hI hmax h𝔭 d)) :=
+  have := reesAlg_finiteType hI hmax h𝔭 d hd hw
+  have : Algebra.FiniteType ℚ (ReesAlg (compFil hI hmax h𝔭 d)) :=
     Algebra.FiniteType.trans (S := A) inferInstance inferInstance
   exact Algebra.FinitePresentation.of_finiteType.1 inferInstance
 
@@ -540,37 +545,37 @@ theorem rees_finitePresentation :
 theorem rees_smooth : Algebra.Smooth ℚ (ReesAlg (compFil hI hmax h𝔭 d)) := by
   set Φ := compFil hI hmax h𝔭 d
   set R := ReesAlg Φ
-  haveI := rees_finitePresentation hI hmax h𝔭 hd hw
+  have := rees_finitePresentation hI hmax h𝔭 hd hw
   refine ⟨?_, inferInstance⟩
   rw [← Algebra.smoothLocus_eq_univ_iff, Set.eq_univ_iff_forall]
   intro P
   show Algebra.FormallySmooth ℚ (Localization.AtPrime P.asIdeal)
   set 𝔮 := P.asIdeal.comap (algebraMap A R)
-  haveI : 𝔮.IsPrime := Ideal.comap_isPrime _ _
+  have : 𝔮.IsPrime := Ideal.comap_isPrime _ _
   obtain ⟨𝔪, h𝔪, h𝔮𝔪⟩ := Ideal.exists_le_maximal 𝔮 (Ideal.IsPrime.ne_top ‹_›)
-  haveI := h𝔪
+  have := h𝔪
   set Rm := ReesAlg (Φ.loc (Localization.AtPrime 𝔪))
-  letI : Algebra R Rm := (reesMap Φ (Localization.AtPrime 𝔪)).toAlgebra
+  let : Algebra R Rm := (reesMap Φ (Localization.AtPrime 𝔪)).toAlgebra
   set M := 𝔪.primeCompl.map (algebraMap A R)
-  haveI : IsLocalization M Rm :=
+  have : IsLocalization M Rm :=
     reesMap_isLocalization Φ (Localization.AtPrime 𝔪) 𝔪.primeCompl
       (Ideal.primeCompl_le_nonZeroDivisors 𝔪)
-  haveI : Algebra.FormallySmooth ℚ Rm := reesLoc_formallySmooth hI hmax h𝔭 hd hw 𝔪
+  have : Algebra.FormallySmooth ℚ Rm := reesLoc_formallySmooth hI hmax h𝔭 hd hw 𝔪
   have hdisj : Disjoint (M : Set R) (P.asIdeal : Set R) := by
     rw [Set.disjoint_left]
     rintro _ ⟨a, ha, rfl⟩ haP
     exact ha (h𝔮𝔪 haP)
   set P' := P.asIdeal.map (algebraMap R Rm)
-  haveI hP' : P'.IsPrime := IsLocalization.isPrime_of_isPrime_disjoint M Rm _ P.isPrime hdisj
+  have hP' : P'.IsPrime := IsLocalization.isPrime_of_isPrime_disjoint M Rm _ P.isPrime hdisj
   have hcomap : P'.comap (algebraMap R Rm) = P.asIdeal :=
     IsLocalization.under_map_of_isPrime_disjoint M Rm P.isPrime hdisj
-  haveI : IsLocalization P.asIdeal.primeCompl (Localization.AtPrime P') := by
+  have : IsLocalization P.asIdeal.primeCompl (Localization.AtPrime P') := by
     have h := IsLocalization.isLocalization_isLocalization_atPrime_isLocalization M
       (Localization.AtPrime P') P'
     have he : (P'.under R).primeCompl = P.asIdeal.primeCompl := by
       ext x; show x ∉ P'.comap (algebraMap R Rm) ↔ x ∉ P.asIdeal; rw [hcomap]
     exact he ▸ h
-  haveI hT : Algebra.FormallySmooth ℚ (Localization.AtPrime P') := inferInstance
+  have hT : Algebra.FormallySmooth ℚ (Localization.AtPrime P') := inferInstance
   let e0 := IsLocalization.algEquiv P.asIdeal.primeCompl (Localization.AtPrime P')
     (Localization.AtPrime P.asIdeal)
   let e : Localization.AtPrime P' ≃ₐ[ℚ] Localization.AtPrime P.asIdeal :=

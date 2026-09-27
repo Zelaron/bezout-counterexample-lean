@@ -31,14 +31,14 @@ lemma pad_nextE {j : ℕ} (hj : j < n) (e : Fin n → ℚ) (b : ℚ) :
     pad n' (nextE e j b) = nextE (pad n' e) j b := by
   funext i
   by_cases h1 : (i : ℕ) < j
-  · rw [pad_nextE_lt i h1]; simp only [nextE, if_pos h1]
+  · rw [pad_nextE_lt i h1]; simp only [nextE, ite_eq_left h1]
   · by_cases h2 : (i : ℕ) = j
-    · rw [pad_nextE_eq hj i h2]; simp only [nextE, if_neg h1, if_pos h2]
+    · rw [pad_nextE_eq hj i h2]; simp only [nextE, ite_eq_right h1, ite_eq_left h2]
     · have : pad n' (nextE e j b) i = 0 := by
         simp only [pad]; split_ifs with h
-        · simp only [nextE, Fin.val_mk, if_neg h1, if_neg h2]
+        · simp only [nextE, ite_eq_right h1, ite_eq_right h2]
         · rfl
-      rw [this]; simp only [nextE, if_neg h1, if_neg h2]
+      rw [this]; simp only [nextE, ite_eq_right h1, ite_eq_right h2]
 
 lemma pushIdx_sub_single (β : Fin n →₀ ℕ) (l : Fin n) :
     pushIdx hnn (β - Finsupp.single l 1) =
@@ -90,7 +90,7 @@ theorem IsRun.map {ψ : S →+* R'} {I : Ideal S} {j : ℕ} {c : Chart S n} {e :
       intro i hi
       rw [hW]
       have hin : (i : ℕ) < n := lt_trans hi hj
-      simp only [pad, dif_pos hin]
+      simp only [pad, dite_eq_left hin]
       exact hb ⟨i, hin⟩ hi
     have hg' : c'.Dv (pushIdx hnn β - Finsupp.single (Fin.castLE hnn l) 1) (ψ f) = ψ g := by
       rw [← pushIdx_sub_single, hc.Dv]
@@ -148,7 +148,7 @@ lemma iterate_pow_of_eq_one (δ : Derivation ℚ S S) {y : S} (hy : δ y = 1) (N
       push_cast
       ring
     · rw [Nat.sub_eq_zero_of_le hmN, Nat.sub_eq_zero_of_le (by omega : N ≤ m + 1)]
-      simp [Nat.sub_eq_zero_of_le hmN]
+      simp
 
 lemma Chart.D_single (c : Chart S n) (l : Fin n) (m : ℕ) (f : S) :
     c.D (Finsupp.single l m) f = (c.d l)^[m] f := by
@@ -272,16 +272,16 @@ lemma polyD_polyX (c : Chart S n) (i j : Fin (n + 1)) :
     cases j using Fin.lastCases with
     | last => simp
     | cast j =>
-      rw [polyD_last, polyX_castSucc, polyExt_C, if_neg (Fin.castSucc_lt_last j).ne']
+      rw [polyD_last, polyX_castSucc, polyExt_C, ite_eq_right (Fin.castSucc_lt_last j).ne']
       simp
   | cast i =>
     cases j using Fin.lastCases with
-    | last => rw [polyD_castSucc, polyX_last, polyExt_X, if_neg (Fin.castSucc_lt_last i).ne]
+    | last => rw [polyD_castSucc, polyX_last, polyExt_X, ite_eq_right (Fin.castSucc_lt_last i).ne]
     | cast j =>
       rw [polyD_castSucc, polyX_castSucc, polyExt_C, c.d_x]
       by_cases h : i = j
       · subst h; simp
-      · rw [if_neg h, if_neg (fun h' => h (Fin.castSucc_injective _ h')), map_zero]
+      · rw [ite_eq_right h, ite_eq_right (fun h' => h (Fin.castSucc_injective _ h')), map_zero]
 
 /-- The chart `(x, X)` on `S[X]` (the new coordinate `X` is the last one). -/
 def Chart.polynomial (c : Chart S n) : Chart S[X] (n + 1) where
@@ -331,6 +331,7 @@ variable (S) in
 /-- The maximal ideal `(𝔪, X)` of `S[X]`. -/
 def polyMax : Ideal S[X] := RingHom.ker ((residue S).comp (Polynomial.evalRingHom 0))
 
+omit [Algebra ℚ S] in
 lemma mem_polyMax (p : S[X]) : p ∈ polyMax S ↔ p.coeff 0 ∈ maximalIdeal S := by
   rw [polyMax, RingHom.mem_ker, RingHom.comp_apply, Polynomial.coe_evalRingHom,
     residue_eq_zero_iff, Polynomial.coeff_zero_eq_eval_zero]
@@ -340,8 +341,10 @@ instance polyMax_isMaximal : (polyMax S).IsMaximal :=
     obtain ⟨b, rfl⟩ := residue_surjective a
     exact ⟨C b, by simp⟩)
 
+omit [Algebra ℚ S] in
 lemma X_mem_polyMax : (X : S[X]) ∈ polyMax S := by simp [mem_polyMax]
 
+omit [Algebra ℚ S] in
 lemma C_mem_polyMax {a : S} (ha : a ∈ maximalIdeal S) : C a ∈ polyMax S := by
   simpa [mem_polyMax] using ha
 
@@ -492,7 +495,7 @@ def expHom (δ : Derivation ℚ S S) : S →+* PowerSeries S where
   toFun := expSeries δ
   map_one' := expSeries_one δ
   map_mul' := expSeries_mul δ
-  map_zero' := by ext m; simp [coeff_expSeries, iterate_derivation_zero]
+  map_zero' := by ext m; simp [coeff_expSeries]
   map_add' := expSeries_add δ
 
 variable {T : Type*} [CommRing T]
@@ -510,7 +513,7 @@ lemma eval_sub_truncEval_mem (t : T) (N : ℕ) (p : Polynomial T) :
   have hdvd : Polynomial.X ^ N ∣ p - PowerSeries.trunc N (p : PowerSeries T) := by
     rw [Polynomial.X_pow_dvd_iff]
     intro d hd
-    rw [Polynomial.coeff_sub, PowerSeries.coeff_trunc, if_pos hd, Polynomial.coeff_coe, sub_self]
+    rw [Polynomial.coeff_sub, PowerSeries.coeff_trunc, ite_eq_left hd, Polynomial.coeff_coe, sub_self]
   obtain ⟨q, hq⟩ := hdvd
   rw [truncEval, ← Polynomial.eval_sub, hq, Polynomial.eval_mul, Polynomial.eval_pow,
     Polynomial.eval_X]
@@ -557,12 +560,14 @@ variable {S : Type*} [CommRing S] [Algebra ℚ S] [IsLocalRing S]
 def dualEval : S[X] →+* TrivSqZeroExt S S :=
   Polynomial.eval₂RingHom (inlHom S S) (inr 1)
 
+omit [Algebra ℚ S] [IsLocalRing S] in
 lemma fst_dualEval (p : S[X]) : (dualEval p).fst = p.coeff 0 := by
   have : (fstHom S S S).toRingHom.comp dualEval = Polynomial.evalRingHom 0 := by
     refine Polynomial.ringHom_ext (fun a => ?_) ?_ <;> simp [dualEval]
   rw [Polynomial.coeff_zero_eq_eval_zero]
   exact congrArg (fun f : S[X] →+* S => f p) this
 
+omit [Algebra ℚ S] in
 lemma dualEval_isUnit (p : (polyMax S).primeCompl) : IsUnit (dualEval (p : S[X])) := by
   rw [isUnit_iff_isUnit_fst, fst_dualEval]
   have h := p.2
@@ -573,12 +578,15 @@ lemma dualEval_isUnit (p : (polyMax S).primeCompl) : IsUnit (dualEval (p : S[X])
 def dualLoc : PolyLoc S →+* TrivSqZeroExt S S :=
   IsLocalization.lift (M := (polyMax S).primeCompl) dualEval_isUnit
 
+omit [Algebra ℚ S] in
 @[simp] lemma dualLoc_toPolyLoc (a : S) : dualLoc (toPolyLoc a) = inl a := by
   simp [dualLoc, toPolyLoc, IsLocalization.lift_eq, dualEval]
 
+omit [Algebra ℚ S] in
 @[simp] lemma dualLoc_polyT : dualLoc (polyT : PolyLoc S) = inr 1 := by
   simp [dualLoc, polyT, IsLocalization.lift_eq, dualEval]
 
+omit [Algebra ℚ S] in
 /-- Elements of an ideal generated by elements whose `dualLoc`-components lie in `A ≤ B` have the
 same property. -/
 lemma dualLoc_span {G : Set (PolyLoc S)} {A B : Ideal S} (hAB : A ≤ B)
@@ -640,10 +648,10 @@ lemma nextE_pad_swap {ek : Fin n → ℚ} {k : ℕ} (hk : k < n + 1)
   · have h1 : Fin.castSucc a ≠ ⟨k, hk⟩ := fun h => hak (by simpa using congrArg Fin.val h)
     have h2 : Fin.castSucc a ≠ Fin.last n := (Fin.castSucc_lt_last a).ne
     rw [Equiv.swap_apply_of_ne_of_ne h1 h2]
-    simp only [nextE, Fin.coe_castSucc]
+    simp only [nextE, Fin.val_castSucc]
     by_cases hlt : (a : ℕ) < k
-    · rw [if_pos hlt]; simp [pad, a.2]
-    · rw [if_neg hlt, if_neg hak, hz a (by omega)]
+    · rw [ite_eq_left hlt]; simp [pad, a.2]
+    · rw [ite_eq_right hlt, ite_eq_right hak, hz a (by omega)]
 
 lemma nextE_pad_at {ek : Fin n → ℚ} {k : ℕ} (hk : k < n + 1) (b : ℚ) :
     nextE (pad (n + 1) ek) k b ⟨k, hk⟩ = b := by
@@ -696,7 +704,7 @@ lemma dualLoc_flowN (δ : Derivation ℚ S S) {N : ℕ} (hN : 2 ≤ N) (f : S) :
     rw [map_mul, map_pow, dualLoc_polyT, pow_succ, pow_succ, mul_assoc, inr_mul_inr, mul_zero,
       mul_zero]
   rw [Finset.sum_eq_zero hvan, zero_add]
-  simp only [map_mul, map_pow, dualLoc_polyT, dualLoc_toPolyLoc, zero_add, pow_zero, mul_one,
+  simp only [map_mul, dualLoc_polyT, dualLoc_toPolyLoc, zero_add, pow_zero, mul_one,
     pow_one, Nat.factorial_zero, Nat.factorial_one, Nat.cast_one, inv_one, one_smul,
     Function.iterate_zero, id_eq, Function.iterate_one]
   rw [add_comm]
@@ -724,7 +732,7 @@ lemma isUnit_det_of_lowerTri {R : Type*} [CommRing R] [IsLocalRing R] {m : ℕ}
     (M : Matrix (Fin m) (Fin m) R) (hup : ∀ i j, i < j → M i j ∈ maximalIdeal R)
     (hdiag : ∀ i, M i i - 1 ∈ maximalIdeal R) : IsUnit M.det := by
   have h1 : residue R M.det = 1 := by
-    rw [RingHom.map_det, Matrix.det_of_lowerTriangular]
+    rw [RingHom.map_det, Matrix.det_of_isLowerTriangular]
     · refine Finset.prod_eq_one fun i _ => ?_
       have := hdiag i
       rw [← residue_eq_zero_iff, map_sub, map_one, sub_eq_zero] at this
@@ -749,6 +757,7 @@ lemma polyLoc_d_polyT (ck : Chart S n) (i : Fin (n + 1)) :
     ck.polyLoc.d i polyT = if i = Fin.last n then 1 else 0 := by
   rw [← ck.polyLoc_x_last, ck.polyLoc.d_x]
 
+omit [Algebra ℚ S] in
 lemma polyT_mem_maximal : (polyT : PolyLoc S) ∈ maximalIdeal (PolyLoc S) := by
   rw [polyT, IsLocalization.AtPrime.to_map_mem_maximal_iff (PolyLoc S) (polyMax S)]
   exact X_mem_polyMax
@@ -762,7 +771,7 @@ lemma flow_jac_isUnit (ck : Chart S n) (y : Fin n → PolyLoc S)
     simp only [Chart.jac, Matrix.of_apply]
     cases j using Fin.lastCases with
     | last =>
-      rw [Fin.lastCases_last, polyLoc_d_polyT, if_neg hij.ne]; exact zero_mem _
+      rw [Fin.lastCases_last, polyLoc_d_polyT, ite_eq_right hij.ne]; exact zero_mem _
     | cast b =>
       rw [Fin.lastCases_castSucc]
       cases i using Fin.lastCases with
@@ -771,7 +780,7 @@ lemma flow_jac_isUnit (ck : Chart S n) (y : Fin n → PolyLoc S)
         obtain ⟨h, hh⟩ := hy b
         have hab : a ≠ b := fun h' => by rw [h'] at hij; exact lt_irrefl _ hij
         rw [hh, map_add, polyLoc_d_toPolyLoc, Derivation.leibniz, polyLoc_d_polyT,
-          if_neg (Fin.castSucc_lt_last a).ne, smul_zero, add_zero, ck.d_x, if_neg hab,
+          ite_eq_right (Fin.castSucc_lt_last a).ne, smul_zero, add_zero, ck.d_x, ite_eq_right hab,
           map_zero, zero_add, smul_eq_mul]
         exact Ideal.mul_mem_right _ _ ht
   · intro i
@@ -780,8 +789,8 @@ lemma flow_jac_isUnit (ck : Chart S n) (y : Fin n → PolyLoc S)
     | cast a =>
       obtain ⟨h, hh⟩ := hy a
       simp only [Chart.jac, Matrix.of_apply, Fin.lastCases_castSucc]
-      rw [hh, map_add, polyLoc_d_toPolyLoc, ck.d_x, if_pos rfl, map_one, Derivation.leibniz,
-        polyLoc_d_polyT, if_neg (Fin.castSucc_lt_last a).ne, smul_zero, add_zero,
+      rw [hh, map_add, polyLoc_d_toPolyLoc, ck.d_x, ite_eq_left rfl, map_one, Derivation.leibniz,
+        polyLoc_d_polyT, ite_eq_right (Fin.castSucc_lt_last a).ne, smul_zero, add_zero,
         add_sub_cancel_left, smul_eq_mul]
       exact Ideal.mul_mem_right _ _ ht
 
@@ -839,7 +848,7 @@ lemma tailSum_single_ge {n : ℕ} {j : ℕ} {l : Fin n} (hl : j ≤ (l : ℕ)) (
   classical
   rw [tailSum, Finset.sum_eq_single l]
   · simp
-  · intro b _ hb; rw [Finsupp.single_apply, if_neg (Ne.symm hb)]
+  · intro b _ hb; rw [Finsupp.single_apply, ite_eq_right (Ne.symm hb)]
   · intro h; exfalso; exact h (Finset.mem_filter.2 ⟨Finset.mem_univ l, hl⟩)
 
 lemma pad_zero' {n n' : ℕ} : pad n' (0 : Fin n → ℚ) = 0 := by
@@ -859,14 +868,14 @@ lemma nextE_pad_antitone {n n' : ℕ} {ek : Fin n → ℚ} (hnn : ∀ i, 0 ≤ e
   simp only [nextE]
   by_cases hj : (j : ℕ) < k
   · have hi : (i : ℕ) < k := lt_of_le_of_lt hij' hj
-    rw [if_pos hi, if_pos hj, hpad i hi, hpad j hj]
+    rw [ite_eq_left hi, ite_eq_left hj, hpad i hi, hpad j hj]
     exact hanti (show (⟨i, _⟩ : Fin n) ≤ ⟨j, _⟩ from hij')
   · by_cases hjk : (j : ℕ) = k
-    · rw [if_neg hj, if_pos hjk]
+    · rw [ite_eq_right hj, ite_eq_left hjk]
       by_cases hi : (i : ℕ) < k
-      · rw [if_pos hi, hpad i hi]; exact hb _ hi
-      · rw [if_neg hi, if_pos (by omega)]
-    · rw [if_neg hj, if_neg hjk]
+      · rw [ite_eq_left hi, hpad i hi]; exact hb _ hi
+      · rw [ite_eq_right hi, ite_eq_left (by omega)]
+    · rw [ite_eq_right hj, ite_eq_right hjk]
       split_ifs
       · exact hpnn i
       · exact hb0
@@ -900,7 +909,7 @@ theorem deriv_mem_RF {I : Ideal S} {c : Chart S n} {k : ℕ} {ck : Chart S n} {e
     have h2 : (w a : ℚ) = d * ek a := hw a
     have hdq : (0 : ℚ) < d := by exact_mod_cast hd
     have hw1 : 1 ≤ w a := by
-      by_contra h; push_neg at h
+      by_contra h; push Not at h
       have : w a = 0 := by omega
       rw [this, Nat.cast_zero] at h2
       exact h1 ((mul_eq_zero.1 h2.symm).resolve_left hdq.ne')
@@ -938,7 +947,7 @@ theorem deriv_mem_RF {I : Ideal S} {c : Chart S n} {k : ℕ} {ck : Chart S n} {e
     have hfact : (∏ j, ((Finsupp.single (Fin.last n) (N - 1)) j).factorial) = (N - 1).factorial := by
       rw [Finset.prod_eq_single (Fin.last n)]
       · simp
-      · intro b _ hb; simp [Finsupp.single_apply, Ne.symm hb]
+      · intro b _ hb; simp [Ne.symm hb]
       · simp
     rw [hfact, show N - (N - 1) = 1 by omega, pow_one, ← smul_mul_assoc]
     congr 1
@@ -971,7 +980,7 @@ theorem deriv_mem_RF {I : Ideal S} {c : Chart S n} {k : ℕ} {ck : Chart S n} {e
     intro i hi
     rw [hW]
     have hin : (i : ℕ) < n := by omega
-    simp only [pad, dif_pos hin]
+    simp only [pad, dite_eq_left hin]
     refine le_trans ?_ (hpos ⟨i, hin⟩ hi)
     have hdq : (0 : ℚ) < d := by exact_mod_cast hd
     rw [hNdef]; push_cast

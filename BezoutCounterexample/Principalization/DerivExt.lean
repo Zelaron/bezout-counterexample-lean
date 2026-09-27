@@ -44,8 +44,8 @@ lemma mapCoeffsLin_mul (δ : Derivation R A A) (p q : MvPolynomial σ A) :
   | monomial m a =>
     induction q using MvPolynomial.induction_on' with
     | monomial n b =>
-      rw [monomial_mul, mapCoeffsLin_monomial, mapCoeffsLin_monomial, mapCoeffsLin_monomial,
-        monomial_mul, monomial_mul, Derivation.leibniz, smul_eq_mul, smul_eq_mul, map_add,
+      rw [monomial_mul_monomial, mapCoeffsLin_monomial, mapCoeffsLin_monomial, mapCoeffsLin_monomial,
+        monomial_mul_monomial, monomial_mul_monomial, Derivation.leibniz, smul_eq_mul, smul_eq_mul, map_add,
         add_comm m n]
     | add q₁ q₂ h₁ h₂ => rw [mul_add, map_add, h₁, h₂, map_add]; ring
   | add p₁ p₂ h₁ h₂ => rw [add_mul, map_add, h₁, h₂, map_add]; ring

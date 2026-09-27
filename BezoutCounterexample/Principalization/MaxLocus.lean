@@ -10,7 +10,7 @@ For a nonzero ideal `I` of a smooth `ℚ`-domain `A`:
 * `InvAt`, `exists_invAt`, `invAt_semicont`: the invariant at points and its upper
   semicontinuity; `exists_maxInv`: the maximal invariant exists.
 * `maxLocus`, `locusIdeal`, `LocData`: the locus of maximal invariant, its ideal and its local
-  structure; `LocData.p_mem_minimalPrimes`, `LocData.eq_p_of_minimal`,
+  structure; `LocData.eq_p_of_minimal`,
   `minimalPrimes_sup_eq_top`: its components are the disjoint zero sets of the minimal primes.
 * `cRF`, `compF`: the maximal centres and the filtration of a component;
   `compF_map`, `compF_map_of_not_le`: the filtration localizes to the maximal centres;
@@ -30,6 +30,7 @@ variable {A : Type} [CommRing A] [IsDomain A] [Algebra ℚ A] [Algebra.Smooth �
 abbrev Iloc (I : Ideal A) (𝔪 : Ideal A) [𝔪.IsPrime] : Ideal (Localization.AtPrime 𝔪) :=
   I.map (algebraMap A (Localization.AtPrime 𝔪))
 
+omit [Algebra ℚ A] [Algebra.Smooth ℚ A] in
 lemma Iloc_ne_bot {I : Ideal A} (hI : I ≠ ⊥) (𝔪 : Ideal A) [𝔪.IsPrime] : Iloc I 𝔪 ≠ ⊥ := by
   intro h
   apply hI
@@ -40,6 +41,7 @@ lemma Iloc_ne_bot {I : Ideal A} (hI : I ≠ ⊥) (𝔪 : Ideal A) [𝔪.IsPrime]
   rw [Ideal.mem_bot]
   exact (IsLocalization.injective _ (Ideal.primeCompl_le_nonZeroDivisors 𝔪)) (by rw [this, map_zero])
 
+omit [IsDomain A] [Algebra ℚ A] [Algebra.Smooth ℚ A] in
 lemma Iloc_le {I : Ideal A} {𝔪 : Ideal A} [𝔪.IsPrime] (h : I ≤ 𝔪) :
     Iloc I 𝔪 ≤ maximalIdeal (Localization.AtPrime 𝔪) := by
   rw [Ideal.map_le_iff_le_comap]
@@ -47,6 +49,7 @@ lemma Iloc_le {I : Ideal A} {𝔪 : Ideal A} [𝔪.IsPrime] (h : I ≤ 𝔪) :
   rw [Ideal.mem_comap, IsLocalization.AtPrime.to_map_mem_maximal_iff (Localization.AtPrime 𝔪) 𝔪 a]
   exact h ha
 
+omit [IsDomain A] [Algebra ℚ A] [Algebra.Smooth ℚ A] in
 lemma le_of_Iloc_le {I : Ideal A} {𝔪 : Ideal A} [𝔪.IsPrime]
     (h : Iloc I 𝔪 ≤ maximalIdeal (Localization.AtPrime 𝔪)) : I ≤ 𝔪 := by
   intro a ha
@@ -70,9 +73,9 @@ lemma ext0_le {n : ℕ} {e e' : Fin n → ℚ} (h : toLex e ≤ toLex e') : toLe
     · simp only [Pi.toLex_apply] at hbelow ⊢
       have hjn : j < n := lt_trans hj i.2
       have := hbelow ⟨j, hjn⟩ hj
-      simp only [ext0, dif_pos hjn]; exact this
+      simp only [ext0, dite_eq_left hjn]; exact this
     · simp only [Pi.toLex_apply] at hi ⊢
-      simp only [ext0, dif_pos i.2]; exact hi
+      simp only [ext0, dite_eq_left i.2]; exact hi
   · rw [toLex.injective h]
 
 lemma IsInv.card_eq {S : Type*} [CommRing S] [Algebra ℚ S] [IsLocalRing S] {I : Ideal S}
@@ -80,6 +83,7 @@ lemma IsInv.card_eq {S : Type*} [CommRing S] [Algebra ℚ S] [IsLocalRing S] {I 
   obtain ⟨⟨J, -, -⟩, -⟩ := he
   exact Chart.card_eq J.c c'
 
+omit [IsDomain A] [Algebra.Smooth ℚ A] in
 lemma InvAt.unique {I : Ideal A} {𝔪 : Ideal A} [𝔪.IsPrime] {v v' : ℕ → ℚ} (h : InvAt I 𝔪 v)
     (h' : InvAt I 𝔪 v') : v = v' := by
   obtain ⟨n, e, he, rfl⟩ := h
@@ -90,6 +94,7 @@ lemma InvAt.unique {I : Ideal A} {𝔪 : Ideal A} [𝔪.IsPrime] {v v' : ℕ →
 
 variable [IsNoetherianRing A]
 
+omit [IsNoetherianRing A] in
 /-- **Local structure of the invariant**, repackaged: the invariant at `𝔪` is computed by the
 transported chart and bounds the invariants at all points of a neighbourhood. -/
 theorem local_inv (I : Ideal A) (hI : I ≠ ⊥) (𝔪 : Ideal A) [𝔪.IsMaximal] (hI𝔪 : I ≤ 𝔪) :
@@ -109,11 +114,13 @@ theorem local_inv (I : Ideal A) (hI : I ≠ ⊥) (𝔪 : Ideal A) [𝔪.IsMaxima
   rw [Loc.map_map_algebraMap, Loc.map_RF] at h1
   exact h1
 
+omit [IsNoetherianRing A] in
 lemma exists_invAt {I : Ideal A} (hI : I ≠ ⊥) (𝔪 : Ideal A) [𝔪.IsMaximal] (hI𝔪 : I ≤ 𝔪) :
     ∃ v, InvAt I 𝔪 v := by
   obtain ⟨n, -, -, -, -, -, -, ek, -, -, hinv, -⟩ := local_inv I hI 𝔪 hI𝔪
   exact ⟨_, n, ek, hinv, rfl⟩
 
+omit [IsNoetherianRing A] in
 /-- **Upper semicontinuity of the invariant.** -/
 lemma invAt_semicont {I : Ideal A} (hI : I ≠ ⊥) (𝔪 : Ideal A) [𝔪.IsMaximal] (hI𝔪 : I ≤ 𝔪)
     {v : ℕ → ℚ} (hv : InvAt I 𝔪 v) :
@@ -139,6 +146,7 @@ open IsLocalRing IsLocalization
 variable {A : Type} [CommRing A] [IsDomain A] [Algebra ℚ A] [Algebra.Smooth ℚ A]
   [IsNoetherianRing A]
 
+omit [IsNoetherianRing A] in
 /-- **The maximal invariant exists** (upper semicontinuity and quasi-compactness). -/
 theorem exists_maxInv {I : Ideal A} (hI : I ≠ ⊥) (hItop : I ≠ ⊤) :
     ∃ v₀ : ℕ → ℚ, (∃ (𝔪 : Ideal A) (_ : 𝔪.IsMaximal), I ≤ 𝔪 ∧ InvAt I 𝔪 v₀) ∧
@@ -146,11 +154,11 @@ theorem exists_maxInv {I : Ideal A} (hI : I ≠ ⊥) (hItop : I ≠ ⊤) :
   classical
   set S := {𝔪 : Ideal A // 𝔪.IsMaximal ∧ I ≤ 𝔪}
   have hv : ∀ p : S, ∃ v, haveI := p.2.1; InvAt I p.1 v := fun p => by
-    haveI := p.2.1; exact exists_invAt hI p.1 p.2.2
+    have := p.2.1; exact exists_invAt hI p.1 p.2.2
   choose v hvv using hv
   have hg : ∀ p : S, ∃ g : A, g ∉ p.1 ∧ ∀ (𝔪' : Ideal A) [𝔪'.IsMaximal], g ∉ 𝔪' →
       ∀ v', InvAt I 𝔪' v' → toLex (v p) ≤ toLex v' := fun p => by
-    haveI := p.2.1; exact invAt_semicont hI p.1 p.2.2 (hvv p)
+    have := p.2.1; exact invAt_semicont hI p.1 p.2.2 (hvv p)
   choose g hgm hgv using hg
   have htop : I ⊔ Ideal.span (Set.range g) = ⊤ := by
     by_contra hne
@@ -168,11 +176,11 @@ theorem exists_maxInv {I : Ideal A} (hI : I ≠ ⊥) (hItop : I ≠ ⊤) :
     simp only [Finsupp.sum_zero_index, add_zero] at hiy
     exact hItop ((Ideal.eq_top_iff_one I).2 (hiy ▸ hi))
   obtain ⟨p₀, hp₀, hmin⟩ := Finset.exists_min_image f.support (fun p => toLex (v p)) hF
-  refine ⟨v p₀, ⟨p₀.1, p₀.2.1, p₀.2.2, by haveI := p₀.2.1; exact hvv p₀⟩, fun 𝔪 _ hI𝔪 w hw => ?_⟩
+  refine ⟨v p₀, ⟨p₀.1, p₀.2.1, p₀.2.2, by have := p₀.2.1; exact hvv p₀⟩, fun 𝔪 _ hI𝔪 w hw => ?_⟩
   -- some `g p` with `p ∈ F` avoids `𝔪`
   obtain ⟨p, hp, hp𝔪⟩ : ∃ p ∈ f.support, g p ∉ 𝔪 := by
     by_contra h
-    push_neg at h
+    push Not at h
     have : (1 : A) ∈ 𝔪 := by
       rw [← hiy]
       refine Ideal.add_mem _ (hI𝔪 hi) ?_
@@ -223,7 +231,7 @@ theorem maxLocus_local {I : Ideal A} (hI : I ≠ ⊥) {v₀ : ℕ → ℚ}
     rw [← hRF, ← hJ'e] at hmem
     exact J'.centred.RF_le_maximalIdeal hpos hmem
   · intro hx
-    haveI := residueField_isIntegral 𝔪'
+    have := residueField_isIntegral 𝔪'
     set c₁ := Loc.transport (hctrl 𝔪' hg') ck
     obtain ⟨c'', hc'', hxx⟩ := Chart.exists_centred c₁
     have hRF : ∀ t, c''.RF ek t = c₁.RF ek t := fun t =>
@@ -255,12 +263,11 @@ def maxLocus (I : Ideal A) (v₀ : ℕ → ℚ) : Set (Ideal A) :=
 /-- The ideal of the locus of maximal invariant. -/
 def locusIdeal (I : Ideal A) (v₀ : ℕ → ℚ) : Ideal A := sInf (maxLocus I v₀)
 
-lemma locusIdeal_le {I : Ideal A} {v₀ : ℕ → ℚ} {𝔪 : Ideal A} (h : 𝔪 ∈ maxLocus I v₀) :
-    locusIdeal I v₀ ≤ 𝔪 := sInf_le h
-
+omit [IsDomain A] [Algebra.Smooth ℚ A] [IsNoetherianRing A] in
 lemma mem_locusIdeal {I : Ideal A} {v₀ : ℕ → ℚ} {f : A} :
     f ∈ locusIdeal I v₀ ↔ ∀ 𝔪 ∈ maxLocus I v₀, f ∈ 𝔪 := Submodule.mem_sInf
 
+omit [IsNoetherianRing A] in
 /-- The maximal locus is closed: a maximal ideal containing its ideal lies in it. -/
 theorem mem_maxLocus_of_le {I : Ideal A} (hI : I ≠ ⊥) {v₀ : ℕ → ℚ}
     (hmax : ∀ (𝔪 : Ideal A) [𝔪.IsMaximal], I ≤ 𝔪 → ∀ v, InvAt I 𝔪 v → toLex v₀ ≤ toLex v)
@@ -339,30 +346,36 @@ instance : D.P.IsPrime := Chart.IsCentred.span_x_isPrime _ D.cent D.k
 
 instance : D.p.IsPrime := Ideal.comap_isPrime _ _
 
+omit [Algebra.Smooth ℚ A] [IsNoetherianRing A] [IsDomain A] in
 lemma P_le_max : D.P ≤ maximalIdeal (Localization.AtPrime 𝔪) := by
   rw [P, Ideal.span_le]
   rintro _ ⟨i, -, rfl⟩
   exact D.cent.x_mem i
 
+omit [Algebra.Smooth ℚ A] [IsNoetherianRing A] [IsDomain A] in
 lemma p_le : D.p ≤ 𝔪 := by
   intro a ha
   rw [← IsLocalization.AtPrime.to_map_mem_maximal_iff (Localization.AtPrime 𝔪) 𝔪 a]
   exact D.P_le_max ha
 
+omit [Algebra.Smooth ℚ A] [IsNoetherianRing A] [IsDomain A] in
 lemma map_p : D.p.map (algebraMap A (Localization.AtPrime 𝔪)) = D.P :=
   IsLocalization.map_under (M := 𝔪.primeCompl) (S := Localization.AtPrime 𝔪) D.P
 
+omit [Algebra.Smooth ℚ A] [IsNoetherianRing A] [IsDomain A] in
 /-- Numerators of the chart functions. -/
 lemma exists_num (i : Fin D.n) : ∃ (a : A) (m : D.M),
     D.ck.x i = IsLocalization.mk' (Localization D.M) a m := by
   obtain ⟨⟨a, m⟩, h⟩ := IsLocalization.mk'_surjective D.M (D.ck.x i)
   exact ⟨a, m, h.symm⟩
 
+omit [Algebra.Smooth ℚ A] [IsNoetherianRing A] [IsDomain A] in
 lemma transport_x_mk' {N : Submonoid A} (h : D.M ≤ N) (i : Fin D.n) (a : A) (m : D.M)
     (hx : D.ck.x i = IsLocalization.mk' (Localization D.M) a m) :
     (Loc.transport h D.ck).x i = IsLocalization.mk' (Localization N) a ⟨m, h m.2⟩ := by
   rw [Loc.transport_x, hx, Loc.map_mk']
 
+omit [Algebra.Smooth ℚ A] [IsNoetherianRing A] [IsDomain A] in
 /-- The numerators of the first `k` chart functions lie in `𝔭`. -/
 lemma num_mem_p (i : Fin D.n) (hi : (i : ℕ) < D.k) (a : A) (m : D.M)
     (hx : D.ck.x i = IsLocalization.mk' (Localization D.M) a m) : a ∈ D.p := by
@@ -372,6 +385,7 @@ lemma num_mem_p (i : Fin D.n) (hi : (i : ℕ) < D.k) (a : A) (m : D.M)
   have h2 := D.P.mul_mem_right (algebraMap A (Localization.AtPrime 𝔪) m) h1
   rwa [IsLocalization.mk'_spec] at h2
 
+omit [Algebra.Smooth ℚ A] [IsNoetherianRing A] [IsDomain A] in
 /-- Conversely, the points of `V(𝔭) ∩ D(g)` are in the maximal locus. -/
 lemma mem_of_p_le (𝔪' : Ideal A) [𝔪'.IsMaximal] (hg' : D.g ∉ 𝔪') (hp : D.p ≤ 𝔪') :
     I ≤ 𝔪' ∧ InvAt I 𝔪' v₀ := by
@@ -382,6 +396,7 @@ lemma mem_of_p_le (𝔪' : Ideal A) [𝔪'.IsMaximal] (hg' : D.g ∉ 𝔪') (hp 
     IsLocalization.AtPrime.mk'_mem_maximal_iff (Localization.AtPrime 𝔪') 𝔪']
   exact hp (D.num_mem_p i hi a m hx)
 
+omit [Algebra.Smooth ℚ A] [IsNoetherianRing A] [IsDomain A] in
 /-- `g aᵢ` lies in the ideal of the maximal locus. -/
 lemma g_mul_num_mem (i : Fin D.n) (hi : (i : ℕ) < D.k) (a : A) (m : D.M)
     (hx : D.ck.x i = IsLocalization.mk' (Localization D.M) a m) :
@@ -396,6 +411,7 @@ lemma g_mul_num_mem (i : Fin D.n) (hi : (i : ℕ) < D.k) (a : A) (m : D.M)
       IsLocalization.AtPrime.mk'_mem_maximal_iff (Localization.AtPrime 𝔪'') 𝔪''] at this
     exact this
 
+omit [Algebra.Smooth ℚ A] [IsNoetherianRing A] [IsDomain A] in
 /-- The chart functions lie in the extension of the ideal of the locus. -/
 lemma P_le_map {𝔮 : Ideal A} (h𝔮 : locusIdeal I v₀ ≤ 𝔮) :
     D.P ≤ 𝔮.map (algebraMap A (Localization.AtPrime 𝔪)) := by
@@ -430,16 +446,17 @@ namespace LocData
 
 variable {I : Ideal A} {v₀ : ℕ → ℚ} {𝔪 : Ideal A} [𝔪.IsMaximal] (D : LocData I v₀ 𝔪)
 
+omit [IsDomain A] in
 /-- The ideal of the maximal locus is contained in `𝔭` (Nullstellensatz). -/
 theorem locusIdeal_le_p : locusIdeal I v₀ ≤ D.p := by
   intro f hf
   by_contra hfp
-  haveI : IsJacobsonRing A := isJacobsonRing_of_finiteType (A := ℚ)
+  have : IsJacobsonRing A := isJacobsonRing_of_finiteType (A := ℚ)
   have hgf : D.g * f ∈ D.p := by
     have hj : D.p.jacobson = D.p := IsJacobsonRing.out inferInstance (inferInstance : D.p.IsPrime).isRadical
     rw [← hj, Ideal.jacobson, Ideal.mem_sInf]
     rintro 𝔪' ⟨hp𝔪', h𝔪'⟩
-    haveI := h𝔪'
+    have := h𝔪'
     by_cases hg' : D.g ∈ 𝔪'
     · exact Ideal.mul_mem_right _ _ hg'
     · obtain ⟨hI', hv'⟩ := D.mem_of_p_le 𝔪' hg' hp𝔪'
@@ -448,19 +465,11 @@ theorem locusIdeal_le_p : locusIdeal I v₀ ≤ D.p := by
   · exact D.hg (D.p_le h)
   · exact hfp h
 
-/-- `𝔭` is a minimal prime of the ideal of the maximal locus. -/
-theorem p_mem_minimalPrimes : D.p ∈ (locusIdeal I v₀).minimalPrimes := by
-  refine ⟨⟨inferInstance, D.locusIdeal_le_p⟩, fun 𝔮 h𝔮 h𝔮p => ?_⟩
-  obtain ⟨h𝔮p', hle⟩ := h𝔮
-  intro a ha
-  have h1 : algebraMap A _ a ∈ 𝔮.map (algebraMap A (Localization.AtPrime 𝔪)) := D.P_le_map hle ha
-  rw [← under_map_atPrime (h𝔮p.trans D.p_le)]
-  exact h1
-
+omit [IsDomain A] in
 /-- `𝔭` is the only minimal prime of the ideal of the maximal locus contained in `𝔪`. -/
 theorem eq_p_of_minimal {𝔮 : Ideal A} (h𝔮 : 𝔮 ∈ (locusIdeal I v₀).minimalPrimes)
     (h𝔮𝔪 : 𝔮 ≤ 𝔪) : 𝔮 = D.p := by
-  haveI := h𝔮.1.1
+  have := h𝔮.1.1
   have hp : D.p ≤ 𝔮 := by
     intro a ha
     have h1 := D.P_le_map h𝔮.1.2 ha
@@ -474,6 +483,7 @@ variable {I : Ideal A} (hI : I ≠ ⊥) {v₀ : ℕ → ℚ}
   (hmax : ∀ (𝔪 : Ideal A) [𝔪.IsMaximal], I ≤ 𝔪 → ∀ v, InvAt I 𝔪 v → toLex v₀ ≤ toLex v)
 include hI hmax
 
+omit [IsNoetherianRing A] in
 /-- The points above a minimal prime of the ideal of the maximal locus lie in the locus. -/
 theorem mem_maxLocus_of_minimal {𝔭 : Ideal A} (h𝔭 : 𝔭 ∈ (locusIdeal I v₀).minimalPrimes)
     (𝔪 : Ideal A) [𝔪.IsMaximal] (h𝔭𝔪 : 𝔭 ≤ 𝔪) : I ≤ 𝔪 ∧ InvAt I 𝔪 v₀ := by
@@ -485,7 +495,7 @@ theorem minimalPrimes_sup_eq_top {𝔭 𝔭' : Ideal A} (h𝔭 : 𝔭 ∈ (locus
     (h𝔭' : 𝔭' ∈ (locusIdeal I v₀).minimalPrimes) (hne : 𝔭 ≠ 𝔭') : 𝔭 ⊔ 𝔭' = ⊤ := by
   by_contra htop
   obtain ⟨𝔪, h𝔪, hle⟩ := Ideal.exists_le_maximal _ htop
-  haveI := h𝔪
+  have := h𝔪
   obtain ⟨hI𝔪, hv⟩ := mem_maxLocus_of_minimal hI hmax h𝔭 𝔪 (le_sup_left.trans hle)
   obtain ⟨D⟩ := LocData.nonempty hI 𝔪 hI𝔪 hv
   exact hne ((D.eq_p_of_minimal h𝔭 (le_sup_left.trans hle)).trans
@@ -506,6 +516,7 @@ def cRF (I : Ideal A) (𝔪 : Ideal A) [𝔪.IsPrime] (t : ℚ) : Ideal (Localiz
   ⨅ (n : ℕ) (J : MC (Localization.AtPrime 𝔪) n) (_ : J.Adm (Iloc I 𝔪))
     (_ : IsInv (Iloc I 𝔪) n J.e), J.RF t
 
+omit [Algebra.Smooth ℚ A] in
 lemma cRF_eq {I : Ideal A} (hI : I ≠ ⊥) {𝔪 : Ideal A} [𝔪.IsMaximal] (hI𝔪 : I ≤ 𝔪) {n : ℕ}
     {J : MC (Localization.AtPrime 𝔪) n} (hJ : J.Adm (Iloc I 𝔪)) (hJi : IsInv (Iloc I 𝔪) n J.e)
     (t : ℚ) : cRF I 𝔪 t = J.RF t := by
@@ -518,6 +529,7 @@ lemma cRF_eq {I : Ideal A} (hI : I ≠ ⊥) {𝔪 : Ideal A} [𝔪.IsMaximal] (h
   have h2 : J'.e = J₀.e := hJi'.unique hJ₀i
   rw [(hmax J hJ).2 h1 t, (hmax J' hJ').2 h2 t]
 
+omit [Algebra.Smooth ℚ A] in
 lemma cRF_mul_le {I : Ideal A} (hI : I ≠ ⊥) {𝔪 : Ideal A} [𝔪.IsMaximal] (hI𝔪 : I ≤ 𝔪)
     {v : ℕ → ℚ} (hv : InvAt I 𝔪 v) (s t : ℚ) : cRF I 𝔪 s * cRF I 𝔪 t ≤ cRF I 𝔪 (s + t) := by
   obtain ⟨n, e, ⟨⟨J, hJ, rfl⟩, hmin⟩, -⟩ := hv
@@ -525,6 +537,7 @@ lemma cRF_mul_le {I : Ideal A} (hI : I ≠ ⊥) {𝔪 : Ideal A} [𝔪.IsMaximal
   rw [cRF_eq hI hI𝔪 hJ hJi, cRF_eq hI hI𝔪 hJ hJi, cRF_eq hI hI𝔪 hJ hJi]
   exact J.c.RF_mul_le J.e s t
 
+omit [Algebra.Smooth ℚ A] in
 lemma cRF_of_nonpos {I : Ideal A} (hI : I ≠ ⊥) {𝔪 : Ideal A} [𝔪.IsMaximal] (hI𝔪 : I ≤ 𝔪)
     {v : ℕ → ℚ} (hv : InvAt I 𝔪 v) {t : ℚ} (ht : t ≤ 0) : cRF I 𝔪 t = ⊤ := by
   obtain ⟨n, e, ⟨⟨J, hJ, rfl⟩, hmin⟩, -⟩ := hv
@@ -585,6 +598,7 @@ abbrev N : Submonoid A := D.M ⊔ Submonoid.powers D.g
 /-- The basic open `D(g)` as a ring. -/
 abbrev B := Localization D.N
 
+omit [Algebra.Smooth ℚ A] [IsNoetherianRing A] [IsDomain A] in
 lemma ctrlN : Loc.Ctrl D.N D.g := D.ctrl.sup
 
 instance away : IsLocalization.Away D.g D.B := Loc.away_of_ctrl D.ctrl
@@ -592,6 +606,7 @@ instance away : IsLocalization.Away D.g D.B := Loc.away_of_ctrl D.ctrl
 /-- The chart over `D(g)`. -/
 def cB : Chart D.B D.n := Loc.transport le_sup_left D.ck
 
+omit [Algebra.Smooth ℚ A] [IsNoetherianRing A] [IsDomain A] in
 lemma transport_cB {𝔪' : Ideal A} [𝔪'.IsMaximal] (hg' : D.g ∉ 𝔪') :
     Loc.transport (D.ctrlN 𝔪' hg') D.cB = Loc.transport (D.ctrl 𝔪' hg') D.ck := by
   rw [cB, Loc.transport_trans]
@@ -602,6 +617,7 @@ def RFB (t : ℚ) : Ideal D.B := D.cB.RF D.ek t
 variable (hI : I ≠ ⊥)
 include hI
 
+omit [Algebra.Smooth ℚ A] in
 /-- At points of the maximal locus in `D(g)`, the chart ideals are the maximal centre. -/
 lemma RFB_map_of_mem {𝔪' : Ideal A} [𝔪'.IsMaximal] (hg' : D.g ∉ 𝔪') (hI' : I ≤ 𝔪')
     (hv' : InvAt I 𝔪' v₀) (t : ℚ) :
@@ -614,12 +630,13 @@ lemma RFB_map_of_mem {𝔪' : Ideal A} [𝔪'.IsMaximal] (hg' : D.g ∉ 𝔪') (
   have hJi : IsInv (Iloc I 𝔪') D.n J'.e := ⟨⟨J', hJ', rfl⟩, by rw [hJ'e]; exact hmin⟩
   rw [cRF_eq hI hI' hJ' hJi, D.rf 𝔪' hg' J' hJ' hJ'e, RFB, Loc.map_RF, D.transport_cB hg']
 
+omit hI [Algebra.Smooth ℚ A] [IsNoetherianRing A] [IsDomain A] in
 /-- At other points of `D(g)` the chart ideals are trivial. -/
 lemma RFB_map_of_not_mem {𝔪' : Ideal A} [𝔪'.IsMaximal] (hg' : D.g ∉ 𝔪')
     (hZ : ¬ (I ≤ 𝔪' ∧ InvAt I 𝔪' v₀)) (t : ℚ) :
     (D.RFB t).map (Loc.map (D.ctrlN 𝔪' hg')) = ⊤ := by
   rw [D.iff 𝔪' hg'] at hZ
-  push_neg at hZ
+  push Not at hZ
   obtain ⟨i, hi, hx⟩ := hZ
   set c₁ := Loc.transport (D.ctrl 𝔪' hg') D.ck
   have hunit : IsUnit (c₁.x i) := by
@@ -633,49 +650,6 @@ lemma RFB_map_of_not_mem {𝔪' : Ideal A} [𝔪'.IsMaximal] (hg' : D.g ∉ 𝔪
     exact hN
   rw [RFB, Loc.map_RF, D.transport_cB hg']
   exact Ideal.eq_top_of_isUnit_mem _ hmem (hunit.pow N)
-
-omit hI in
-/-- **Local–global principle over `D(g)`**: membership in an ideal of `B` can be tested at the
-maximal ideals of `A` in `D(g)`. -/
-lemma mem_of_forall_map (J : Ideal D.B) (x : D.B)
-    (h : ∀ (𝔪' : Ideal A) [𝔪'.IsMaximal] (hg' : D.g ∉ 𝔪'),
-      Loc.map (D.ctrlN 𝔪' hg') x ∈ J.map (Loc.map (D.ctrlN 𝔪' hg'))) : x ∈ J := by
-  haveI : IsJacobsonRing A := isJacobsonRing_of_finiteType (A := ℚ)
-  by_contra hx
-  have hcol : J.colon (Ideal.span {x}) ≠ ⊤ := by
-    intro htop
-    apply hx
-    have : (1 : D.B) ∈ J.colon (Ideal.span {x}) := by rw [htop]; trivial
-    have := Submodule.mem_colon.1 this x (Ideal.mem_span_singleton_self x)
-    simpa using this
-  obtain ⟨𝔫, h𝔫, hle⟩ := Ideal.exists_le_maximal _ hcol
-  have hmax := (IsLocalization.isMaximal_iff_isMaximal_disjoint D.B D.g 𝔫).1 h𝔫
-  set 𝔪' := 𝔫.under A
-  haveI : 𝔪'.IsMaximal := hmax.1
-  have hg' : D.g ∉ 𝔪' := hmax.2
-  have hN' := D.ctrlN 𝔪' hg'
-  letI := Loc.alg hN'
-  haveI := Loc.tower hN'
-  haveI := Loc.isLoc hN'
-  have h1 := h 𝔪' hg'
-  have halg : ∀ y : D.B, Loc.map hN' y = algebraMap D.B (Localization.AtPrime 𝔪') y := fun _ => rfl
-  have hJ : J.map (Loc.map hN') = J.map (algebraMap D.B (Localization.AtPrime 𝔪')) := rfl
-  rw [halg, hJ, IsLocalization.mem_map_algebraMap_iff (𝔪'.primeCompl.map (algebraMap A D.B))] at h1
-  obtain ⟨⟨j, ⟨_, s, hs, rfl⟩⟩, hj⟩ := h1
-  simp only at hj
-  have hinj : Function.Injective (Loc.map hN') :=
-    Loc.map_injective hN' (Ideal.primeCompl_le_nonZeroDivisors 𝔪')
-  rw [← halg, ← halg, ← map_mul] at hj
-  have hj' := hinj hj
-  have hsJ : algebraMap A D.B s ∈ J.colon (Ideal.span {x}) := by
-    rw [Submodule.mem_colon]
-    intro y hy
-    obtain ⟨z, rfl⟩ := Ideal.mem_span_singleton'.1 hy
-    rw [smul_eq_mul]
-    have : algebraMap A D.B s * (z * x) = z * (x * algebraMap A D.B s) := by ring
-    rw [this, hj']
-    exact J.mul_mem_left _ j.2
-  exact hs (hle hsJ)
 
 end LocData
 
@@ -693,18 +667,20 @@ namespace LocData
 
 variable {I : Ideal A} {v₀ : ℕ → ℚ} {𝔪 : Ideal A} [𝔪.IsMaximal] (D : LocData I v₀ 𝔪)
 
+omit [Algebra.Smooth ℚ A] [IsNoetherianRing A] [IsDomain A] in
 lemma map_algebraMap_B {𝔪' : Ideal A} [𝔪'.IsMaximal] (hg' : D.g ∉ 𝔪') (x : A) :
     Loc.map (D.ctrlN 𝔪' hg') (algebraMap A D.B x) = algebraMap A (Localization.AtPrime 𝔪') x :=
   Loc.map_algebraMap _ x
 
+omit [Algebra.Smooth ℚ A] [IsNoetherianRing A] in
 /-- Pulling membership back from a point of `D(g)` to `D(g)`. -/
 lemma exists_of_mem_map {𝔪' : Ideal A} [𝔪'.IsMaximal] (hg' : D.g ∉ 𝔪') (J : Ideal D.B) {x : A}
     (hx : algebraMap A (Localization.AtPrime 𝔪') x ∈ J.map (Loc.map (D.ctrlN 𝔪' hg'))) :
     ∃ y : A, y ∉ 𝔪' ∧ algebraMap A D.B (y * x) ∈ J := by
   have hN' := D.ctrlN 𝔪' hg'
-  letI := Loc.alg hN'
-  haveI := Loc.tower hN'
-  haveI := Loc.isLoc hN'
+  let := Loc.alg hN'
+  have := Loc.tower hN'
+  have := Loc.isLoc hN'
   have halg : ∀ y : D.B, Loc.map hN' y = algebraMap D.B (Localization.AtPrime 𝔪') y := fun _ => rfl
   have hJ : J.map (Loc.map hN') = J.map (algebraMap D.B (Localization.AtPrime 𝔪')) := rfl
   rw [← D.map_algebraMap_B hg', halg, hJ,
@@ -721,20 +697,21 @@ lemma exists_of_mem_map {𝔪' : Ideal A} [𝔪'.IsMaximal] (hg' : D.g ∉ 𝔪'
 variable (hI : I ≠ ⊥)
 include hI
 
+omit [Algebra.Smooth ℚ A] in
 /-- The two charts give the same ideals at common points. -/
 lemma RFB_map_eq {𝔪₁ : Ideal A} [𝔪₁.IsMaximal] (D₁ : LocData I v₀ 𝔪₁) {𝔪' : Ideal A}
     [𝔪'.IsMaximal] (hg : D.g ∉ 𝔪') (hg₁ : D₁.g ∉ 𝔪') (t : ℚ) :
     (D.RFB t).map (Loc.map (D.ctrlN 𝔪' hg)) = (D₁.RFB t).map (Loc.map (D₁.ctrlN 𝔪' hg₁)) := by
   by_cases hZ : I ≤ 𝔪' ∧ InvAt I 𝔪' v₀
   · rw [D.RFB_map_of_mem hI hg hZ.1 hZ.2, D₁.RFB_map_of_mem hI hg₁ hZ.1 hZ.2]
-  · rw [D.RFB_map_of_not_mem hI hg hZ, D₁.RFB_map_of_not_mem hI hg₁ hZ]
+  · rw [D.RFB_map_of_not_mem hg hZ, D₁.RFB_map_of_not_mem hg₁ hZ]
 
 /-- **Spreading a membership** from one chart to another, up to a power of `g`. -/
 lemma exists_pow_mul_mem {𝔪₁ : Ideal A} [𝔪₁.IsMaximal] (D₁ : LocData I v₀ 𝔪₁) (b : A) (t : ℚ)
     (hb : algebraMap A D.B b ∈ D.RFB t) :
     ∃ N : ℕ, algebraMap A D₁.B (D.g ^ N * b) ∈ D₁.RFB t := by
-  haveI : IsJacobsonRing A := isJacobsonRing_of_finiteType (A := ℚ)
-  haveI : IsJacobsonRing D₁.B := isJacobsonRing_localization (y := D₁.g)
+  have : IsJacobsonRing A := isJacobsonRing_of_finiteType (A := ℚ)
+  have : IsJacobsonRing D₁.B := isJacobsonRing_localization (y := D₁.g)
   set 𝔠 := (D₁.RFB t).colon (Ideal.span {algebraMap A D₁.B b})
   have hrad : algebraMap A D₁.B D.g ∈ 𝔠.radical := by
     have hj : 𝔠.radical.jacobson = 𝔠.radical := IsJacobsonRing.out inferInstance (Ideal.radical_isRadical _)
@@ -742,7 +719,7 @@ lemma exists_pow_mul_mem {𝔪₁ : Ideal A} [𝔪₁.IsMaximal] (D₁ : LocData
     rintro 𝔫 ⟨h𝔠𝔫, h𝔫⟩
     have hmax := (IsLocalization.isMaximal_iff_isMaximal_disjoint D₁.B D₁.g 𝔫).1 h𝔫
     set 𝔪' := 𝔫.under A
-    haveI : 𝔪'.IsMaximal := hmax.1
+    have : 𝔪'.IsMaximal := hmax.1
     have hg₁ : D₁.g ∉ 𝔪' := hmax.2
     by_contra hg𝔫
     have hg : D.g ∉ 𝔪' := hg𝔫
@@ -782,6 +759,7 @@ def compF (I : Ideal A) (𝔭 : Ideal A) (t : ℚ) : Ideal A :=
   ⨅ (𝔪 : Ideal A) (_ : 𝔪.IsMaximal) (_ : 𝔭 ≤ 𝔪),
     (cRF I 𝔪 t).comap (algebraMap A (Localization.AtPrime 𝔪))
 
+omit [IsDomain A] [Algebra.Smooth ℚ A] [IsNoetherianRing A] in
 lemma mem_compF {I 𝔭 : Ideal A} {t : ℚ} {f : A} :
     f ∈ compF I 𝔭 t ↔ ∀ (𝔪 : Ideal A) [𝔪.IsMaximal], 𝔭 ≤ 𝔪 →
       algebraMap A (Localization.AtPrime 𝔪) f ∈ cRF I 𝔪 t := by
@@ -812,12 +790,12 @@ theorem compF_map (𝔪₀ : Ideal A) [𝔪₀.IsMaximal] (h𝔭𝔪 : 𝔭 ≤ 
   -- local data at the points of `V(𝔭)`
   set S := {𝔪 : Ideal A // 𝔪.IsMaximal ∧ 𝔭 ≤ 𝔪}
   have hD : ∀ p : S, Nonempty (haveI := p.2.1; LocData I v₀ p.1) := fun p => by
-    haveI := p.2.1
+    have := p.2.1
     have hZ := mem_maxLocus_of_minimal hI hmax h𝔭 p.1 p.2.2
     exact LocData.nonempty hI p.1 hZ.1 hZ.2
   let D : ∀ p : S, (haveI := p.2.1; LocData I v₀ p.1) := fun p => (hD p).some
   let gS : S → A := fun p => haveI := p.2.1; (D p).g
-  have hgS : ∀ p : S, gS p ∉ p.1 := fun p => by haveI := p.2.1; exact (D p).hg
+  have hgS : ∀ p : S, gS p ∉ p.1 := fun p => by have := p.2.1; exact (D p).hg
   -- the chart at `𝔪₀`
   have hZ₀ := mem_maxLocus_of_minimal hI hmax h𝔭 𝔪₀ h𝔭𝔪
   obtain ⟨D₀⟩ := LocData.nonempty hI 𝔪₀ hZ₀.1 hZ₀.2
@@ -839,7 +817,7 @@ theorem compF_map (𝔪₀ : Ideal A) [𝔪₀.IsMaximal] (h𝔭𝔪 : 𝔭 ≤ 
   have h3 : ∀ p : S, ∃ N : ℕ, haveI := p.2.1;
       algebraMap A (D p).B (D₀.g ^ N * (s₁ * a)) ∈ (D p).RFB t :=
     fun p => by
-      haveI := p.2.1
+      have := p.2.1
       exact D₀.exists_pow_mul_mem hI (D p) (s₁ * a) t hs₁a
   choose N hN using h3
   set M := ∑ p ∈ f.support, N p
@@ -849,14 +827,14 @@ theorem compF_map (𝔪₀ : Ideal A) [𝔪₀.IsMaximal] (h𝔭𝔪 : 𝔭 ≤ 
     intro 𝔪' _ h𝔭𝔪'
     obtain ⟨p, hp, hp𝔪'⟩ : ∃ p ∈ f.support, gS p ∉ 𝔪' := by
       by_contra h
-      push_neg at h
+      push Not at h
       have : (1 : A) ∈ 𝔪' := by
         rw [← hiy]
         refine Ideal.add_mem _ (h𝔭𝔪' hi) ?_
         rw [Finsupp.sum]
         exact Ideal.sum_mem _ fun p hp => Ideal.mul_mem_left _ _ (h p hp)
       exact (Ideal.IsMaximal.ne_top ‹_›) ((Ideal.eq_top_iff_one _).2 this)
-    haveI := p.2.1
+    have := p.2.1
     have hZ' := mem_maxLocus_of_minimal hI hmax h𝔭 𝔪' h𝔭𝔪'
     have h4 := Ideal.mem_map_of_mem (Loc.map ((D p).ctrlN 𝔪' hp𝔪')) (hN p)
     rw [(D p).RFB_map_of_mem hI hp𝔪' hZ'.1 hZ'.2, (D p).map_algebraMap_B hp𝔪'] at h4
@@ -888,7 +866,7 @@ lemma Chart.RF_le_span {R : Type*} [CommRing R] [Algebra ℚ R] {n : ℕ} (c : C
   rw [Chart.RF, Ideal.span_le]
   rintro _ ⟨α, h0, hα, rfl⟩
   have : ∃ i, α i ≠ 0 := by
-    by_contra h; push_neg at h
+    by_contra h; push Not at h
     have : α = 0 := Finsupp.ext h
     rw [this, lam_zero] at hα; linarith
   obtain ⟨i, hi⟩ := this
@@ -898,6 +876,7 @@ lemma Chart.RF_le_span {R : Type*} [CommRing R] [Algebra ℚ R] {n : ℕ} (c : C
   exact Ideal.pow_mem_of_mem _ (Ideal.subset_span (Set.mem_image_of_mem c.x hei)) _
     (Nat.pos_of_ne_zero hi)
 
+omit [Algebra.Smooth ℚ A] in
 lemma compF_antitone {I 𝔭 : Ideal A} {s t : ℚ} (hst : s ≤ t) (hI : I ≠ ⊥)
     (hZ : ∀ (𝔪 : Ideal A) [𝔪.IsMaximal], 𝔭 ≤ 𝔪 → I ≤ 𝔪 ∧ ∃ v, InvAt I 𝔪 v) :
     compF I 𝔭 t ≤ compF I 𝔭 s := by
@@ -917,6 +896,7 @@ variable {I : Ideal A} (hI : I ≠ ⊥) {v₀ : ℕ → ℚ}
 include hI hmax h𝔭 hd hw
 
 omit hI hmax h𝔭 in
+omit [Algebra.Smooth ℚ A] [IsNoetherianRing A] [IsDomain A] in
 lemma LocData.le_ek {𝔪 : Ideal A} [𝔪.IsMaximal] (D : LocData I v₀ 𝔪) {i : Fin D.n}
     (hi : D.ek i ≠ 0) : 1 / (d : ℚ) ≤ D.ek i := by
   obtain ⟨w, hw'⟩ := hw i
@@ -933,18 +913,19 @@ lemma LocData.le_ek {𝔪 : Ideal A} [𝔪.IsMaximal] (D : LocData I v₀ 𝔪) 
   linarith [hw']
 
 omit hI hmax h𝔭 hd hw in
+omit [IsNoetherianRing A] [IsDomain A] [Algebra.Smooth ℚ A] in
 lemma LocData.le {𝔪 : Ideal A} [𝔪.IsMaximal] (D : LocData I v₀ 𝔪) : I ≤ 𝔪 := by
   obtain ⟨⟨J, hJ, -⟩, -⟩ := D.inv
   exact le_of_Iloc_le (hJ.trans (J.centred.RF_le_maximalIdeal one_pos))
 
-omit hmax h𝔭 hd hw in
+omit hmax h𝔭 hd hw [Algebra.Smooth ℚ A] in
 lemma LocData.cRF_eq_transport {𝔪 : Ideal A} [𝔪.IsMaximal] (D : LocData I v₀ 𝔪) (t : ℚ) :
     cRF I 𝔪 t = (Loc.transport (D.ctrl 𝔪 D.hg) D.ck).RF D.ek t := by
   obtain ⟨⟨J, hJ, hJe⟩, hmin⟩ := D.inv
   have hJi : IsInv (Iloc I 𝔪) D.n J.e := ⟨⟨J, hJ, rfl⟩, by rw [hJe]; exact hmin⟩
   rw [cRF_eq hI D.le hJ hJi, D.rf 𝔪 D.hg J hJ hJe]
 
-omit hmax h𝔭 in
+omit hmax h𝔭 [Algebra.Smooth ℚ A] in
 lemma LocData.P_le_cRF {𝔪 : Ideal A} [𝔪.IsMaximal] (D : LocData I v₀ 𝔪) :
     D.P ≤ cRF I 𝔪 (1 / d) := by
   rw [D.cRF_eq_transport hI, LocData.P, Ideal.span_le]
@@ -953,7 +934,7 @@ lemma LocData.P_le_cRF {𝔪 : Ideal A} [𝔪.IsMaximal] (D : LocData I v₀ �
   exact (Loc.transport _ D.ck).RF_antitone D.ek (D.le_ek hd hw hne)
     ((Loc.transport _ D.ck).x_mem_RF D.ek i hne)
 
-omit hmax h𝔭 in
+omit hmax h𝔭 [Algebra.Smooth ℚ A] in
 lemma LocData.P_pow_le {𝔪 : Ideal A} [𝔪.IsMaximal] (D : LocData I v₀ 𝔪) (N : ℕ) :
     D.P ^ N ≤ cRF I 𝔪 (N / d) := by
   have hv : InvAt I 𝔪 v₀ := ⟨D.n, D.ek, D.inv, D.hv⟩
@@ -1000,9 +981,9 @@ theorem compF_map_of_not_le (𝔪₀ : Ideal A) [𝔪₀.IsMaximal] (h𝔭𝔪 :
 theorem compF_one_div : compF I 𝔭 (1 / d) = 𝔭 := by
   apply le_antisymm
   · intro f hf
-    haveI := h𝔭.1.1
+    have := h𝔭.1.1
     obtain ⟨𝔪, h𝔪, hle⟩ := Ideal.exists_le_maximal 𝔭 (Ideal.IsPrime.ne_top ‹_›)
-    haveI := h𝔪
+    have := h𝔪
     have hZ := mem_maxLocus_of_minimal hI hmax h𝔭 𝔪 hle
     obtain ⟨D⟩ := LocData.nonempty hI 𝔪 hZ.1 hZ.2
     have hp : 𝔭 = D.p := D.eq_p_of_minimal h𝔭 hle

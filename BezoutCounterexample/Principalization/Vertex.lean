@@ -5,7 +5,7 @@ import BezoutCounterexample.Principalization.Rees
 
 Part of the proof of Theorem 3.6 (`thm:drop`) of the paper.
 
-* `truncW`, `MC.SA.toLex_le`, `MC.SA.RF_eq`: semi-associated centres bound all admissible centres.
+* `truncW`: the first `j` weights of a weight vector, followed by zeros.
 * `weakIdeal`: the weak transform `(f Tᵈ : f ∈ I)`; `weak_le_reesRF`: it is admissible for the Rees
   centre of every compatible chart.
 * `DE_stepA`, `DE_stepA'`, `DE_stepR`: one Method-1 step at `A_p` in a compatible chart
@@ -36,8 +36,8 @@ lemma truncW_antitone {e : Fin n → ℚ} (he : ∀ i, 0 ≤ e i) (hanti : Antit
   intro a b hab
   simp only [truncW]
   by_cases hb : (b : ℕ) < j
-  · rw [if_pos hb, if_pos (lt_of_le_of_lt (Fin.le_def.1 hab) hb)]; exact hanti hab
-  · rw [if_neg hb]; split_ifs; exact he a; exact le_rfl
+  · rw [ite_eq_left hb, ite_eq_left (lt_of_le_of_lt (Fin.le_def.1 hab) hb)]; exact hanti hab
+  · rw [ite_eq_right hb]; split_ifs; exact he a; exact le_rfl
 
 lemma truncW_zero (e : Fin n → ℚ) : truncW e 0 = 0 := by funext i; simp [truncW]
 
@@ -54,23 +54,15 @@ lemma nextE_truncW (e : Fin n → ℚ) {j : ℕ} (hj : j < n) :
   funext i
   simp only [nextE, truncW]
   by_cases h1 : (i : ℕ) < j
-  · rw [if_pos h1, if_pos h1, if_pos (by omega)]
+  · rw [ite_eq_left h1, ite_eq_left h1, ite_eq_left (by omega)]
   · by_cases h2 : (i : ℕ) = j
-    · rw [if_neg h1, if_pos h2, if_pos (by omega)]; congr 1; exact Fin.ext h2.symm
-    · rw [if_neg h1, if_neg h2, if_neg (by omega)]
-
-lemma truncW_supp {e : Fin n → ℚ} {k : ℕ} (hsupp : ∀ i, e i ≠ 0 ↔ (i : ℕ) < k) {j : ℕ}
-    (hj : j ≤ k) : ∀ i, truncW e j i ≠ 0 ↔ (i : ℕ) < j := by
-  intro i
-  simp only [truncW]
-  split_ifs with h
-  · exact ⟨fun _ => h, fun _ => (hsupp i).2 (by omega)⟩
-  · exact ⟨fun h' => absurd rfl h', fun h' => absurd h' h⟩
+    · rw [ite_eq_right h1, ite_eq_left h2, ite_eq_left (by omega)]; congr 1; exact Fin.ext h2.symm
+    · rw [ite_eq_right h1, ite_eq_right h2, ite_eq_right (by omega)]
 
 lemma lex_le_at {a b : Fin n → ℚ} (h : toLex a ≤ toLex b) {j : ℕ} (hj : j < n)
     (hagree : ∀ i : Fin n, (i : ℕ) < j → a i = b i) : a ⟨j, hj⟩ ≤ b ⟨j, hj⟩ := by
   by_contra hlt
-  push_neg at hlt
+  push Not at hlt
   refine absurd h (not_le.2 ⟨⟨j, hj⟩, fun i hi => (hagree i (Fin.lt_def.1 hi)).symm, ?_⟩)
   simpa [Pi.toLex_apply] using hlt
 
@@ -79,25 +71,6 @@ end Trunc
 section SALex
 
 variable {R : Type*} [CommRing R] [Algebra ℚ R] [IsLocalRing R] [IsNoetherianRing R] {n : ℕ}
-
-/-- A `k`-semi-associated centre bounds all admissible centres lexicographically from below. -/
-lemma MC.SA.toLex_le {I : Ideal R} {k : ℕ} {J : MC R n} (hSA : MC.SA I k J) (J' : MC R n)
-    (hJ' : J'.Adm I) : toLex J.e ≤ toLex J'.e := by
-  rw [← not_lt]
-  rintro ⟨i, hbelow, hlt⟩
-  simp only [Pi.toLex_apply] at hbelow hlt
-  by_cases hik : (i : ℕ) < k
-  · exact absurd (hSA.max J' hJ' i hik fun i' hi' => hbelow i' hi') (not_le.2 hlt)
-  · rw [hSA.e_eq_zero (by omega)] at hlt
-    exact absurd (J'.nonneg i) (not_le.2 hlt)
-
-/-- A `k`-semi-associated centre determines the weighted ideals of admissible centres with its
-weights. -/
-lemma MC.SA.RF_eq {I : Ideal R} {k : ℕ} {J : MC R n} (hSA : MC.SA I k J) (J' : MC R n)
-    (hJ' : J'.Adm I) (he : J'.e = J.e) (t : ℚ) : J'.RF t = J.RF t := by
-  obtain ⟨c'', -, hRF, hx⟩ := hSA.dom J' hJ' (fun i _ => by rw [he])
-  rw [← hRF, he, MC.RF]
-  exact Chart.RF_congr (fun i hi => hx i ((hSA.supp i).1 hi)) t
 
 end SALex
 
@@ -145,7 +118,7 @@ lemma Chart.localization_RF {R S : Type*} [CommRing R] [Algebra ℚ R] [CommRing
   rw [Chart.RF, Chart.RF, Ideal.map_span]
   congr 1
   ext g
-  simp only [Set.mem_setOf_eq, Set.mem_image]
+  simp only [Set.mem_ofPred_eq, Set.mem_image]
   constructor
   · rintro ⟨α, h0, ht, rfl⟩
     exact ⟨_, ⟨α, h0, ht, rfl⟩, by simp [map_prod, map_pow]⟩
@@ -256,13 +229,14 @@ abbrev VLoc (hpos : ∀ j : ℤ, 0 < j → Φ.F j ≤ maximalIdeal B) :=
 
 theorem VLoc_noeth (c : Chart B n) (hF : ∀ j, Φ.F j = chartFil c e d j) (he : ∀ i, 0 ≤ e i)
     (hd : 0 < d) (hw : ∀ i, (w i : ℚ) = d * e i) : IsNoetherianRing (VLoc hpos) := by
-  haveI := rees_noetherian c hF he hd hw
+  have := rees_noetherian c hF he hd hw
   exact IsLocalization.isNoetherianRing (vertex hpos).primeCompl _ inferInstance
 
 /-- The Rees chart of a compatible chart, localized at the vertex. -/
 def vChart (c' : Chart B n) (hF' : ∀ j, Φ.F j = chartFil c' e d j) : Chart (VLoc hpos) (n + 1) :=
   (reesChart c' hF' he hd hw).localization (vertex hpos).primeCompl
 
+omit [IsNoetherianRing B] in
 lemma vChart_isCentred (c' : Chart B n) (hF' : ∀ j, Φ.F j = chartFil c' e d j)
     (hc' : c'.IsCentred) : (vChart he hd hw hpos c' hF').IsCentred :=
   reesLoc_isCentred c' hF' he hd hw hc'
@@ -275,9 +249,9 @@ lemma pad_antitone' {e : Fin n → ℚ} (he : ∀ i, 0 ≤ e i) (hanti : Antiton
   intro a b hab
   simp only [pad]
   by_cases hb : (b : ℕ) < n
-  · rw [dif_pos hb, dif_pos (lt_of_le_of_lt (Fin.le_def.1 hab) hb)]
+  · rw [dite_eq_left hb, dite_eq_left (lt_of_le_of_lt (Fin.le_def.1 hab) hb)]
     exact hanti (Fin.le_def.2 (by simpa using Fin.le_def.1 hab))
-  · rw [dif_neg hb]; split_ifs; exact he _; exact le_rfl
+  · rw [dite_eq_right hb]; split_ifs; exact he _; exact le_rfl
 
 end DE
 
@@ -300,7 +274,7 @@ theorem DE_stepA (he : ∀ i, 0 ≤ e i) (hanti : Antitone e) (hd : 0 < d) {k : 
     (hmax : ∀ J' : MC B n, J'.Adm I → toLex e ≤ toLex J'.e) {j : ℕ} (hjk : j < k) (hkn : k ≤ n)
     (c' : Chart B n) (hc' : c'.IsCentred) (hF' : ∀ m, Φ.F m = chartFil c' e d m)
     (hA : MC.SA I j ⟨c', truncW e j, hc', truncW_nonneg he j, truncW_antitone he hanti j⟩) :
-    ∃ (β₀ : Fin n →₀ ℕ) (f₀ : B) (hf₀ : f₀ ∈ I) (l : Fin n),
+    ∃ (β₀ : Fin n →₀ ℕ) (f₀ : B) (_hf₀ : f₀ ∈ I) (l : Fin n),
       coeff β₀ (c'.tau f₀) ≠ 0 ∧ lam (truncW e j) β₀ < 1 ∧ 0 < tailSum j β₀ ∧
       (∀ β : Fin n →₀ ℕ, (∃ g ∈ I, coeff β (c'.tau g) ≠ 0) → lam (truncW e j) β < 1 →
         Xi (truncW e j) j β₀ ≤ Xi (truncW e j) j β) ∧
@@ -317,7 +291,7 @@ theorem DE_stepA (he : ∀ i, 0 ≤ e i) (hanti : Antitone e) (hd : 0 < d) {k : 
     intro hadm
     have h1 := hmax _ hadm
     have h2 := lex_le_at h1 hjn (fun i hi => by simp [truncW, hi])
-    simp only [truncW, lt_irrefl, if_false] at h2
+    simp only [truncW, lt_irrefl, ite_false] at h2
     exact absurd h2 (not_le.2 hej)
   obtain ⟨hj, β₀, f₀, hf₀, hf₀ne, hlt₀, hN₀, hmin₀, hnext₀, hbJ₀⟩ := hA.step_data hna
   set b := (1 - lam (truncW e j) β₀) / tailSum j β₀ with hbdef
@@ -339,7 +313,7 @@ theorem DE_stepA (he : ∀ i, 0 ≤ e i) (hanti : Antitone e) (hd : 0 < d) {k : 
   have hbeq : b = e jj := le_antisymm hb_le hb_ge
   -- `λ_e(β₀) ≥ 1` by duality
   have hlam1 : 1 ≤ lam e β₀ := by
-    by_contra h; push_neg at h
+    by_contra h; push Not at h
     exact hf₀ne ((hc'.mem_RF_iff he 1 f₀).1 (hadm' hf₀) β₀ h)
   -- splitting `λ_e(β₀)` at `j`
   have hsum : lam e β₀ = lam (truncW e j) β₀ +
@@ -350,11 +324,11 @@ theorem DE_stepA (he : ∀ i, 0 ≤ e i) (hanti : Antitone e) (hd : 0 < d) {k : 
     have h1 : ∑ i ∈ Finset.univ.filter (fun i : Fin n => ¬ (i : ℕ) < j),
         (β₀ i : ℚ) * (if (i : ℕ) < j then e i else 0) = 0 :=
       Finset.sum_eq_zero fun i hi => by
-        rw [Finset.mem_filter] at hi; rw [if_neg hi.2, mul_zero]
+        rw [Finset.mem_filter] at hi; rw [ite_eq_right hi.2, mul_zero]
     have h2 : ∑ i ∈ Finset.univ.filter (fun i : Fin n => (i : ℕ) < j),
         (β₀ i : ℚ) * (if (i : ℕ) < j then e i else 0) =
         ∑ i ∈ Finset.univ.filter (fun i : Fin n => (i : ℕ) < j), (β₀ i : ℚ) * e i :=
-      Finset.sum_congr rfl fun i hi => by rw [Finset.mem_filter] at hi; rw [if_pos hi.2]
+      Finset.sum_congr rfl fun i hi => by rw [Finset.mem_filter] at hi; rw [ite_eq_left hi.2]
     rw [h1, h2, add_zero]
     congr 1
     refine Finset.sum_congr ?_ fun _ _ => rfl
@@ -472,7 +446,7 @@ theorem DE_stepA' {k : ℕ} (hsupp : ∀ i, e i ≠ 0 ↔ (i : ℕ) < k) (I : Id
     intro hadm
     have h1 := hmax _ hadm
     have h2 := lex_le_at h1 hjn (fun i hi => by simp [truncW, hi])
-    simp only [truncW, lt_irrefl, if_false] at h2
+    simp only [truncW, lt_irrefl, ite_false] at h2
     exact absurd h2 (not_le.2 hej)
   obtain ⟨hj', hunit, hbJ, u, hu, hc'', hnn'', ha'', hSA''⟩ :=
     hA.step_run_of hna β₀ f₀ hf₀ hf₀ne hlt₀ hN₀ hmin₀ l hl hβl
@@ -555,7 +529,7 @@ theorem DE_stepR (c₀ : Chart B n) (hF₀ : ∀ m, Φ.F m = chartFil c₀ e d m
           pad_nonneg' _ (truncW_nonneg he _),
           pad_antitone' (truncW_nonneg he _) (truncW_antitone he hanti _)⟩ := by
   classical
-  haveI := VLoc_noeth hpos c₀ hF₀ he hd hw
+  have := VLoc_noeth hpos c₀ hF₀ he hd hw
   have hjn : j < n := by omega
   obtain ⟨β₀, f₀, hf₀, l, hl, hβl, u, hu, hc'', hunit, hf₀ne, hlt₀, hN₀, hel, hlam, hW, hF'',
     hSA''⟩ := DE_stepA' he hanti hd hsupp I hId hmax hjk hkn c' hc' hF' hA
@@ -611,7 +585,7 @@ theorem DE_stepR (c₀ : Chart B n) (hF₀ : ∀ m, Φ.F m = chartFil c₀ e d m
     hJV (fun i hi => by
       show pad (n + 1) e i = pad (n + 1) (truncW e j) i
       simp only [pad, truncW]
-      split_ifs <;> first | rfl | (exfalso; simp_all; omega)) hjR (by
+      split_ifs <;> rfl) hjR (by
       show 0 < pad (n + 1) e ⟨j, hjR⟩
       rw [hejR]; exact hej)
   have hW' : 1 - lam (truncW e j) β₀ = e ⟨j, hjn⟩ * tailSum j β₀ := by
@@ -629,7 +603,7 @@ theorem DE_stepR (c₀ : Chart B n) (hF₀ : ∀ m, Φ.F m = chartFil c₀ e d m
       · exact pad_nonneg' _ (truncW_nonneg he j) i
       · rw [hejR]; exact hej.le
     have h2 : 1 ≤ lam (compl (pad (n + 1) (truncW e j)) j (pad (n + 1) e ⟨j, hjR⟩)) β' := by
-      by_contra h; push_neg at h
+      by_contra h; push Not at h
       exact hgne ((hRc.mem_RF_iff hcnn 1 g).1 h1 β' h)
     rw [lam_compl (pad_zero_ge_truncW e), hejR] at h2
     simp only [Xi]
@@ -680,7 +654,7 @@ theorem DE_stepR (c₀ : Chart B n) (hF₀ : ∀ m, Φ.F m = chartFil c₀ e d m
     rw [hgR]
     congr 1
     apply Subtype.ext
-    rw [hgcoe, reesX_castSucc, hc''x, if_pos (Equiv.swap_apply_left _ _), hwl]
+    rw [hgcoe, reesX_castSucc, hc''x, ite_eq_left (Equiv.swap_apply_left _ _), hwl]
   have heqchart : nextChart Rc ⟨j, hjR'⟩ (Fin.castSucc l) gR uR huR =
       vChart he hd hw hpos c'' hF'' := by
     apply Chart.eq_of_x
@@ -688,7 +662,7 @@ theorem DE_stepR (c₀ : Chart B n) (hF₀ : ∀ m, Φ.F m = chartFil c₀ e d m
     rw [nextChart_x_apply, hjj]
     cases i using Fin.lastCases with
     | last =>
-      rw [swap_castSucc_last, if_neg (Fin.castSucc_lt_last l).ne']
+      rw [swap_castSucc_last, ite_eq_right (Fin.castSucc_lt_last l).ne']
       show algebraMap (ReesAlg Φ) (VLoc hpos) (reesX c' hF' he hd hw (Fin.last n)) =
         algebraMap (ReesAlg Φ) (VLoc hpos) (reesX c'' hF'' he hd hw (Fin.last n))
       congr 1
@@ -697,18 +671,18 @@ theorem DE_stepR (c₀ : Chart B n) (hF₀ : ∀ m, Φ.F m = chartFil c₀ e d m
     | cast a =>
       rw [swap_castSucc_eq]
       by_cases hb : Equiv.swap ⟨j, hjn⟩ l a = l
-      · rw [if_pos (congrArg Fin.castSucc hb), hgR']
+      · rw [ite_eq_left (congrArg Fin.castSucc hb), hgR']
         have ha : a = ⟨j, hjn⟩ := by
           have := congrArg (Equiv.swap ⟨j, hjn⟩ l) hb
           rwa [Equiv.swap_apply_self, Equiv.swap_apply_right] at this
         subst ha
         rfl
-      · rw [if_neg (fun h => hb (Fin.castSucc_injective _ h))]
+      · rw [ite_eq_right (fun h => hb (Fin.castSucc_injective _ h))]
         show algebraMap (ReesAlg Φ) (VLoc hpos) (reesX c' hF' he hd hw _) =
           algebraMap (ReesAlg Φ) (VLoc hpos) (reesX c'' hF'' he hd hw (Fin.castSucc a))
         congr 1
         apply Subtype.ext
-        rw [reesX_castSucc, reesX_castSucc, hc''x, if_neg hb, hwswap]
+        rw [reesX_castSucc, reesX_castSucc, hc''x, ite_eq_right hb, hwswap]
   have hwtsR : nextE (pad (n + 1) (truncW e j)) j
       (nextW (pad (n + 1) (truncW e j)) j (pushIdx (Nat.le_succ n) β₀)) =
       pad (n + 1) (truncW e (j + 1)) := by
@@ -740,11 +714,8 @@ variable {B : Type*} [CommRing B] [Algebra ℚ B] [IsLocalRing B] [IsNoetherianR
   (hpos : ∀ j : ℤ, 0 < j → Φ.F j ≤ maximalIdeal B)
 
 omit [IsNoetherianRing B] in
-lemma reesAlg_isDomain : IsDomain (ReesAlg Φ) := inferInstance
-
-include hd in
-lemma weakV_ne_bot (c₀ : Chart B n) (hF₀ : ∀ m, Φ.F m = chartFil c₀ e d m) (he : ∀ i, 0 ≤ e i)
-    (hw : ∀ i, (w i : ℚ) = d * e i) (I : Ideal B) (hI0 : I ≠ ⊥) (hId : I ≤ Φ.F d) :
+lemma weakV_ne_bot (c₀ : Chart B n) (_hF₀ : ∀ m, Φ.F m = chartFil c₀ e d m) (_he : ∀ i, 0 ≤ e i)
+    (_hw : ∀ i, (w i : ℚ) = d * e i) (I : Ideal B) (hI0 : I ≠ ⊥) (hId : I ≤ Φ.F d) :
     weakV hpos I hId ≠ ⊥ := by
   obtain ⟨f, hf, hf0⟩ := Submodule.exists_mem_ne_zero_of_ne_bot hI0
   intro h
@@ -755,9 +726,10 @@ lemma weakV_ne_bot (c₀ : Chart B n) (hF₀ : ∀ m, Φ.F m = chartFil c₀ e d
     (Ideal.primeCompl_le_nonZeroDivisors (vertex hpos))
   have h2 := hinj (hmem.trans (map_zero _).symm)
   have h3 := congrArg (fun p : ReesAlg Φ => (p : B[T;T⁻¹]).coeff d) h2
-  simp only [coeff_C_mul_T, if_pos rfl] at h3
+  simp only [coeff_C_mul_T] at h3
   exact hf0 (by simpa using h3)
 
+omit [IsNoetherianRing B] [IsDomain B] [Algebra ℚ B] in
 lemma weakV_le_max (I : Ideal B) (hId : I ≤ Φ.F d) (hd : 0 < d) :
     weakV hpos I hId ≤ maximalIdeal (VLoc hpos) := by
   rw [weakV, Ideal.map_le_iff_le_comap, weakIdeal, Ideal.span_le]
@@ -765,7 +737,7 @@ lemma weakV_le_max (I : Ideal B) (hId : I ≤ Φ.F d) (hd : 0 < d) :
   rw [SetLike.mem_coe, Ideal.mem_comap,
     IsLocalization.AtPrime.to_map_mem_maximal_iff (VLoc hpos) (vertex hpos), mem_vertex]
   show (LaurentPolynomial.C f * T d).coeff 0 ∈ maximalIdeal B
-  rw [coeff_C_mul_T, if_neg (by omega)]
+  rw [coeff_C_mul_T, ite_eq_right (by omega)]
   exact zero_mem _
 
 end DEMain
@@ -794,7 +766,7 @@ theorem vertex_invariant (c₀ : Chart B n) (hc₀ : c₀.IsCentred)
     ∃ (c' : Chart B n) (hc' : c'.IsCentred) (hF' : ∀ m, Φ.F m = chartFil c' e d m),
       MC.SA (weakV hpos I hId) k ⟨vChart he hd hw hpos c' hF', pad (n + 1) e,
         vChart_isCentred he hd hw hpos c' hF' hc', pad_nonneg' e he, pad_antitone' he hanti⟩ := by
-  haveI := VLoc_noeth hpos c₀ hF₀ he hd hw
+  have := VLoc_noeth hpos c₀ hF₀ he hd hw
   have hIm : I ≤ maximalIdeal B := hId.trans (hpos d (by exact_mod_cast hd))
   have key : ∀ j, j ≤ k → ∃ (c' : Chart B n) (hc' : c'.IsCentred)
       (hF' : ∀ m, Φ.F m = chartFil c' e d m),
@@ -812,7 +784,7 @@ theorem vertex_invariant (c₀ : Chart B n) (hc₀ : c₀.IsCentred)
             ⟨c₀, truncW e 0, hc₀, truncW_nonneg he 0, truncW_antitone he hanti 0⟩ :=
           MC.ext' rfl (truncW_zero e).symm
         rwa [hMC] at h
-      · have h := MC.sa_zero (weakV_ne_bot hd hpos c₀ hF₀ he hw I hI0 hId)
+      · have h := MC.sa_zero (weakV_ne_bot hpos c₀ hF₀ he hw I hI0 hId)
           (weakV_le_max hpos I hId hd) (vChart he hd hw hpos c₀ hF₀)
           (vChart_isCentred he hd hw hpos c₀ hF₀ hc₀)
         have hMC : (⟨vChart he hd hw hpos c₀ hF₀, 0, vChart_isCentred he hd hw hpos c₀ hF₀ hc₀,

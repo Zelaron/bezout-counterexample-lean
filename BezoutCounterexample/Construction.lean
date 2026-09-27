@@ -1,25 +1,56 @@
-import BezoutCounterexample.Topology
+import BezoutCounterexample.PrincipalizationExtension
 
 /-!
-# Section 5: construction of the Bézout domain (Construction 5.1, Proposition 5.2)
+# Section 5: construction of the Bézout domain
 
-From Proposition 4.6 of the paper for coprime pairs (`CoprimePairPE`, implied by
-`PrincipalizationExtension`), we construct injections
-`A₀ ↪ A₁ ↪ A₂ ↪ ⋯` of smooth finitely generated factorial `ℚ`-domains together with compact sets
-`Kₙ ⊂ Spec(Aₙ)(ℝ)` such that the pullback of the Möbius bundle to every `Kₙ` is nonorientable,
-and put `R = ⋃ Aₙ` (a direct limit). Everything here is parametrized by a proof
-`hPE : CoprimePairPE`; such a proof is `coprimePairPE_holds` (`MainTheorem.lean`), obtained from
-`Principalization.principalizationExtension`.
+This file formalizes **Construction 5.1** (`construction:ring`), **Proposition 5.2**
+(`prop:bezout-domain`) and the statement **(5.2)** (`eq:nonorientable-stages`) of
 
-As in Construction 5.1, one pair is processed per stage, using the Cantor pairing function: at
-stage `n = pair(i, j)` we process the image in `Aₙ` of `ηᵢ(j)`, so every pair of elements of every
-`Aᵢ` is processed at some later stage.
+  C. Hägg, A. Mörtberg, *A countable Bézout domain that is not an elementary divisor domain*.
 
-* `isCompact_K₀`: the circle is compact.
-* `nonorientable_pullback`: nonorientability is preserved along monotone surjections
-  (Lemma 2.1), which gives (5.2).
-* `R`, `R.isDomain`, `R.isBezout`, `R.countable`, `R.Δ_ne_zero`, `R.Δ_not_isUnit`
-  (Proposition 5.2).
+## Construction 5.1
+
+* `pairing : ℕ × ℕ ≃ ℕ` is the fixed bijection `⟨·,·⟩` with `i ≤ ⟨i, j⟩` (`left_le_pairing`);
+  we use Szudzik's pairing function `Nat.pair`.
+* `Construction.A n` is the ring `A_n` (a `SmoothFactorialDomain`: a smooth finitely generated
+  factorial `ℚ`-domain), `Construction.K n ⊆ Spec(A_n)(ℝ)` is the compact set `K_n`, and
+  `Construction.incl n : A_n ↪ A_{n+1}` is the injection of `ℚ`-algebras. We have `A_0 = ℚ[x, y]`
+  and `K_0 = K₀` (`A_zero`, `K_zero`), every `K_n` is compact (`isCompact_K`), every
+  `A_n → A_{n+1}` is injective (`incl_injective`) and every induced map `K_{n+1} → K_n` is a
+  monotone surjection (`isMonotoneSurjOn_incl`).
+* `Construction.η i : ℕ → A_i × A_i` is the surjection chosen once `A_i` has been constructed
+  (`η_surjective`).
+* To pass from `A_n` to `A_{n+1}`, write `n = ⟨i, j⟩`; the pair `(a, b) = Construction.pairAt n`
+  processed at this step is the image in `A_n` of `η_i(j)` (`pairAt_eq`). The step
+  (`Construction.step`) follows the case split of the paper:
+  - if `a = 0` or `b = 0`, then `A_{n+1} = A_n` and `K_{n+1} = K_n` (`trivialStep`,
+    `stepAt_of_eq_zero`, `A_succ_of_eq_zero`, `K_succ_of_eq_zero`);
+  - otherwise `a = c a'`, `b = c b'` with `a'`, `b'` coprime (`coprimeFactors`, a choice from
+    `exists_coprime_factors`), and Proposition 4.6 (`principalization_extension`) is applied to
+    the ideal `(a', b') A_n` and the compact set `K_n` (`principalizationStep`,
+    `stepAt_of_ne_zero`, `principalizationStep_principal`); then
+    `(a, b) A_{n+1} = c (a', b') A_{n+1}` (`principalizationStep_map_span`) is principal.
+  In both cases `(a, b) A_{n+1}` is principal (`span_pairAt_map_isPrincipal`).
+* `R = ⋃ A_n` (5.1) is the direct limit (`Ring.DirectLimit`) of `A_0 ↪ A_1 ↪ ⋯`, with the
+  injections `R.of n : A_n ↪ R` (`R.of_injective`) and `R.ι = R.of 0 : A₀ ↪ R`.
+
+The output of Proposition 4.6 is bundled as `PrincipalizationResult`; `Construction.inclLE h` is the
+composite `A_i → A_j` for `i ≤ j`, and `Construction.ι n = inclLE : A₀ → A_n` identifies `A₀` with
+its image in `A_n`.
+
+## Proposition 5.2
+
+`R.isDomain`, `R.countable`, `R.isBezout`, `R.charZero`, `R.algebraicIndependent`, `R.Δ_ne_zero`
+and `R.Δ_not_isUnit`, collected in `bezout_domain`: `R` is a countable Bézout domain of
+characteristic zero, `x` and `y` remain algebraically independent over `ℚ`, and `Δ` is a nonzero
+nonunit of `R`.
+
+## (5.2)
+
+`Construction.nonorientable n`: the line bundle `L_n = L_{x,y}` on `K_n` is nonorientable. As in the
+paper, `L_n` is the pullback of `L₀` along the composite `K_n → K_0` of the transition maps, which
+is a monotone surjection by Lemma 2.2 (`isMonotoneSurjOn_ι`, using `IsMonotoneSurjOn.trans`), so
+Lemma 2.1 (`not_isOrientable_pullback`) applies.
 -/
 
 noncomputable section
@@ -28,480 +59,552 @@ namespace BezoutCounterexample
 
 open Set Topology
 
-/-! ### Preliminaries -/
+/-! ## Preliminaries -/
 
-instance SmoothFactorialDomain.countable (A : SmoothFactorialDomain) : Countable A := by
-  obtain ⟨n, f, hf⟩ := Algebra.FiniteType.iff_quotient_mvPolynomial''.1
-    (inferInstance : Algebra.FiniteType ℚ A)
-  exact hf.countable
-
-/-- `A₀ = ℚ[x,y]` as a smooth factorial domain. -/
+/-- `A₀ = ℚ[x, y]`, as a smooth finitely generated factorial `ℚ`-domain. -/
 def A₀SFD : SmoothFactorialDomain := ⟨A₀⟩
 
-/-- Evaluation of `A₀ = ℚ[x,y]` at a point of `ℝ²`. -/
-def evalPt (p : Fin 2 → ℝ) : RealPt A₀ :=
-  RealPt.ofHom (MvPolynomial.aeval p : A₀ →ₐ[ℚ] ℝ).toRingHom
+/-- The fixed bijection `⟨·,·⟩ : ℕ × ℕ → ℕ` of Construction 5.1. We use Szudzik's pairing
+function `Nat.pair`; any bijection with `i ≤ ⟨i, j⟩` (for instance the Cantor pairing) would do
+equally well. -/
+def pairing : ℕ × ℕ ≃ ℕ := Nat.pairEquiv
 
-@[simp] lemma evalPt_x (p : Fin 2 → ℝ) : evalPt p x = p 0 := by simp [evalPt, x]
+/-- `i ≤ ⟨i, j⟩` for all `i, j`. -/
+theorem left_le_pairing (i j : ℕ) : i ≤ pairing (i, j) := Nat.left_le_pair i j
 
-@[simp] lemma evalPt_y (p : Fin 2 → ℝ) : evalPt p y = p 1 := by simp [evalPt, y]
+section CoprimeFactors
 
-lemma continuous_evalPt : Continuous evalPt := by
-  rw [RealPt.continuous_iff]
-  intro q
-  have : (fun p => evalPt p q) =
-      fun p : Fin 2 → ℝ => MvPolynomial.eval p (MvPolynomial.map (algebraMap ℚ ℝ) q) := by
-    funext p
-    simp [evalPt, MvPolynomial.aeval_def, MvPolynomial.eval_map]
-  rw [this]
-  exact MvPolynomial.continuous_eval _
+variable {A : Type*} [CommRing A] [UniqueFactorizationMonoid A]
 
-lemma Δ_eval (z : RealPt A₀) : z Δ = z x ^ 2 + z y ^ 2 - 1 := by
-  simp [Δ, map_sub, map_add, map_pow, map_one]
+/-- In a UFD, `a` and `b ≠ 0` can be written `a = c a'`, `b = c b'` with `a'` and `b'` coprime
+(written as a triple `(c, a', b')`). -/
+theorem exists_coprime_factors (a b : A) (hb : b ≠ 0) :
+    ∃ t : A × A × A, a = t.1 * t.2.1 ∧ b = t.1 * t.2.2 ∧ IsRelPrime t.2.1 t.2.2 := by
+  obtain ⟨a', b', c, hcop, ha, hb⟩ := UniqueFactorizationMonoid.exists_reduced_factors' a b hb
+  exact ⟨(c, a', b'), ha.symm, hb.symm, hcop⟩
 
-/-- The circle `K₀` is compact. -/
-theorem isCompact_K₀ : IsCompact K₀ := by
-  have hS : IsCompact {p : Fin 2 → ℝ | p 0 ^ 2 + p 1 ^ 2 = 1} := by
-    apply Metric.isCompact_of_isClosed_isBounded
-    · exact isClosed_eq (by fun_prop) continuous_const
-    · refine (Metric.isBounded_iff_subset_closedBall 0).2 ⟨1, fun p hp => ?_⟩
-      simp only [mem_ofPred_eq] at hp
-      rw [Metric.mem_closedBall, dist_zero_right, pi_norm_le_iff_of_nonneg zero_le_one]
-      intro i
-      rw [Real.norm_eq_abs, abs_le]
-      fin_cases i <;> simp <;> constructor <;> nlinarith [sq_nonneg (p 0), sq_nonneg (p 1)]
-  have : K₀ = evalPt '' {p : Fin 2 → ℝ | p 0 ^ 2 + p 1 ^ 2 = 1} := by
-    ext z
-    constructor
-    · intro hz
-      refine ⟨![z x, z y], ?_, ?_⟩
-      · have : z Δ = 0 := hz
-        rw [Δ_eval] at this
-        simp only [mem_ofPred_eq, Matrix.cons_val_zero, Matrix.cons_val_one]
-        linarith
-      · exact realPt_A₀_ext (by simp) (by simp)
-    · rintro ⟨p, hp, rfl⟩
-      show evalPt p Δ = 0
-      rw [Δ_eval, evalPt_x, evalPt_y]
-      simp only [mem_ofPred_eq] at hp
-      linarith
-  rw [this]
-  exact hS.image continuous_evalPt
+/-- The factorization `a = c a'`, `b = c b'` with `a'`, `b'` coprime chosen in Construction 5.1,
+as the triple `(c, a', b')`. -/
+def coprimeFactors (a b : A) (hb : b ≠ 0) : A × A × A := (exists_coprime_factors a b hb).choose
 
-lemma IsMonotoneSurjOn.id {X : Type*} [TopologicalSpace X] (K : Set X) :
-    IsMonotoneSurjOn (fun z : X => z) K K := by
-  refine ⟨mapsTo_id K, ⟨continuous_id.subtype_map _, fun w => ⟨w, rfl⟩, fun z => ?_⟩⟩
-  have : (Set.MapsTo.restrict (fun z : X => z) K K (mapsTo_id K)) ⁻¹' {z} = {z} := by
-    ext w
-    simp only [mem_preimage, mem_singleton_iff]
-    constructor
-    · intro h; exact Subtype.ext (congrArg Subtype.val h)
-    · intro h; subst h; rfl
-  rw [this]
-  exact isConnected_singleton
+theorem coprimeFactors_spec (a b : A) (hb : b ≠ 0) :
+    a = (coprimeFactors a b hb).1 * (coprimeFactors a b hb).2.1 ∧
+      b = (coprimeFactors a b hb).1 * (coprimeFactors a b hb).2.2 ∧
+      IsRelPrime (coprimeFactors a b hb).2.1 (coprimeFactors a b hb).2.2 :=
+  (exists_coprime_factors a b hb).choose_spec
 
-/-- Nonorientability of `z ↦ im M(z a, z b)` is preserved under pullback along a monotone
-surjection (this is how Lemma 2.1 is used to obtain (5.2)). -/
-theorem nonorientable_pullback {A B : Type*} [CommRing A] [CommRing B] (f : A →+* B) (a b : A)
-    {K : Set (RealPt A)} {K' : Set (RealPt B)} (hK' : IsCompact K')
-    (hmono : IsMonotoneSurjOn (RealPt.comap f) K' K) (hcirc : ∀ z ∈ K, z a ^ 2 + z b ^ 2 = 1)
-    (h : ¬ LineFieldOrientable (fun z : K => z.1 a) (fun z : K => z.1 b)) :
-    ¬ LineFieldOrientable (fun z : K' => z.1 (f a)) (fun z : K' => z.1 (f b)) := by
-  obtain ⟨hmaps, hq⟩ := hmono
-  have := isCompact_iff_compactSpace.1 hK'
-  intro h'
-  exact h (orientation_descent hq (fun z : K => z.1 a) (fun z : K => z.1 b)
-    (fun z => hcirc z.1 z.2) h')
+/-- For `a ≠ 0`, the ideal `(a', b')` is nonzero. -/
+theorem span_coprimeFactors_ne_bot {a b : A} (ha : a ≠ 0) (hb : b ≠ 0) :
+    (Ideal.span {(coprimeFactors a b hb).2.1, (coprimeFactors a b hb).2.2} : Ideal A) ≠ ⊥ := by
+  intro h
+  apply ha
+  have h' : (coprimeFactors a b hb).2.1 ∈
+      (Ideal.span {(coprimeFactors a b hb).2.1, (coprimeFactors a b hb).2.2} : Ideal A) :=
+    Ideal.subset_span (by simp)
+  rw [h, Ideal.mem_bot] at h'
+  rw [(coprimeFactors_spec a b hb).1, h', mul_zero]
 
-/-! ### Stages of the construction -/
+end CoprimeFactors
 
-/-- The data at a stage of Construction 5.1: a smooth factorial domain `A` with an injection
-`ι : A₀ ↪ A`, a compact set `K ⊂ Spec(A)(ℝ)` lying over the circle, on which the pullback of the
-Möbius bundle is nonorientable, and an enumeration `e i` of (the image in `A` of) `Aᵢ × Aᵢ`. -/
+/-- If `a = c a'` and `b = c b'`, then `(a, b) = c (a', b')`, hence `(a, b) A' = c (a', b') A'`
+for every homomorphism `A → A'`. -/
+theorem map_span_pair_eq_mul {A A' F : Type*} [CommRing A] [CommRing A'] [FunLike F A A']
+    [RingHomClass F A A'] (f : F) {a b c a' b' : A} (ha : a = c * a') (hb : b = c * b') :
+    (Ideal.span {a, b} : Ideal A).map f =
+      Ideal.span {f c} * (Ideal.span {a', b'} : Ideal A).map f := by
+  have h : (Ideal.span {a, b} : Ideal A) = Ideal.span {c} * Ideal.span {a', b'} := by
+    rw [Ideal.span_mul_span, Set.singleton_mul, Set.image_pair, ← ha, ← hb]
+  rw [h, Ideal.map_mul, Ideal.map_span, Set.image_singleton]
+
+/-- The output of Proposition 4.6 for `A`, `I` and `K`: a smooth finitely generated factorial
+`ℚ`-domain `A'`, an injection `f : A ↪ A'` such that `I A'` is principal, and a compact set
+`K' ⊆ Spec(A')(ℝ)` such that the induced map `K' → K` is a monotone surjection. -/
+structure PrincipalizationResult (A : SmoothFactorialDomain) (I : Ideal A) (K : Set (RealPt A)) where
+  /-- The ring `A'`. -/
+  A' : SmoothFactorialDomain
+  /-- The injection `A ↪ A'`. -/
+  f : A →ₐ[ℚ] A'
+  /-- The compact set `K' ⊆ Spec(A')(ℝ)`. -/
+  K' : Set (RealPt A')
+  injective : Function.Injective f
+  principal : (I.map f).IsPrincipal
+  isCompact : IsCompact K'
+  monotone : IsMonotoneSurjOn (RealPt.comap (f : A →+* A')) K' K
+
+/-- A choice of the data provided by Proposition 4.6 (`principalization_extension`). -/
+def principalizationResult (A : SmoothFactorialDomain) (I : Ideal A) (hI : I ≠ ⊥)
+    (K : Set (RealPt A)) (hK : IsCompact K) : PrincipalizationResult A I K :=
+  Classical.choice <| by
+    obtain ⟨A', f, K', h₁, h₂, h₃, h₄⟩ := principalization_extension A I hI K hK
+    exact ⟨⟨A', f, K', h₁, h₂, h₃, h₄⟩⟩
+
+namespace Construction
+
+/-! ## Construction 5.1 -/
+
+/-- Every finitely generated `ℚ`-algebra is countable, so once a stage `A` has been constructed we
+may choose a surjection `ℕ → A × A`. -/
+def chooseSurj (A : SmoothFactorialDomain) : ℕ → A × A :=
+  Classical.choose (exists_surjective_nat (A × A))
+
+theorem chooseSurj_surjective (A : SmoothFactorialDomain) :
+    Function.Surjective (chooseSurj A) :=
+  Classical.choose_spec (exists_surjective_nat (A × A))
+
+/-- The data at stage `n` of Construction 5.1: the ring `A_n`, the compact set
+`K_n ⊆ Spec(A_n)(ℝ)`, and, for `i ≤ n`, the image `e i j ∈ A_n × A_n` of the pair `η_i(j)`
+(`e_eq`). -/
 structure Stage where
+  /-- The ring `A_n`. -/
   A : SmoothFactorialDomain
-  ι : A₀ →ₐ[ℚ] A
+  /-- The compact set `K_n`. -/
   K : Set (RealPt A)
+  isCompact_K : IsCompact K
+  /-- For `i ≤ n`, `e i j` is the image in `A_n` of `η_i(j)`. -/
   e : ℕ → ℕ → A × A
-  ι_injective : Function.Injective ι
-  K_compact : IsCompact K
-  K_circle : ∀ z ∈ K, z (ι Δ) = 0
-  nonorientable : ¬ LineFieldOrientable (fun z : K => z.1 (ι x)) (fun z : K => z.1 (ι y))
 
-lemma Stage.circle (S : Stage) (z : RealPt S.A) (hz : z ∈ S.K) :
-    z (S.ι x) ^ 2 + z (S.ι y) ^ 2 = 1 := by
-  have h := S.K_circle z hz
-  have : z (S.ι Δ) = z (S.ι x) ^ 2 + z (S.ι y) ^ 2 - 1 := by
-    simp [Δ, map_sub, map_add, map_pow, map_one]
-  linarith
+/-- The pair processed when passing from `A_n` to `A_{n+1}`: writing `n = ⟨i, j⟩`, it is `e i j`,
+the image in `A_n` of `η_i(j)`. -/
+def Stage.pair (S : Stage) (n : ℕ) : S.A × S.A :=
+  S.e (pairing.symm n).1 (pairing.symm n).2
 
-/-- The pair processed at stage `n`. -/
-def Stage.pair (S : Stage) (n : ℕ) : S.A × S.A := S.e n.unpair.1 n.unpair.2
+/-- The step for a pair `(a, b)` with `a = 0` or `b = 0`: the ideal `(a, b)` is principal, and we
+put `A_{n+1} = A_n` and `K_{n+1} = K_n`. -/
+def trivialStep (S : Stage) (a b : S.A) (h : a = 0 ∨ b = 0) :
+    PrincipalizationResult S.A (Ideal.span {a, b}) S.K where
+  A' := S.A
+  f := AlgHom.id ℚ S.A
+  K' := S.K
+  injective := Function.injective_id
+  principal := by
+    rw [Ideal.map_span, Set.image_pair]
+    rcases h with rfl | rfl
+    · exact ⟨⟨b, show _ = Ideal.span {b} by simp⟩⟩
+    · exact ⟨⟨a, show _ = Ideal.span {a} by rw [Set.pair_comm]; simp⟩⟩
+  isCompact := S.isCompact_K
+  monotone := IsMonotoneSurjOn.id S.K
 
-/-- The result of one step of the construction, starting from stage `S` at time `n`. -/
-structure StepData (n : ℕ) (S : Stage) where
-  next : Stage
-  map : S.A →ₐ[ℚ] next.A
-  map_injective : Function.Injective map
-  ι_comp : next.ι = map.comp S.ι
-  e_old : ∀ i ≤ n, ∀ j, next.e i j = Prod.map map map (S.e i j)
-  e_new : Function.Surjective (next.e (n + 1))
-  principal : (Ideal.span {map (S.pair n).1, map (S.pair n).2} : Ideal next.A).IsPrincipal
+/-- The step for a pair `(a, b)` with `a ≠ 0` and `b ≠ 0`: write `a = c a'` and `b = c b'` with
+`a'` and `b'` coprime (possible as `A_n` is a UFD), apply Proposition 4.6 to the ideal
+`(a', b') A_n` and the compact set `K_n`, and let `A_{n+1}` and `K_{n+1}` be the resulting ring
+and compact set. Then `(a, b) A_{n+1} = c (a', b') A_{n+1}` is principal. -/
+def principalizationStep (S : Stage) (a b : S.A) (ha : a ≠ 0) (hb : b ≠ 0) :
+    PrincipalizationResult S.A (Ideal.span {a, b}) S.K :=
+  let t := coprimeFactors a b hb
+  let D := principalizationResult S.A (Ideal.span {t.2.1, t.2.2}) (span_coprimeFactors_ne_bot ha hb)
+    S.K S.isCompact_K
+  { A' := D.A'
+    f := D.f
+    K' := D.K'
+    injective := D.injective
+    principal := by
+      -- `(a, b) A_{n+1} = c (a', b') A_{n+1} = (c g)`
+      obtain ⟨g, hg⟩ := D.principal
+      refine ⟨⟨D.f t.1 * g, ?_⟩⟩
+      rw [map_span_pair_eq_mul D.f (coprimeFactors_spec a b hb).1 (coprimeFactors_spec a b hb).2.1,
+        hg, Ideal.span_singleton_mul_span_singleton]
+    isCompact := D.isCompact
+    monotone := D.monotone }
 
-/-- The updated enumeration. -/
-def newEnum {A B : Type*} (n : ℕ) (f : A → B) (e : ℕ → ℕ → A × A) (η : ℕ → B × B) :
-    ℕ → ℕ → B × B :=
-  fun i j => if i ≤ n then Prod.map f f (e i j) else η j
+/-- In the case `a, b ≠ 0`, Proposition 4.6 makes `(a', b') A_{n+1}` principal. -/
+theorem principalizationStep_principal (S : Stage) (a b : S.A) (ha : a ≠ 0) (hb : b ≠ 0) :
+    ((Ideal.span {(coprimeFactors a b hb).2.1, (coprimeFactors a b hb).2.2} : Ideal S.A).map
+      (principalizationStep S a b ha hb).f).IsPrincipal :=
+  (principalizationResult _ _ (span_coprimeFactors_ne_bot ha hb) S.K S.isCompact_K).principal
 
-/-- A step, given an extension `A → A'` principalizing the processed pair, with a compact set
-`K'` mapping monotonically onto `K`. -/
-def mkStep (n : ℕ) (S : Stage) (A' : SmoothFactorialDomain) (f : S.A →ₐ[ℚ] A')
-    (K' : Set (RealPt A')) (hf : Function.Injective f) (hK' : IsCompact K')
-    (hmono : IsMonotoneSurjOn (RealPt.comap (f : S.A →+* A')) K' S.K)
-    (hprinc : (Ideal.span {f (S.pair n).1, f (S.pair n).2} : Ideal A').IsPrincipal) :
-    StepData n S where
-  next :=
-    { A := A'
-      ι := f.comp S.ι
-      K := K'
-      e := newEnum n f S.e (Classical.choose (exists_surjective_nat (A' × A')))
-      ι_injective := hf.comp S.ι_injective
-      K_compact := hK'
-      K_circle := fun z hz => by
-        have := S.K_circle _ (hmono.1 hz)
-        simpa using this
-      nonorientable := by
-        have := nonorientable_pullback (f : S.A →+* A') (S.ι x) (S.ι y) hK' hmono
-          (fun z hz => S.circle z hz) S.nonorientable
-        simpa using this }
-  map := f
-  map_injective := hf
-  ι_comp := rfl
-  e_old i hi j := by simp [newEnum, hi]
-  e_new := by
-    have h := Classical.choose_spec (exists_surjective_nat (A' × A'))
-    show Function.Surjective
-      (newEnum n f S.e (Classical.choose (exists_surjective_nat (A' × A'))) (n + 1))
-    have : newEnum n f S.e (Classical.choose (exists_surjective_nat (A' × A'))) (n + 1) =
-        Classical.choose (exists_surjective_nat (A' × A')) := by
-      funext j; simp [newEnum]
-    rw [this]; exact h
-  principal := hprinc
+/-- In the case `a, b ≠ 0`: `(a, b) A_{n+1} = c (a', b') A_{n+1}`. -/
+theorem principalizationStep_map_span (S : Stage) (a b : S.A) (ha : a ≠ 0) (hb : b ≠ 0) :
+    (Ideal.span {a, b} : Ideal S.A).map (principalizationStep S a b ha hb).f =
+      Ideal.span {(principalizationStep S a b ha hb).f (coprimeFactors a b hb).1} *
+        (Ideal.span {(coprimeFactors a b hb).2.1, (coprimeFactors a b hb).2.2} : Ideal S.A).map
+          (principalizationStep S a b ha hb).f :=
+  map_span_pair_eq_mul _ (coprimeFactors_spec a b hb).1 (coprimeFactors_spec a b hb).2.1
 
-/-- **Proposition 4.6 for coprime pairs**: the conclusion of `PrincipalizationExtension` for
-ideals `(a, b)` with `a, b` coprime and nonzero. This is all the construction needs. -/
-def CoprimePairPE : Prop :=
-  ∀ (A : SmoothFactorialDomain) (a b : A) (K : Set (RealPt A)),
-    IsRelPrime a b → a ≠ 0 → b ≠ 0 → IsCompact K →
-    ∃ (A' : SmoothFactorialDomain) (f : A →ₐ[ℚ] A') (K' : Set (RealPt A')),
-      Function.Injective f ∧ ((Ideal.span {a, b}).map f).IsPrincipal ∧ IsCompact K' ∧
-        IsMonotoneSurjOn (RealPt.comap (f : A →+* A')) K' K
+open Classical in
+/-- **One step of Construction 5.1**, for the pair `(a, b)` of `A_n`: if `a = 0` or `b = 0` then
+`A_{n+1} = A_n` and `K_{n+1} = K_n` (`trivialStep`); otherwise we extract the greatest common
+divisor and apply Proposition 4.6 to the coprime pair (`principalizationStep`). -/
+def step (S : Stage) (a b : S.A) : PrincipalizationResult S.A (Ideal.span {a, b}) S.K :=
+  if h : a = 0 ∨ b = 0 then trivialStep S a b h
+  else principalizationStep S a b (not_or.1 h).1 (not_or.1 h).2
 
-theorem PrincipalizationExtension.coprimePair (h : PrincipalizationExtension) : CoprimePairPE :=
-  fun A a b K _ ha _ hK => h A (Ideal.span {a, b}) K
-    (fun h0 => ha (by
-      have : a ∈ (⊥ : Ideal A) := h0 ▸ Ideal.subset_span (by simp)
-      simpa using this))
-    (Submodule.fg_span ((Set.finite_singleton _).insert _)) hK
+theorem step_of_eq_zero (S : Stage) (a b : S.A) (h : a = 0 ∨ b = 0) :
+    step S a b = trivialStep S a b h := by
+  rw [step, dite_eq_left h]
 
-/-- From the coprime case, Proposition 4.6 follows for every pair (extract a gcd). -/
-theorem CoprimePairPE.pair (hPE : CoprimePairPE) (A : SmoothFactorialDomain) (a b : A)
-    (K : Set (RealPt A)) (hK : IsCompact K) :
-    ∃ (A' : SmoothFactorialDomain) (f : A →ₐ[ℚ] A') (K' : Set (RealPt A')),
-      Function.Injective f ∧ ((Ideal.span {a, b}).map f).IsPrincipal ∧ IsCompact K' ∧
-        IsMonotoneSurjOn (RealPt.comap (f : A →+* A')) K' K := by
-  classical
-  by_cases hb : b = 0
-  · refine ⟨A, AlgHom.id ℚ A, K, Function.injective_id, ⟨⟨a, ?_⟩⟩, hK, IsMonotoneSurjOn.id K⟩
-    rw [hb, Ideal.map_span, Set.image_pair, Set.pair_comm]
-    simp
-  by_cases ha : a = 0
-  · refine ⟨A, AlgHom.id ℚ A, K, Function.injective_id, ⟨⟨b, ?_⟩⟩, hK, IsMonotoneSurjOn.id K⟩
-    rw [ha, Ideal.map_span, Set.image_pair]
-    simp
-  obtain ⟨a', b', c, hcop, rfl, rfl⟩ := UniqueFactorizationMonoid.exists_reduced_factors' a b hb
-  have ha' : a' ≠ 0 := by rintro rfl; exact ha (mul_zero c)
-  have hb' : b' ≠ 0 := by rintro rfl; exact hb (mul_zero c)
-  obtain ⟨A', f, K', hinj, ⟨⟨g, hg⟩⟩, hK', hmono⟩ := hPE A a' b' K hcop ha' hb' hK
-  refine ⟨A', f, K', hinj, ⟨⟨f c * g, ?_⟩⟩, hK', hmono⟩
-  have hsplit : (Ideal.span {c * a', c * b'} : Ideal A) = Ideal.span {c} * Ideal.span {a', b'} := by
-    rw [Ideal.span_mul_span, Set.singleton_mul, Set.image_pair]
-  rw [hsplit, Ideal.map_mul, hg, Ideal.map_span, Set.image_singleton,
-    Ideal.span_singleton_mul_span_singleton]
+theorem step_of_ne_zero (S : Stage) (a b : S.A) (ha : a ≠ 0) (hb : b ≠ 0) :
+    step S a b = principalizationStep S a b ha hb := by
+  rw [step, dite_eq_right (not_or.2 ⟨ha, hb⟩)]
 
-variable (hPE : CoprimePairPE)
-
-/-- The initial stage: `A₀ = ℚ[x,y]` and the circle `K₀`. -/
+/-- The stage `A_0 = ℚ[x, y]`, `K_0 = K₀`, with the surjection `η_0 : ℕ → A_0 × A_0`. -/
 def initialStage : Stage where
   A := A₀SFD
-  ι := AlgHom.id ℚ A₀
   K := K₀
-  e := fun _ => Classical.choose (exists_surjective_nat (A₀ × A₀))
-  ι_injective := Function.injective_id
-  K_compact := isCompact_K₀
-  K_circle := fun _ hz => hz
-  nonorientable := L₀_nonorientable
+  isCompact_K := isCompact_K₀
+  e _ := chooseSurj A₀SFD
 
-/-- One step of Construction 5.1: apply Proposition 4.6 (for pairs, reduced to coprime pairs by
-extracting a gcd) to the pair processed at time `n`, and carry along the compact set. -/
-def step (n : ℕ) (S : Stage) : StepData n S := by
-  classical
-  have h := hPE.pair S.A (S.pair n).1 (S.pair n).2 S.K S.K_compact
-  have h1 := Classical.choose_spec h
-  have h2 := Classical.choose_spec h1
-  have h3 := Classical.choose_spec h2
-  refine mkStep n S (Classical.choose h) (Classical.choose h1) (Classical.choose h2)
-    h3.1 h3.2.2.1 h3.2.2.2 ?_
-  have := h3.2.1
-  rwa [Ideal.map_span, Set.image_pair] at this
+/-- Passing from stage `n` to stage `n + 1`: the pair `S.pair n` is processed by `step`, the
+earlier pairs `e i j` (`i ≤ n`) are mapped to the new ring, and the surjection `η_{n+1}` is chosen
+for the new ring. -/
+def nextStage (n : ℕ) (S : Stage) : Stage where
+  A := (step S (S.pair n).1 (S.pair n).2).A'
+  K := (step S (S.pair n).1 (S.pair n).2).K'
+  isCompact_K := (step S (S.pair n).1 (S.pair n).2).isCompact
+  e i j :=
+    if i ≤ n then
+      Prod.map (step S (S.pair n).1 (S.pair n).2).f (step S (S.pair n).1 (S.pair n).2).f (S.e i j)
+    else chooseSurj (step S (S.pair n).1 (S.pair n).2).A' j
 
-/-- The stages `(Aₙ, Kₙ)` of Construction 5.1. -/
-def stage : ℕ → Stage := fun n => Nat.rec (initialStage) (fun n S => (step hPE n S).next) n
+lemma nextStage_e_of_le (n : ℕ) (S : Stage) {i : ℕ} (h : i ≤ n) (j : ℕ) :
+    (nextStage n S).e i j = Prod.map (step S (S.pair n).1 (S.pair n).2).f
+      (step S (S.pair n).1 (S.pair n).2).f (S.e i j) := by
+  simp only [nextStage, h, ite_true]
 
-lemma stage_zero : stage hPE 0 = initialStage := rfl
+lemma nextStage_e_succ (n : ℕ) (S : Stage) (j : ℕ) :
+    (nextStage n S).e (n + 1) j = chooseSurj (step S (S.pair n).1 (S.pair n).2).A' j := by
+  simp [nextStage]
 
-lemma stage_succ (n : ℕ) : stage hPE (n + 1) = (step hPE n (stage hPE n)).next := rfl
+/-- The stages of Construction 5.1. -/
+def stage (n : ℕ) : Stage := Nat.rec initialStage (fun n S => nextStage n S) n
 
-/-- The ring `Aₙ`. -/
-abbrev G (n : ℕ) : Type := (stage hPE n).A
+theorem stage_zero : stage 0 = initialStage := rfl
 
-/-- The injection `Aₙ ↪ Aₙ₊₁`. -/
-def trans (n : ℕ) : G hPE n →ₐ[ℚ] G hPE (n + 1) := (step hPE n (stage hPE n)).map
+theorem stage_succ (n : ℕ) : stage (n + 1) = nextStage n (stage n) := rfl
 
-lemma trans_injective (n : ℕ) : Function.Injective (trans hPE n) :=
-  (step hPE n (stage hPE n)).map_injective
+/-- The ring `A_n`. -/
+abbrev A (n : ℕ) : SmoothFactorialDomain := (stage n).A
 
-lemma ι_succ (n : ℕ) : (stage hPE (n + 1)).ι = (trans hPE n).comp (stage hPE n).ι :=
-  (step hPE n (stage hPE n)).ι_comp
+/-- The compact set `K_n ⊆ Spec(A_n)(ℝ)`. -/
+abbrev K (n : ℕ) : Set (RealPt (A n)) := (stage n).K
 
-/-- The composite `Aᵢ → Aⱼ` for `i ≤ j`. -/
-def transLE {i j : ℕ} (h : i ≤ j) (a : G hPE i) : G hPE j :=
-  Nat.leRecOn h (fun {k} (b : G hPE k) => trans hPE k b) a
+/-- The surjection `η_i : ℕ → A_i × A_i` chosen once `A_i` has been constructed. -/
+def η (i : ℕ) : ℕ → A i × A i := (stage i).e i
 
-lemma transLE_self (i : ℕ) (a : G hPE i) : transLE hPE (le_refl i) a = a :=
+/-- The pair `(a, b)` processed when passing from `A_n` to `A_{n+1}`. -/
+def pairAt (n : ℕ) : A n × A n := (stage n).pair n
+
+/-- The step from `A_n` to `A_{n+1}`. -/
+abbrev stepAt (n : ℕ) : PrincipalizationResult (A n) (Ideal.span {(pairAt n).1, (pairAt n).2})
+    (K n) :=
+  step (stage n) (pairAt n).1 (pairAt n).2
+
+/-- The injection `A_n ↪ A_{n+1}`. -/
+def incl (n : ℕ) : A n →ₐ[ℚ] A (n + 1) := (stepAt n).f
+
+theorem A_zero : A 0 = A₀SFD := rfl
+
+theorem K_zero : K 0 = K₀ := rfl
+
+/-- The case `a = 0` or `b = 0` of the construction: `A_{n+1} = A_n`, `K_{n+1} = K_n`. -/
+theorem stepAt_of_eq_zero (n : ℕ) (h : (pairAt n).1 = 0 ∨ (pairAt n).2 = 0) :
+    stepAt n = trivialStep (stage n) (pairAt n).1 (pairAt n).2 h :=
+  step_of_eq_zero _ _ _ h
+
+/-- The case `a ≠ 0` and `b ≠ 0` of the construction: Proposition 4.6 is applied to the coprime
+pair `(a', b')`. -/
+theorem stepAt_of_ne_zero (n : ℕ) (ha : (pairAt n).1 ≠ 0) (hb : (pairAt n).2 ≠ 0) :
+    stepAt n = principalizationStep (stage n) (pairAt n).1 (pairAt n).2 ha hb :=
+  step_of_ne_zero _ _ _ ha hb
+
+/-- If `a = 0` or `b = 0`, then `A_{n+1} = A_n`. -/
+theorem A_succ_of_eq_zero (n : ℕ) (h : (pairAt n).1 = 0 ∨ (pairAt n).2 = 0) :
+    A (n + 1) = A n := by
+  show (stepAt n).A' = (stage n).A
+  rw [stepAt_of_eq_zero n h]
+  rfl
+
+/-- If `a = 0` or `b = 0`, then `K_{n+1} = K_n` (as subsets of `Spec(A_{n+1})(ℝ) = Spec(A_n)(ℝ)`). -/
+theorem K_succ_of_eq_zero (n : ℕ) (h : (pairAt n).1 = 0 ∨ (pairAt n).2 = 0) :
+    HEq (K (n + 1)) (K n) := by
+  show HEq (stepAt n).K' (stage n).K
+  rw [stepAt_of_eq_zero n h]
+  exact HEq.rfl
+
+/-- Every `K_n` is compact. -/
+theorem isCompact_K (n : ℕ) : IsCompact (K n) := (stage n).isCompact_K
+
+/-- Every map `A_n → A_{n+1}` is injective. -/
+theorem incl_injective (n : ℕ) : Function.Injective (incl n) := (stepAt n).injective
+
+/-- Every induced map `K_{n+1} → K_n` is a monotone surjection. -/
+theorem isMonotoneSurjOn_incl (n : ℕ) :
+    IsMonotoneSurjOn (RealPt.comap (incl n : A n →+* A (n + 1))) (K (n + 1)) (K n) :=
+  (stepAt n).monotone
+
+/-- The pair processed when passing from `A_n` to `A_{n+1}` generates a principal ideal of
+`A_{n+1}`. -/
+theorem span_pairAt_map_isPrincipal (n : ℕ) :
+    ((Ideal.span {(pairAt n).1, (pairAt n).2} : Ideal (A n)).map (incl n)).IsPrincipal :=
+  (stepAt n).principal
+
+/-! ### The composite maps `A_i → A_j` -/
+
+/-- The composite `A_i → A_j` for `i ≤ j`, as a function. -/
+def inclLEFun {i j : ℕ} (h : i ≤ j) (a : A i) : A j :=
+  Nat.leRecOn h (fun {k} (b : A k) => incl k b) a
+
+lemma inclLEFun_self (i : ℕ) (a : A i) : inclLEFun (le_refl i) a = a :=
   Nat.leRecOn_self _
 
-lemma transLE_succ {i j : ℕ} (h : i ≤ j) (a : G hPE i) :
-    transLE hPE (h.trans (Nat.le_succ j)) a = trans hPE j (transLE hPE h a) :=
+lemma inclLEFun_succ {i j : ℕ} (h : i ≤ j) (a : A i) :
+    inclLEFun (h.trans (Nat.le_succ j)) a = incl j (inclLEFun h a) :=
   Nat.leRecOn_succ h _
 
-lemma transLE_trans {i j k : ℕ} (hij : i ≤ j) (hjk : j ≤ k) (a : G hPE i) :
-    transLE hPE (hij.trans hjk) a = transLE hPE hjk (transLE hPE hij a) :=
+lemma inclLEFun_trans {i j k : ℕ} (hij : i ≤ j) (hjk : j ≤ k) (a : A i) :
+    inclLEFun (hij.trans hjk) a = inclLEFun hjk (inclLEFun hij a) :=
   Nat.leRecOn_trans hij hjk _
 
-lemma transLE_one (i j : ℕ) (h : i ≤ j) : transLE hPE h 1 = 1 := by
-  induction j, h using Nat.le_induction with
-  | base => exact transLE_self hPE i 1
-  | succ k hik ih => rw [transLE_succ hPE hik, ih, map_one]
+/-- The composite `A_i → A_j` for `i ≤ j`, as a ring homomorphism. -/
+def inclLE {i j : ℕ} (h : i ≤ j) : A i →+* A j where
+  toFun := inclLEFun h
+  map_one' := by
+    induction j, h using Nat.le_induction with
+    | base => exact inclLEFun_self i 1
+    | succ k hik ih => rw [inclLEFun_succ hik, ih, map_one]
+  map_mul' a b := by
+    induction j, h using Nat.le_induction with
+    | base => simp only [inclLEFun_self]
+    | succ k hik ih => rw [inclLEFun_succ hik, inclLEFun_succ hik, inclLEFun_succ hik, ih,
+        map_mul]
+  map_zero' := by
+    induction j, h using Nat.le_induction with
+    | base => exact inclLEFun_self i 0
+    | succ k hik ih => rw [inclLEFun_succ hik, ih, map_zero]
+  map_add' a b := by
+    induction j, h using Nat.le_induction with
+    | base => simp only [inclLEFun_self]
+    | succ k hik ih => rw [inclLEFun_succ hik, inclLEFun_succ hik, inclLEFun_succ hik, ih,
+        map_add]
 
-lemma transLE_zero (i j : ℕ) (h : i ≤ j) : transLE hPE h 0 = 0 := by
-  induction j, h using Nat.le_induction with
-  | base => exact transLE_self hPE i 0
-  | succ k hik ih => rw [transLE_succ hPE hik, ih, map_zero]
+lemma inclLE_apply {i j : ℕ} (h : i ≤ j) (a : A i) : inclLE h a = inclLEFun h a := rfl
 
-lemma transLE_mul (i j : ℕ) (h : i ≤ j) (a b : G hPE i) :
-    transLE hPE h (a * b) = transLE hPE h a * transLE hPE h b := by
-  induction j, h using Nat.le_induction with
-  | base => simp only [transLE_self]
-  | succ k hik ih => rw [transLE_succ hPE hik, transLE_succ hPE hik, transLE_succ hPE hik, ih,
-      map_mul]
+lemma inclLE_self (i : ℕ) (a : A i) : inclLE (le_refl i) a = a := inclLEFun_self i a
 
-lemma transLE_add (i j : ℕ) (h : i ≤ j) (a b : G hPE i) :
-    transLE hPE h (a + b) = transLE hPE h a + transLE hPE h b := by
-  induction j, h using Nat.le_induction with
-  | base => simp only [transLE_self]
-  | succ k hik ih => rw [transLE_succ hPE hik, transLE_succ hPE hik, transLE_succ hPE hik, ih,
-      map_add]
+lemma inclLE_succ {i j : ℕ} (h : i ≤ j) (a : A i) :
+    inclLE (h.trans (Nat.le_succ j)) a = incl j (inclLE h a) := inclLEFun_succ h a
 
-/-- The composite `Aᵢ → Aⱼ` as a ring homomorphism. -/
-def transHom (i j : ℕ) (h : i ≤ j) : G hPE i →+* G hPE j where
-  toFun := transLE hPE h
-  map_one' := transLE_one hPE i j h
-  map_mul' := transLE_mul hPE i j h
-  map_zero' := transLE_zero hPE i j h
-  map_add' := transLE_add hPE i j h
+lemma inclLE_trans {i j k : ℕ} (hij : i ≤ j) (hjk : j ≤ k) (a : A i) :
+    inclLE (hij.trans hjk) a = inclLE hjk (inclLE hij a) := inclLEFun_trans hij hjk a
 
-lemma transHom_injective (i j : ℕ) (h : i ≤ j) : Function.Injective (transHom hPE i j h) :=
-  Nat.leRecOn_injective h _ (fun k => trans_injective hPE k)
+lemma inclLE_succ_self (n : ℕ) (a : A n) : inclLE (Nat.le_succ n) a = incl n a := by
+  rw [← inclLE_self n a, ← inclLE_succ (le_refl n), inclLE_self]
 
-instance directedSystem : DirectedSystem (G hPE) fun i j h => ⇑(transHom hPE i j h) where
-  map_self i a := transLE_self hPE i a
-  map_map _ _ _ hij hjk a := (transLE_trans hPE hij hjk a).symm
+/-- The composites `A_i → A_j` are injective. -/
+lemma inclLE_injective {i j : ℕ} (h : i ≤ j) : Function.Injective (inclLE h) :=
+  Nat.leRecOn_injective h _ (fun k => incl_injective k)
 
-/-- **The ring `R = ⋃ₙ Aₙ`** (equation (5.1)), as a direct limit. -/
-def R : Type := Ring.DirectLimit (G hPE) fun i j h => ⇑(transHom hPE i j h)
+instance directedSystem :
+    DirectedSystem (fun n => (A n : Type)) fun _ _ h => ⇑(inclLE h) where
+  map_self i a := inclLE_self i a
+  map_map _ _ _ hij hjk a := (inclLE_trans hij hjk a).symm
+
+/-- The injection `A₀ ↪ A_n`, identifying `A₀` with its image in `A_n`. -/
+def ι (n : ℕ) : A₀ →+* A n := inclLE (Nat.zero_le n)
+
+lemma ι_zero (a : A₀) : ι 0 a = a := inclLE_self 0 a
+
+lemma ι_succ (n : ℕ) (a : A₀) : ι (n + 1) a = incl n (ι n a) :=
+  inclLE_succ (Nat.zero_le n) a
+
+/-! ### The surjections `η_i` and the pairs processed -/
+
+/-- `η_i : ℕ → A_i × A_i` is surjective. -/
+theorem η_surjective (i : ℕ) : Function.Surjective (η i) := by
+  cases i with
+  | zero => exact chooseSurj_surjective A₀SFD
+  | succ n =>
+    have : η (n + 1) = chooseSurj (A (n + 1)) := funext fun j => nextStage_e_succ n (stage n) j
+    rw [this]
+    exact chooseSurj_surjective _
+
+/-- For `i ≤ n`, `e i j` at stage `n` is the image in `A_n` of `η_i(j)`. -/
+theorem e_eq {i : ℕ} (j : ℕ) {n : ℕ} (h : i ≤ n) :
+    (stage n).e i j = Prod.map (inclLE h) (inclLE h) (η i j) := by
+  induction n, h using Nat.le_induction with
+  | base => ext <;> simp [η, inclLE_self]
+  | succ k hik ih =>
+    have h1 : (stage (k + 1)).e i j = Prod.map (incl k) (incl k) ((stage k).e i j) :=
+      nextStage_e_of_le k (stage k) hik j
+    rw [h1, ih]
+    ext <;> simp only [Prod.map_fst, Prod.map_snd] <;> exact (inclLE_succ hik _).symm
+
+/-- **The pair processed at step `n = ⟨i, j⟩`** is the image in `A_n` of `η_i(j)`. -/
+theorem pairAt_eq (i j : ℕ) :
+    pairAt (pairing (i, j)) =
+      Prod.map (inclLE (left_le_pairing i j)) (inclLE (left_le_pairing i j)) (η i j) := by
+  have h := e_eq j (left_le_pairing i j)
+  rw [pairAt, Stage.pair, Equiv.symm_apply_apply]
+  exact h
+
+/-! ### Real points: the composite `K_n → K_0` and (5.2) -/
+
+/-- **Lemma 2.2 applied to the transition maps**: the composite `K_n → K_0` is a monotone
+surjection. -/
+theorem isMonotoneSurjOn_ι (n : ℕ) : IsMonotoneSurjOn (RealPt.comap (ι n)) (K n) K₀ := by
+  induction n with
+  | zero =>
+    have : RealPt.comap (ι 0) = fun z => z := by
+      funext z
+      ext a
+      exact congrArg z (ι_zero a)
+    rw [this]
+    exact IsMonotoneSurjOn.id K₀
+  | succ n ih =>
+    have : RealPt.comap (ι (n + 1)) =
+        RealPt.comap (ι n) ∘ RealPt.comap (incl n : A n →+* A (n + 1)) := by
+      funext z
+      ext a
+      simp only [Function.comp_apply, RealPt.comap_apply, ι_succ]
+      rfl
+    rw [this]
+    exact IsMonotoneSurjOn.trans (isCompact_K (n + 1)) ih (isMonotoneSurjOn_incl n)
+
+/-- `K_n` maps to `K_0`. -/
+theorem mapsTo_K₀ (n : ℕ) : MapsTo (RealPt.comap (ι n)) (K n) K₀ :=
+  (isMonotoneSurjOn_ι n).1
+
+/-- `Δ` vanishes at every point of `K_n`. -/
+theorem Δ_eq_zero (n : ℕ) {z : RealPt (A n)} (hz : z ∈ K n) : z (ι n Δ) = 0 :=
+  mapsTo_K₀ n hz
+
+/-- The functions `x`, `y` satisfy `x² + y² = 1` on `K_n`. -/
+theorem circle (n : ℕ) {z : RealPt (A n)} (hz : z ∈ K n) :
+    z (ι n x) ^ 2 + z (ι n y) ^ 2 = 1 :=
+  K₀_circle (mapsTo_K₀ n hz)
+
+/-- Every `K_n` is nonempty. -/
+theorem K_nonempty (n : ℕ) : (K n).Nonempty := by
+  induction n with
+  | zero => exact ⟨circlePt 0, circlePt_mem 0⟩
+  | succ n ih =>
+    obtain ⟨z, hz⟩ := ih
+    obtain ⟨hmaps, hq⟩ := isMonotoneSurjOn_incl n
+    obtain ⟨w, -⟩ := hq.surjective ⟨z, hz⟩
+    exact ⟨w.1, w.2⟩
+
+/-- **(5.2)** (`eq:nonorientable-stages`): for every `n`, the line bundle `L_n = L_{x,y}` on
+`K_n` is nonorientable. It is the pullback of `L₀` along the composite `K_n → K_0` of the
+transition maps, which is a monotone surjection by Lemma 2.2 (`isMonotoneSurjOn_ι`); hence
+Lemma 2.1 applies. -/
+theorem nonorientable (n : ℕ) :
+    ¬ IsOrientable (fun z : K n => z.1 (ι n x)) (fun z : K n => z.1 (ι n y)) :=
+  not_isOrientable_pullback (ι n) x y (isCompact_K n) (isMonotoneSurjOn_ι n)
+    (fun _ hz => K₀_circle hz) L₀_not_isOrientable
+
+end Construction
+
+open Construction
+
+/-! ## The ring `R = ⋃ A_n` -/
+
+/-- **The ring `R = ⋃_{n ≥ 0} A_n`** (5.1), the direct limit of the injections
+`A_0 ↪ A_1 ↪ A_2 ↪ ⋯` of Construction 5.1. -/
+def R : Type := Ring.DirectLimit (fun n => (A n : Type)) fun _ _ h => ⇑(inclLE h)
 
 namespace R
 
-instance : CommRing (R hPE) := inferInstanceAs (CommRing (Ring.DirectLimit _ _))
+instance : CommRing R := inferInstanceAs (CommRing (Ring.DirectLimit _ _))
 
-/-- The inclusion `Aₙ ↪ R`. -/
-def of (n : ℕ) : G hPE n →+* R hPE := Ring.DirectLimit.of (G hPE) _ n
+/-- The inclusion `A_n ↪ R`. -/
+def of (n : ℕ) : A n →+* R := Ring.DirectLimit.of (fun n => (A n : Type)) _ n
 
-lemma of_transHom {i j : ℕ} (h : i ≤ j) (a : G hPE i) :
-    of hPE j (transHom hPE i j h a) = of hPE i a :=
-  Ring.DirectLimit.of_f h a
+lemma of_inclLE {i j : ℕ} (h : i ≤ j) (a : A i) : of j (inclLE h a) = of i a :=
+  Ring.DirectLimit.of_f (G := fun n => (A n : Type)) (f := fun _ _ h => ⇑(inclLE h)) h a
 
-lemma of_trans (n : ℕ) (a : G hPE n) : of hPE (n + 1) (trans hPE n a) = of hPE n a := by
-  have h := of_transHom hPE (Nat.le_succ n) a
-  have h2 : transHom hPE n (n + 1) (Nat.le_succ n) a = trans hPE n a := by
-    show transLE hPE _ a = _
-    exact (transLE_succ hPE (le_refl n) a).trans (congrArg _ (transLE_self hPE n a))
-  rwa [h2] at h
+lemma of_incl (n : ℕ) (a : A n) : of (n + 1) (incl n a) = of n a := by
+  rw [← inclLE_succ_self, of_inclLE]
 
-lemma of_injective (n : ℕ) : Function.Injective (of hPE n) :=
-  Ring.DirectLimit.of_injective (G := G hPE) (fun i j h => transHom hPE i j h)
-    (fun i j h => transHom_injective hPE i j h) n
+/-- Every `A_n → R` is injective: we identify `A_n` with its image in `R`. -/
+lemma of_injective (n : ℕ) : Function.Injective (of n) :=
+  Ring.DirectLimit.of_injective (G := fun n => (A n : Type)) (fun _ _ h => inclLE h)
+    (fun _ _ h => inclLE_injective h) n
 
-lemma exists_of (r : R hPE) : ∃ n a, of hPE n a = r := Ring.DirectLimit.exists_of r
+lemma exists_of (r : R) : ∃ n a, of n a = r := Ring.DirectLimit.exists_of r
 
-/-- Any finite family of elements of `R` comes from a single stage. -/
-lemma exists_of_fin (k : ℕ) (v : Fin k → R hPE) :
-    ∃ (n : ℕ) (w : Fin k → G hPE n), ∀ t, of hPE n (w t) = v t := by
+/-- Any finite family of elements of `R` lies in a single `A_n`. -/
+lemma exists_of_fin (k : ℕ) (v : Fin k → R) :
+    ∃ (n : ℕ) (w : Fin k → A n), ∀ t, of n (w t) = v t := by
   induction k with
   | zero => exact ⟨0, Fin.elim0, fun t => Fin.elim0 t⟩
   | succ k ih =>
     obtain ⟨n, w, hw⟩ := ih (fun t => v t.castSucc)
-    obtain ⟨m, a, ha⟩ := exists_of hPE (v (Fin.last k))
-    refine ⟨max n m, Fin.lastCases (transHom hPE m (max n m) (le_max_right n m) a)
-      (fun t => transHom hPE n (max n m) (le_max_left n m) (w t)), fun t => ?_⟩
+    obtain ⟨m, a, ha⟩ := exists_of (v (Fin.last k))
+    refine ⟨max n m, Fin.lastCases (inclLE (le_max_right n m) a)
+      (fun t => inclLE (le_max_left n m) (w t)), fun t => ?_⟩
     induction t using Fin.lastCases with
-    | last => simp only [Fin.lastCases_last, of_transHom, ha]
-    | cast t => simp only [Fin.lastCases_castSucc, of_transHom, hw]
+    | last => simp only [Fin.lastCases_last, of_inclLE, ha]
+    | cast t => simp only [Fin.lastCases_castSucc, of_inclLE, hw]
 
 /-- The inclusion `A₀ ↪ R`. -/
-def ι : A₀ →+* R hPE := of hPE 0
+def ι : A₀ →+* R := of 0
 
-lemma of_comp_ι (n : ℕ) : (of hPE n).comp ((stage hPE n).ι : A₀ →+* G hPE n) = ι hPE := by
-  induction n with
-  | zero => rfl
-  | succ n ih =>
-    rw [← ih]
-    ext a
-    · simp only [RingHom.comp_apply]
-      rw [ι_succ]
-      simp only [AlgHom.coe_toRingHom, AlgHom.comp_apply]
-      exact of_trans hPE n _
-    · simp only [RingHom.comp_apply]
-      rw [ι_succ]
-      simp only [AlgHom.coe_toRingHom, AlgHom.comp_apply]
-      exact of_trans hPE n _
+lemma of_ι (n : ℕ) (a : A₀) : of n (Construction.ι n a) = ι a :=
+  of_inclLE (Nat.zero_le n) a
 
-lemma of_ι (n : ℕ) (a : A₀) : of hPE n ((stage hPE n).ι a) = ι hPE a :=
-  congrArg (fun g : A₀ →+* R hPE => g a) (of_comp_ι hPE n)
+/-- `A₀ → R` is injective. -/
+lemma ι_injective : Function.Injective ι := of_injective 0
 
-lemma ι_injective : Function.Injective (ι hPE) := of_injective hPE 0
-
-instance : Nontrivial (R hPE) := by
+instance : Nontrivial R := by
   refine ⟨⟨0, 1, fun h => ?_⟩⟩
-  have : of hPE 0 0 = of hPE 0 1 := by simpa using h
-  exact zero_ne_one (of_injective hPE 0 this)
+  have : of 0 0 = of 0 1 := by simpa using h
+  exact zero_ne_one (of_injective 0 this)
 
-instance : IsDomain (R hPE) := by
-  have : NoZeroDivisors (R hPE) := ⟨fun {a b} hab => by
-      obtain ⟨n, w, hw⟩ := exists_of_fin hPE 2 ![a, b]
-      have ha : of hPE n (w 0) = a := hw 0
-      have hb : of hPE n (w 1) = b := hw 1
+/-- An increasing union of domains is a domain. -/
+instance isDomain : IsDomain R := by
+  have : NoZeroDivisors R := ⟨fun {a b} hab => by
+      obtain ⟨n, w, hw⟩ := exists_of_fin 2 ![a, b]
+      have ha : of n (w 0) = a := hw 0
+      have hb : of n (w 1) = b := hw 1
       have : w 0 * w 1 = 0 := by
-        apply of_injective hPE n
+        apply of_injective n
         rw [map_mul, ha, hb, hab, map_zero]
       rcases mul_eq_zero.1 this with h | h
       · left; rw [← ha, h, map_zero]
       · right; rw [← hb, h, map_zero]⟩
   exact NoZeroDivisors.to_isDomain _
 
-/-- `R` is countable. -/
-instance : Countable (R hPE) := by
-  have : Function.Surjective fun p : Σ n, G hPE n => of hPE p.1 p.2 := by
+/-- `R` is countable, because every `A_n` is countable. -/
+instance countable : Countable R := by
+  have : Function.Surjective fun p : Σ n, (A n : Type) => of p.1 p.2 := by
     intro r
-    obtain ⟨n, a, h⟩ := exists_of hPE r
+    obtain ⟨n, a, h⟩ := exists_of r
     exact ⟨⟨n, a⟩, h⟩
   exact this.countable
 
-/-! #### Enumeration bookkeeping -/
-
-lemma e_zero_surjective : Function.Surjective ((stage hPE 0).e 0) :=
-  Classical.choose_spec (exists_surjective_nat (A₀ × A₀))
-
-lemma e_diag_surjective (m : ℕ) : Function.Surjective ((stage hPE m).e m) := by
-  cases m with
-  | zero => exact e_zero_surjective hPE
-  | succ m => exact (step hPE m (stage hPE m)).e_new
-
-lemma e_transport (m : ℕ) (j : ℕ) :
-    ∀ n (h : m ≤ n), (stage hPE n).e m j =
-      Prod.map (transHom hPE m n h) (transHom hPE m n h) ((stage hPE m).e m j) := by
-  intro n h
-  induction n, h using Nat.le_induction with
-  | base =>
-    ext <;> simp [transHom, transLE_self]
-  | succ k hmk ih =>
-    show (step hPE k (stage hPE k)).next.e m j = _
-    rw [(step hPE k (stage hPE k)).e_old m hmk j, ih]
-    ext <;> simp only [Prod.map_fst, Prod.map_snd] <;>
-      exact (transLE_succ hPE hmk _).symm
-
-/-- **Proposition 5.2 (Bézout).** Every two-generated ideal of `R` is principal. -/
-instance isBezout : IsBezout (R hPE) := by
+/-- **`R` is a Bézout domain.** Let `a, b ∈ R`; choose `i` with `a, b ∈ A_i` and `j` with
+`η_i(j) = (a, b)`. This pair is processed when passing from `A_n` to `A_{n+1}`, `n = ⟨i, j⟩`,
+so `(a, b) A_{n+1} = g A_{n+1}` for some `g ∈ A_{n+1}`; extension to `R` gives `(a, b) R = g R`. -/
+instance isBezout : IsBezout R := by
   rw [IsBezout.iff_span_pair_isPrincipal]
   intro a b
-  obtain ⟨m, w, hw⟩ := exists_of_fin hPE 2 ![a, b]
-  obtain ⟨j, hj⟩ := e_diag_surjective hPE m (w 0, w 1)
-  set n := Nat.pair m j
-  have hmn : m ≤ n := Nat.left_le_pair m j
-  have hpair : (stage hPE n).pair n =
-      (transHom hPE m n hmn (w 0), transHom hPE m n hmn (w 1)) := by
-    rw [Stage.pair, Nat.unpair_pair, e_transport hPE m j n hmn, hj]
+  obtain ⟨i, w, hw⟩ := exists_of_fin 2 ![a, b]
+  obtain ⟨j, hj⟩ := η_surjective i (w 0, w 1)
+  set n := pairing (i, j)
+  have hpair : pairAt n = (inclLE (left_le_pairing i j) (w 0),
+      inclLE (left_le_pairing i j) (w 1)) := by
+    rw [pairAt_eq, hj]
     rfl
-  obtain ⟨g, hg⟩ := (step hPE n (stage hPE n)).principal
-  let g' : G hPE (n + 1) := g
-  have hg' : (Ideal.span {trans hPE n ((stage hPE n).pair n).1,
-      trans hPE n ((stage hPE n).pair n).2} : Ideal (G hPE (n + 1))) =
-      Ideal.span {g'} := hg
-  have hmap := congrArg (Ideal.map (of hPE (n + 1))) hg'
-  rw [Ideal.map_span, Ideal.map_span, Set.image_pair, Set.image_singleton, hpair, of_trans,
-    of_trans, of_transHom, of_transHom, hw 0, hw 1] at hmap
-  exact ⟨⟨of hPE (n + 1) g', by simpa using hmap⟩⟩
+  obtain ⟨g, hg⟩ := span_pairAt_map_isPrincipal n
+  have hg' : (Ideal.span {incl n (inclLE (left_le_pairing i j) (w 0)),
+      incl n (inclLE (left_le_pairing i j) (w 1))} : Ideal (A (n + 1))) = Ideal.span {g} := by
+    refine Eq.trans ?_ hg
+    rw [Ideal.map_span, Set.image_pair, hpair]
+  have hmap := congrArg (Ideal.map (of (n + 1))) hg'
+  rw [Ideal.map_span, Ideal.map_span, Set.image_pair, Set.image_singleton, of_incl, of_incl,
+    of_inclLE, of_inclLE, hw 0, hw 1] at hmap
+  exact ⟨⟨of (n + 1) g, by simpa using hmap⟩⟩
 
-/-- The real points of the stage `Aₙ` lying in `Kₙ` form a nonempty set. -/
-lemma K_nonempty (n : ℕ) : (stage hPE n).K.Nonempty := by
-  by_contra h
-  rw [Set.not_nonempty_iff_eq_empty] at h
-  have he : IsEmpty (stage hPE n).K := Set.isEmpty_coe_sort.2 h
-  apply (stage hPE n).nonorientable
-  exact ⟨fun z => (he.false z).elim, continuous_of_const fun z => (he.false z).elim,
-    fun z => (he.false z).elim⟩
+/-- `R` is a `ℚ`-algebra (it contains `ℚ ⊆ A₀`). -/
+instance : Algebra ℚ R := ((ι).comp (algebraMap ℚ A₀)).toAlgebra
 
-/-- **Proposition 5.2.** `Δ` is a nonzero element of `R`. -/
-lemma Δ_ne_zero : ι hPE Δ ≠ 0 := by
-  intro h
-  have : (Δ : A₀) = 0 := ι_injective hPE (by rw [h, map_zero])
-  have h2 := congrArg (MvPolynomial.eval (fun _ => (0 : ℚ))) this
-  simp [Δ, x, y] at h2
-
-/-- **Proposition 5.2.** `Δ` is not a unit of `R`. -/
-lemma Δ_not_isUnit : ¬ IsUnit (ι hPE Δ) := by
-  rintro ⟨u, hu⟩
-  obtain ⟨n, w, hw⟩ := exists_of_fin hPE 1 ![(u⁻¹ : (R hPE)ˣ)]
-  have h1 : (stage hPE n).ι Δ * w 0 = 1 := by
-    apply of_injective hPE n
-    rw [map_mul, map_one, of_ι, hw 0, ← hu]
-    simp
-  obtain ⟨z, hz⟩ := K_nonempty hPE n
-  have h2 := congrArg z h1
-  rw [map_mul, map_one, (stage hPE n).K_circle z hz, zero_mul] at h2
-  exact zero_ne_one h2
-
-/-- `R` is a `ℚ`-algebra, hence of characteristic zero. -/
-instance : Algebra ℚ (R hPE) := ((ι hPE).comp (algebraMap ℚ A₀)).toAlgebra
-
-instance : CharZero (R hPE) :=
-  charZero_of_injective_algebraMap (algebraMap ℚ (R hPE)).injective
+/-- `R` has characteristic zero, since it contains `ℚ`. -/
+instance charZero : CharZero R :=
+  charZero_of_injective_algebraMap (algebraMap ℚ R).injective
 
 /-- `x` and `y` remain algebraically independent over `ℚ` in `R`. -/
-lemma algebraicIndependent : AlgebraicIndependent ℚ ![ι hPE x, ι hPE y] := by
+theorem algebraicIndependent : AlgebraicIndependent ℚ ![ι x, ι y] := by
   rw [algebraicIndependent_iff_injective_aeval]
-  have : (MvPolynomial.aeval ![ι hPE x, ι hPE y] : A₀ →ₐ[ℚ] R hPE).toRingHom = ι hPE := by
+  have : (MvPolynomial.aeval ![ι x, ι y] : A₀ →ₐ[ℚ] R).toRingHom = ι := by
     apply MvPolynomial.ringHom_ext
     · intro r
       simp only [AlgHom.toRingHom_eq_coe, AlgHom.coe_toRingHom, MvPolynomial.aeval_C]
@@ -509,10 +612,41 @@ lemma algebraicIndependent : AlgebraicIndependent ℚ ![ι hPE x, ι hPE y] := b
     · intro i
       fin_cases i <;> simp [x, y]
   intro p q hpq
-  apply ι_injective hPE
+  apply ι_injective
   rw [← this]
   exact hpq
 
+/-- `Δ` is a nonzero element of `R`. -/
+theorem Δ_ne_zero : ι Δ ≠ 0 := by
+  intro h
+  have : (Δ : A₀) = 0 := ι_injective (by rw [h, map_zero])
+  have h2 := congrArg (MvPolynomial.eval (fun _ => (0 : ℚ))) this
+  simp [Δ, x, y] at h2
+
+/-- **`Δ` is not a unit of `R`.** If it were, its inverse would lie in some `A_N`, the identity
+`Δ Δ⁻¹ = 1` would hold in `A_N`, and evaluation at a point of the nonempty set `K_N`, where `Δ`
+vanishes, would give `0 = 1`. -/
+theorem Δ_not_isUnit : ¬ IsUnit (ι Δ) := by
+  rintro ⟨u, hu⟩
+  obtain ⟨N, w, hw⟩ := exists_of_fin 1 ![(u⁻¹ : Rˣ)]
+  have h1 : Construction.ι N Δ * w 0 = 1 := by
+    apply of_injective N
+    rw [map_mul, map_one, of_ι, hw 0, ← hu]
+    simp
+  obtain ⟨z, hz⟩ := K_nonempty N
+  have h2 := congrArg z h1
+  rw [map_mul, map_one, Δ_eq_zero N hz, zero_mul] at h2
+  exact zero_ne_one h2
+
 end R
+
+/-- **Proposition 5.2** (`prop:bezout-domain`). The ring `R` is a countable Bézout domain of
+characteristic zero. The elements `x` and `y` remain algebraically independent over `ℚ`, and `Δ`
+is a nonzero nonunit of `R`. -/
+theorem bezout_domain :
+    Countable R ∧ IsDomain R ∧ IsBezout R ∧ CharZero R ∧
+      AlgebraicIndependent ℚ ![R.ι x, R.ι y] ∧ R.ι Δ ≠ 0 ∧ ¬ IsUnit (R.ι Δ) :=
+  ⟨R.countable, R.isDomain, R.isBezout, R.charZero, R.algebraicIndependent, R.Δ_ne_zero,
+    R.Δ_not_isUnit⟩
 
 end BezoutCounterexample

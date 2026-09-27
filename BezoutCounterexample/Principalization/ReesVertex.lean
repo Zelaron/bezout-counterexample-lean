@@ -46,8 +46,8 @@ lemma wcomp_mul {a b : ℕ} {F G : MvPowerSeries (Fin n) K}
       rw [← map_add, hp, hγ]
     rw [coeff_wcomp, coeff_wcomp]
     by_cases h1 : Finsupp.weight w p.1 = a
-    · rw [if_pos h1, if_pos (by omega)]
-    · rw [if_neg h1, zero_mul]
+    · rw [ite_eq_left h1, ite_eq_left (by omega)]
+    · rw [ite_eq_right h1, zero_mul]
       rcases Nat.lt_or_gt_of_ne h1 with h | h
       · rw [hF _ h, zero_mul]
       · rw [hG _ (by omega), mul_zero]
@@ -85,16 +85,13 @@ lemma mem_RF_iff_weight (a : ℕ) (z : S) :
   rw [lam_eq_weight hd hw, div_lt_div_iff_of_pos_right (by exact_mod_cast hd)]
   exact Nat.cast_lt
 
-omit hc he hd hw in
-lemma lt_succ_weight {a : ℕ} {m : ℕ} : m < a + 1 ↔ m < a ∨ m = a := by omega
-
 /-- **The associated graded ring of a weighted filtration is a domain** (initial forms). -/
 theorem RF_mul_not_mem [IsDomain (ResidueField S)] {a b : ℕ} {z z' : S}
     (hz : z ∈ c.RF e ((a : ℚ) / d)) (hz1 : z ∉ c.RF e (((a + 1 : ℕ) : ℚ) / d))
     (hz' : z' ∈ c.RF e ((b : ℚ) / d)) (hz'1 : z' ∉ c.RF e (((b + 1 : ℕ) : ℚ) / d)) :
     z * z' ∉ c.RF e (((a + b + 1 : ℕ) : ℚ) / d) := by
   rw [mem_RF_iff_weight c hc he hd hw] at hz hz' hz1 hz'1 ⊢
-  push_neg at hz1 hz'1 ⊢
+  push Not at hz1 hz'1 ⊢
   obtain ⟨β, hβ, hβne⟩ := hz1
   obtain ⟨β', hβ', hβ'ne⟩ := hz'1
   have hβa : Finsupp.weight w β = a := by
@@ -103,16 +100,16 @@ theorem RF_mul_not_mem [IsDomain (ResidueField S)] {a b : ℕ} {z z' : S}
     by_contra h; exact hβ'ne (hz' β' (by omega))
   have hF : wcomp w a (c.tau z) ≠ 0 := fun h => hβne (by
     have := congrArg (coeff β) h
-    rwa [coeff_wcomp, if_pos hβa, map_zero] at this)
+    rwa [coeff_wcomp, ite_eq_left hβa, map_zero] at this)
   have hG : wcomp w b (c.tau z') ≠ 0 := fun h => hβ'ne (by
     have := congrArg (coeff β') h
-    rwa [coeff_wcomp, if_pos hβb, map_zero] at this)
+    rwa [coeff_wcomp, ite_eq_left hβb, map_zero] at this)
   have hmul := wcomp_mul w hz hz'
   rw [← map_mul] at hmul
   have hne : wcomp w (a + b) (c.tau (z * z')) ≠ 0 := by
     rw [hmul]; exact mul_ne_zero hF hG
   by_contra hall
-  push_neg at hall
+  push Not at hall
   apply hne
   ext γ
   rw [coeff_wcomp, map_zero]
@@ -138,6 +135,7 @@ variable {I : Ideal A} (hI : I ≠ ⊥) {v₀ : ℕ → ℚ}
   (hw : ∀ i, ∃ w : ℕ, (w : ℚ) = d * v₀ i)
 include hI hmax h𝔭 hd hw
 
+omit hd in
 /-- The local data at a point of the component: a maximal centre with integral weights. -/
 lemma exists_centre_data (𝔪 : Ideal A) [𝔪.IsMaximal] (h𝔭𝔪 : 𝔭 ≤ 𝔪) :
     ∃ (n : ℕ) (J : MC (Localization.AtPrime 𝔪) n) (w : Fin n → ℕ),
@@ -172,7 +170,7 @@ theorem not_mem_loc {a : ℕ} {x : A} (hx : x ∈ (compFil hI hmax h𝔭 d).F a)
   have hh𝔭 : h ∉ 𝔭 := fun h' => hh (h𝔭𝔪₀ h')
   rw [compFil_mem_iff]
   intro 𝔪 _ h𝔭𝔪
-  obtain ⟨n, J, w, hwe, hcRF⟩ := exists_centre_data hI hmax h𝔭 hd hw 𝔪 h𝔭𝔪
+  obtain ⟨n, J, w, hwe, hcRF⟩ := exists_centre_data hI hmax h𝔭 hw 𝔪 h𝔭𝔪
   have hx' := (compFil_mem_iff hI hmax h𝔭 a x).1 hx 𝔪 h𝔭𝔪
   have hhx' := (compFil_mem_iff hI hmax h𝔭 (a + 1) (h * x)).1 hhx 𝔪 h𝔭𝔪
   rw [hcRF] at hx' hhx' ⊢
@@ -185,12 +183,12 @@ theorem not_mem_loc {a : ℕ} {x : A} (hx : x ∈ (compFil hI hmax h𝔭 d).F a)
         (compF I 𝔭 (1 / d)).map (algebraMap A (Localization.AtPrime 𝔪)) := by
       rw [compF_map hI hmax h𝔭 𝔪 h𝔭𝔪]; simpa using hmem'
     rw [compF_one_div hI hmax h𝔭 hd hw] at this
-    haveI hp := h𝔭.1.1
+    have hp := h𝔭.1.1
     rw [← under_map_atPrime h𝔭𝔪] at hh𝔭
     exact hh𝔭 this
   have hh0 : algebraMap A (Localization.AtPrime 𝔪) h ∈ J.RF (((0 : ℕ) : ℚ) / d) := by
     rw [Nat.cast_zero, zero_div, MC.RF, J.c.RF_of_nonpos J.nonneg le_rfl]; trivial
-  have := RF_mul_not_mem J.c J.centred J.nonneg hd hwe hh0 hh1 (by push_cast; exact hx')
+  have := RF_mul_not_mem J.c J.centred J.nonneg hd hwe hh0 hh1 hx'
     (by push_cast at hne ⊢; exact hne)
   rw [← map_mul] at this
   apply this
@@ -203,10 +201,10 @@ theorem compFil_mul_not_mem {a b : ℕ} {x y : A} (hx : x ∈ (compFil hI hmax h
     (hx1 : x ∉ (compFil hI hmax h𝔭 d).F (a + 1)) (hy : y ∈ (compFil hI hmax h𝔭 d).F b)
     (hy1 : y ∉ (compFil hI hmax h𝔭 d).F (b + 1)) :
     x * y ∉ (compFil hI hmax h𝔭 d).F (a + b + 1) := by
-  haveI := h𝔭.1.1
+  have := h𝔭.1.1
   obtain ⟨𝔪, h𝔪, hle⟩ := Ideal.exists_le_maximal 𝔭 (Ideal.IsPrime.ne_top ‹_›)
-  haveI := h𝔪
-  obtain ⟨n, J, w, hwe, hcRF⟩ := exists_centre_data hI hmax h𝔭 hd hw 𝔪 hle
+  have := h𝔪
+  obtain ⟨n, J, w, hwe, hcRF⟩ := exists_centre_data hI hmax h𝔭 hw 𝔪 hle
   have hx' := (compFil_mem_iff hI hmax h𝔭 a x).1 hx 𝔪 hle
   have hy' := (compFil_mem_iff hI hmax h𝔭 b y).1 hy 𝔪 hle
   have hx1' := not_mem_loc hI hmax h𝔭 hd hw hx hx1 𝔪 hle
@@ -215,8 +213,8 @@ theorem compFil_mul_not_mem {a b : ℕ} {x y : A} (hx : x ∈ (compFil hI hmax h
   intro hxy
   have hxy' := (compFil_mem_iff hI hmax h𝔭 (a + b + 1) (x * y)).1 hxy 𝔪 hle
   rw [hcRF, map_mul] at hxy'
-  exact RF_mul_not_mem J.c J.centred J.nonneg hd hwe (by push_cast; exact hx') hx1'
-    (by push_cast; exact hy') hy1' (by push_cast at hxy' ⊢; exact hxy')
+  exact RF_mul_not_mem J.c J.centred J.nonneg hd hwe hx' hx1'
+    hy' hy1' (by push_cast at hxy' ⊢; exact hxy')
 
 end BezoutCounterexample.Principalization
 
@@ -237,14 +235,17 @@ def reesS : ReesAlg Φ :=
     rw [this]
     exact C_mul_T_mem_ReesAlg (by rw [hneg _ (by norm_num)]; trivial)⟩
 
+omit [Algebra ℚ B] in
 lemma reesS_coe : (reesS Φ hneg : B[T;T⁻¹]) = T (-1) := rfl
 
+omit hneg [Algebra ℚ B] in
 lemma mul_T_mem {p : B[T;T⁻¹]} (hp : ∀ j, p.coeff j ∈ Φ.F (j + 1)) : T 1 * p ∈ ReesAlg Φ := by
   intro j
   rw [coeff_T_mul]
   have := hp (j - 1)
   rwa [sub_add_cancel] at this
 
+omit [Algebra ℚ B] in
 /-- Membership in `(s)`. -/
 theorem mem_span_s_iff (p : ReesAlg Φ) :
     p ∈ Ideal.span {reesS Φ hneg} ↔ ∀ j, (p : B[T;T⁻¹]).coeff j ∈ Φ.F (j + 1) := by
@@ -255,10 +256,11 @@ theorem mem_span_s_iff (p : ReesAlg Φ) :
     rw [mul_comm, coeff_T_mul, sub_neg_eq_add]
     exact q.2 (j + 1)
   · intro h
-    refine Ideal.mem_span_singleton'.2 ⟨⟨T 1 * (p : B[T;T⁻¹]), mul_T_mem Φ hneg h⟩, Subtype.ext ?_⟩
+    refine Ideal.mem_span_singleton'.2 ⟨⟨T 1 * (p : B[T;T⁻¹]), mul_T_mem Φ h⟩, Subtype.ext ?_⟩
     show (T 1 * (p : B[T;T⁻¹]) * T (-1) : B[T;T⁻¹]) = (p : B[T;T⁻¹])
     rw [mul_comm, ← mul_assoc, ← T_add]; simp
 
+omit [Algebra ℚ B] in
 /-- **The exceptional divisor is prime** when the associated graded ring is a domain. -/
 theorem span_s_isPrime (h1 : Φ.F 1 ≠ ⊤)
     (hgr : ∀ (a b : ℕ) (x y : B), x ∈ Φ.F a → x ∉ Φ.F (a + 1) → y ∈ Φ.F b → y ∉ Φ.F (b + 1) →
@@ -268,13 +270,13 @@ theorem span_s_isPrime (h1 : Φ.F 1 ≠ ⊤)
   refine ⟨fun htop => ?_, fun {p q} hpq => ?_⟩
   · have h1mem : (1 : ReesAlg Φ) ∈ Ideal.span {reesS Φ hneg} := by rw [htop]; trivial
     have := (mem_span_s_iff Φ hneg 1).1 h1mem 0
-    rw [show ((1 : ReesAlg Φ) : B[T;T⁻¹]) = 1 from rfl, coeff_one_laurent, if_pos rfl] at this
+    rw [show ((1 : ReesAlg Φ) : B[T;T⁻¹]) = 1 from rfl, coeff_one_laurent, ite_eq_left rfl] at this
     exact h1 ((Ideal.eq_top_iff_one _).2 (by simpa using this))
   by_contra hne
-  push_neg at hne
+  push Not at hne
   obtain ⟨hp, hq⟩ := hne
   rw [mem_span_s_iff] at hp hq hpq
-  push_neg at hp hq
+  push Not at hp hq
   -- minimal bad indices
   set Sp := (p : B[T;T⁻¹]).coeff.support.filter fun j => (p : B[T;T⁻¹]).coeff j ∉ Φ.F (j + 1)
   set Sq := (q : B[T;T⁻¹]).coeff.support.filter fun j => (q : B[T;T⁻¹]).coeff j ∉ Φ.F (j + 1)
@@ -305,10 +307,10 @@ theorem span_s_isPrime (h1 : Φ.F 1 ≠ ⊤)
       rw [Finsupp.mem_support_iff]; intro h0; rw [h0] at h; exact h (zero_mem _)
     exact absurd (Sq.min'_le b hmem) (not_le.2 hb)
   have hj₀nn : 0 ≤ j₀ := by
-    by_contra h; push_neg at h
+    by_contra h; push Not at h
     exact hj₀ (by rw [hneg _ (by omega)]; trivial)
   have hl₀nn : 0 ≤ l₀ := by
-    by_contra h; push_neg at h
+    by_contra h; push Not at h
     exact hl₀ (by rw [hneg _ (by omega)]; trivial)
   -- the coefficient of `pq` in degree `j₀ + l₀`
   have hcoeff := hpq (j₀ + l₀)
@@ -357,9 +359,11 @@ section Generic
 variable {B : Type*} [CommRing B] [Algebra ℚ B] (Φ : WFil B) (hneg : ∀ j : ℤ, j ≤ 0 → Φ.F j = ⊤)
 include hneg
 
+omit [Algebra ℚ B] in
 lemma reesS_pow_coe (N : ℕ) : ((reesS Φ hneg ^ N : ReesAlg Φ) : B[T;T⁻¹]) = T (-(N : ℤ)) := by
   rw [SubmonoidClass.coe_pow, reesS_coe, T_pow]; congr 1; ring
 
+omit [Algebra ℚ B] in
 /-- **Inverting `s`** gives the Laurent polynomial ring. -/
 theorem isLocalization_away_s : IsLocalization.Away (reesS Φ hneg) B[T;T⁻¹] := by
   refine ⟨?_, ?_, ?_⟩
@@ -394,10 +398,11 @@ def weakT (I : Ideal B) (d : ℤ) (hId : I ≤ Φ.F d) : Ideal (ReesAlg Φ) :=
   Ideal.span (Set.range fun f : I => (⟨LaurentPolynomial.C (f : B) * T d,
     C_mul_T_mem_ReesAlg (hId f.2)⟩ : ReesAlg Φ))
 
+omit [Algebra ℚ B] in
 /-- **`I R = s^d I_w`.** -/
 theorem map_eq_weakT (I : Ideal B) (d : ℕ) (hId : I ≤ Φ.F d) :
     I.map (algebraMap B (ReesAlg Φ)) = Ideal.span {reesS Φ hneg ^ d} * weakT Φ I d hId := by
-  rw [weakT, Ideal.span_mul_span', Ideal.map, Set.singleton_mul]
+  rw [weakT, Ideal.span_mul_span, Ideal.map, Set.singleton_mul]
   congr 1
   ext p
   simp only [Set.mem_image, Set.mem_range]
@@ -454,7 +459,7 @@ theorem vertex_isInv (c₀ : Chart B n) (hc₀ : c₀.IsCentred)
       IsInv (S := VLoc hpos) (weakV hpos I hId) (n + 1) (pad (n + 1) e) ∧
       (vChart he hd hw hpos c' hF').IsCentred ∧
       weakV hpos I hId ≤ (vChart he hd hw hpos c' hF').RF (pad (n + 1) e) 1 := by
-  haveI := VLoc_noeth hpos c₀ hF₀ he hd hw
+  have := VLoc_noeth hpos c₀ hF₀ he hd hw
   obtain ⟨c', hc', hF', hSA⟩ := vertex_invariant he hanti hd hw hpos c₀ hc₀ hF₀ hsupp hkn I hI0 hId hmax
   have hadm : weakV hpos I hId ≤ (vChart he hd hw hpos c' hF').RF (pad (n + 1) e) 1 := by
     rw [vChart, Chart.localization_RF]
@@ -483,6 +488,7 @@ def scaleUnit (μ : Bˣ) : (B[T;T⁻¹])ˣ :=
 /-- The rescaling `T ↦ μ T`. -/
 def lscale (μ : Bˣ) : B[T;T⁻¹] →+* B[T;T⁻¹] := LaurentPolynomial.eval₂ LaurentPolynomial.C (scaleUnit μ)
 
+omit [Algebra ℚ B] in
 lemma scaleUnit_pow (μ : Bˣ) (n : ℕ) :
     ((scaleUnit μ ^ n : (B[T;T⁻¹])ˣ) : B[T;T⁻¹]) = LaurentPolynomial.C (↑(μ ^ n) : B) * T n := by
   induction n with
@@ -493,6 +499,7 @@ lemma scaleUnit_pow (μ : Bˣ) (n : ℕ) :
     rw [show ((n + 1 : ℕ) : ℤ) = n + 1 by push_cast; ring, T_add]
     ring
 
+omit [Algebra ℚ B] in
 lemma scaleUnit_zpow (μ : Bˣ) (j : ℤ) :
     ((scaleUnit μ ^ j : (B[T;T⁻¹])ˣ) : B[T;T⁻¹]) = LaurentPolynomial.C (↑(μ ^ j) : B) * T j := by
   obtain ⟨n, rfl | rfl⟩ := Int.eq_nat_or_neg j
@@ -511,6 +518,7 @@ lemma scaleUnit_zpow (μ : Bˣ) (j : ℤ) :
         _ = _ := by rw [← mul_assoc, Units.inv_mul, one_mul]
     exact hinv
 
+omit [Algebra ℚ B] in
 lemma lscale_C_mul_T (μ : Bˣ) (b : B) (j : ℤ) :
     lscale μ (LaurentPolynomial.C b * T j) = LaurentPolynomial.C (b * ↑(μ ^ j)) * T j := by
   rw [lscale, eval₂_C_mul_T, scaleUnit_zpow, map_mul, mul_assoc]
@@ -528,6 +536,7 @@ section Scale
 
 variable {B : Type*} [CommRing B] [Algebra ℚ B]
 
+omit [Algebra ℚ B] in
 lemma lscale_coeff (μ : Bˣ) (p : B[T;T⁻¹]) (j : ℤ) :
     (lscale μ p).coeff j = p.coeff j * ↑(μ ^ j) := by
   induction p using LaurentPolynomial.induction_on' with
@@ -540,15 +549,18 @@ lemma lscale_coeff (μ : Bˣ) (p : B[T;T⁻¹]) (j : ℤ) :
     · subst h; rfl
     · rw [zero_mul]
 
+omit [Algebra ℚ B] in
 lemma lscale_lscale (μ ν : Bˣ) (p : B[T;T⁻¹]) : lscale μ (lscale ν p) = lscale (μ * ν) p := by
   ext j
   rw [lscale_coeff, lscale_coeff, lscale_coeff, mul_assoc, ← Units.val_mul, ← mul_zpow, mul_comm ν]
 
+omit [Algebra ℚ B] in
 lemma lscale_one (p : B[T;T⁻¹]) : lscale 1 p = p := by
   ext j; rw [lscale_coeff, one_zpow, Units.val_one, mul_one]
 
 variable (Φ : WFil B)
 
+omit [Algebra ℚ B] in
 lemma lscale_mem {μ : Bˣ} {p : B[T;T⁻¹]} (hp : p ∈ ReesAlg Φ) : lscale μ p ∈ ReesAlg Φ := by
   intro j
   rw [lscale_coeff]
@@ -567,17 +579,9 @@ def reesScale (μ : Bˣ) : ReesAlg Φ ≃+* ReesAlg Φ where
   map_mul' p q := Subtype.ext (by simp)
   map_add' p q := Subtype.ext (by simp)
 
+omit [Algebra ℚ B] in
 lemma reesScale_coe (μ : Bˣ) (p : ReesAlg Φ) :
     ((reesScale Φ μ p : ReesAlg Φ) : B[T;T⁻¹]) = lscale μ p := rfl
-
-lemma reesScale_algebraMap (μ : Bˣ) (b : B) :
-    reesScale Φ μ (algebraMap B (ReesAlg Φ) b) = algebraMap B (ReesAlg Φ) b := by
-  apply Subtype.ext
-  rw [reesScale_coe]
-  show lscale μ (algebraMap B B[T;T⁻¹] b) = algebraMap B B[T;T⁻¹] b
-  rw [← LaurentPolynomial.C_eq_algebraMap, show (LaurentPolynomial.C b : B[T;T⁻¹]) =
-    LaurentPolynomial.C b * T 0 by simp, lscale_C_mul_T]
-  simp
 
 end Scale
 
@@ -601,14 +605,16 @@ lemma qUnit_val (μ : ℚ) (hμ : μ ≠ 0) : ((qUnit μ hμ : Bˣ) : B) = algeb
 def hcomp (p : ReesAlg Φ) (j : ℤ) : ReesAlg Φ :=
   ⟨LaurentPolynomial.C ((p : B[T;T⁻¹]).coeff j) * T j, C_mul_T_mem_ReesAlg (p.2 j)⟩
 
+omit [Algebra ℚ B] in
 lemma sum_hcomp (p : ReesAlg Φ) : ∑ j ∈ (p : B[T;T⁻¹]).coeff.support, hcomp Φ p j = p := by
   apply Subtype.ext
-  rw [AddSubmonoidClass.coe_finset_sum]
+  rw [AddSubmonoidClass.coe_finsetSum]
   conv_rhs => rw [← AddMonoidAlgebra.sum_coeff_single (p : B[T;T⁻¹])]
   rw [Finsupp.sum]
   refine Finset.sum_congr rfl fun j _ => ?_
   rw [single_eq_C_mul_T]; rfl
 
+omit [Algebra ℚ B] in
 lemma reesScale_hcomp (μ : Bˣ) (p : ReesAlg Φ) (j : ℤ) :
     reesScale Φ μ (hcomp Φ p j) = algebraMap B (ReesAlg Φ) ↑(μ ^ j) * hcomp Φ p j := by
   apply Subtype.ext
@@ -619,6 +625,7 @@ lemma reesScale_hcomp (μ : Bˣ) (p : ReesAlg Φ) (j : ℤ) :
 
 include hneg
 
+omit [Algebra ℚ B] in
 lemma hcomp_neg_mem (P : Ideal (ReesAlg Φ)) (hs : reesS Φ hneg ∈ P) (p : ReesAlg Φ) {j : ℤ}
     (hj : j < 0) : hcomp Φ p j ∈ P := by
   have : hcomp Φ p j = algebraMap B (ReesAlg Φ) ((p : B[T;T⁻¹]).coeff j) *
@@ -640,19 +647,19 @@ theorem exists_reesScale_not_mem (P : Ideal (ReesAlg Φ)) [hP : P.IsMaximal]
     (hs : reesS Φ hneg ∈ P) (G : ReesAlg Φ) (hG : hcomp Φ G 0 ∉ P) :
     ∃ (μ : ℚ) (hμ : μ ≠ 0), reesScale Φ (qUnit μ hμ) G ∉ P := by
   classical
-  haveI : P.IsPrime := hP.isPrime
-  letI : CommRing (ReesAlg Φ ⧸ P) := Ideal.Quotient.commRing P
+  have : P.IsPrime := hP.isPrime
+  let : CommRing (ReesAlg Φ ⧸ P) := Ideal.Quotient.commRing P
   let π : ReesAlg Φ →+* ReesAlg Φ ⧸ P := Ideal.Quotient.mk P
   set S := (G : B[T;T⁻¹]).coeff.support
   set Q : Polynomial (ReesAlg Φ ⧸ P) := ∑ j ∈ S.filter (fun j => 0 ≤ j),
     (Polynomial.C (π (hcomp Φ G j)) * (Polynomial.X : Polynomial (ReesAlg Φ ⧸ P)) ^ j.toNat)
   have hQ0 : Q.coeff 0 = π (hcomp Φ G 0) := by
-    simp only [Q, Polynomial.finset_sum_coeff, Polynomial.coeff_C_mul_X_pow]
+    simp only [Q, Polynomial.finsetSum_coeff, Polynomial.coeff_C_mul_X_pow]
     by_cases h0 : (0 : ℤ) ∈ S
     · rw [Finset.sum_eq_single (0 : ℤ)]
       · simp
       · intro j hj hj0
-        rw [if_neg]; rw [Finset.mem_filter] at hj; omega
+        rw [ite_eq_right]; rw [Finset.mem_filter] at hj; omega
       · intro h; exact absurd (Finset.mem_filter.2 ⟨h0, le_rfl⟩) h
     · have hG0 : hcomp Φ G 0 = 0 := by
         apply Subtype.ext
@@ -661,7 +668,7 @@ theorem exists_reesScale_not_mem (P : Ideal (ReesAlg Φ)) [hP : P.IsMaximal]
       rw [hG0, map_zero]
       refine Finset.sum_eq_zero fun j hj => ?_
       rw [Finset.mem_filter] at hj
-      rw [if_neg]; intro h; apply h0; have : j = 0 := by omega
+      rw [ite_eq_right]; intro h; apply h0; have : j = 0 := by omega
       rw [← this]; exact hj.1
   have hQne : Q ≠ 0 := by
     intro h
@@ -673,7 +680,7 @@ theorem exists_reesScale_not_mem (P : Ideal (ReesAlg Φ)) [hP : P.IsMaximal]
     intro μ hμ
     conv_lhs => rw [← sum_hcomp Φ G]
     rw [map_sum, map_sum]
-    simp only [Q, Polynomial.eval_finset_sum, Polynomial.eval_mul, Polynomial.eval_C,
+    simp only [Q, Polynomial.eval_finsetSum, Polynomial.eval_mul, Polynomial.eval_C,
       Polynomial.eval_pow, Polynomial.eval_X]
     rw [← Finset.sum_filter_add_sum_filter_not S (fun j => 0 ≤ j)]
     have hneg0 : ∑ j ∈ S.filter (fun j => ¬ 0 ≤ j), π (reesScale Φ (qUnit μ hμ) (hcomp Φ G j)) = 0 := by
@@ -715,14 +722,14 @@ lemma comap_isMaximal_of_finiteType {A R : Type*} [CommRing A] [CommRing R] [Alg
     [Algebra ℚ R] [Algebra A R] [IsScalarTower ℚ A R] [Algebra.FiniteType ℚ R] (P : Ideal R)
     [hP : P.IsMaximal] : (P.comap (algebraMap A R)).IsMaximal := by
   set 𝔪 := P.comap (algebraMap A R)
-  haveI : 𝔪.IsPrime := Ideal.comap_isPrime _ _
-  letI := Ideal.Quotient.field P
-  haveI : Module.Finite ℚ (R ⧸ P) := finite_of_finite_type_of_isJacobsonRing ℚ (R ⧸ P)
+  have : 𝔪.IsPrime := Ideal.comap_isPrime _ _
+  let := Ideal.Quotient.field P
+  have : Module.Finite ℚ (R ⧸ P) := finite_of_finite_type_of_isJacobsonRing ℚ (R ⧸ P)
   let φ : (A ⧸ 𝔪) →ₐ[ℚ] (R ⧸ P) :=
     Ideal.quotientMapₐ P (IsScalarTower.toAlgHom ℚ A R) le_rfl
   have hφ : Function.Injective φ := Ideal.quotientMap_injective
-  haveI : Module.Finite ℚ (A ⧸ 𝔪) := Module.Finite.of_injective φ.toLinearMap hφ
-  haveI : IsArtinianRing (A ⧸ 𝔪) := IsArtinianRing.of_finite ℚ (A ⧸ 𝔪)
+  have : Module.Finite ℚ (A ⧸ 𝔪) := Module.Finite.of_injective φ.toLinearMap hφ
+  have : IsArtinianRing (A ⧸ 𝔪) := IsArtinianRing.of_finite ℚ (A ⧸ 𝔪)
   exact Ideal.Quotient.maximal_of_isField 𝔪 (IsArtinianRing.isField_of_isDomain _)
 
 end BezoutCounterexample.Principalization
@@ -742,6 +749,7 @@ variable {B : Type*} [CommRing B] [Algebra ℚ B] [IsDomain B] (Φ : WFil B)
 /-- The vertex over `𝔪`, as an ideal of the global Rees algebra. -/
 def vertexG : Ideal (ReesAlg Φ) := (vertex hpos).comap (reesMap Φ (Localization.AtPrime 𝔪))
 
+omit [IsDomain B] [Algebra ℚ B] in
 lemma mem_vertexG (p : ReesAlg Φ) : p ∈ vertexG Φ 𝔪 hpos ↔ (p : B[T;T⁻¹]).coeff 0 ∈ 𝔪 := by
   rw [vertexG, Ideal.mem_comap, mem_vertex, reesMap_coe, lmap_coeff,
     IsLocalization.AtPrime.to_map_mem_maximal_iff (Localization.AtPrime 𝔪) 𝔪]
@@ -755,7 +763,7 @@ instance vertexG_isMaximal : (vertexG Φ 𝔪 hpos).IsMaximal := by
     rw [← hq]
     show residue _ ((lmap (algebraMap B (Localization.AtPrime 𝔪)) (algebraMap B B[T;T⁻¹] a)).coeff 0) =
       algebraMap (B ⧸ 𝔪) 𝔪.ResidueField (Ideal.Quotient.mk 𝔪 a)
-    rw [lmap_coeff, ← LaurentPolynomial.C_eq_algebraMap, LaurentPolynomial.C_apply, if_pos rfl]
+    rw [lmap_coeff, ← LaurentPolynomial.C_eq_algebraMap, LaurentPolynomial.C_apply, ite_eq_left rfl]
     rfl
   have : vertexG Φ 𝔪 hpos = RingHom.ker ((vtx hpos).comp (reesMap Φ (Localization.AtPrime 𝔪))) := by
     ext p; rw [vertexG, Ideal.mem_comap, RingHom.mem_ker, RingHom.comp_apply]; rfl
@@ -782,13 +790,14 @@ variable {B : Type*} [CommRing B] [Algebra ℚ B] [IsDomain B] (Φ : WFil B)
 abbrev reesAlgLoc : Algebra (ReesAlg Φ) (ReesAlg (Φ.loc (Localization.AtPrime 𝔪))) :=
   (reesMap Φ (Localization.AtPrime 𝔪)).toAlgebra
 
+omit [Algebra ℚ B] in
 /-- **The vertex local ring is the localization of the global Rees algebra at the global
 vertex.** -/
 theorem isLocalization_VLoc :
     letI := reesAlgLoc Φ 𝔪
     IsLocalization.AtPrime (VLoc hpos) (vertexG Φ 𝔪 hpos) := by
-  letI := reesAlgLoc Φ 𝔪
-  haveI : IsLocalization (𝔪.primeCompl.map (algebraMap B (ReesAlg Φ)))
+  let := reesAlgLoc Φ 𝔪
+  have : IsLocalization (𝔪.primeCompl.map (algebraMap B (ReesAlg Φ)))
       (ReesAlg (Φ.loc (Localization.AtPrime 𝔪))) :=
     reesMap_isLocalization Φ (Localization.AtPrime 𝔪) 𝔪.primeCompl
       (Ideal.primeCompl_le_nonZeroDivisors 𝔪)
@@ -809,10 +818,12 @@ section WeakLoc
 variable {B : Type*} [CommRing B] [Algebra ℚ B] [IsDomain B] (Φ : WFil B)
   (𝔪 : Ideal B) [𝔪.IsMaximal]
 
+omit [Algebra ℚ B] [IsDomain B] in
 lemma weak_map_le (I : Ideal B) (d : ℕ) (hId : I ≤ Φ.F d) :
     I.map (algebraMap B (Localization.AtPrime 𝔪)) ≤ (Φ.loc (Localization.AtPrime 𝔪)).F d :=
   Ideal.map_mono hId
 
+omit [IsDomain B] in
 /-- **The weak transform localizes.** -/
 theorem weakT_map_eq (I : Ideal B) (d : ℕ) (hId : I ≤ Φ.F d) :
     (weakT Φ I d hId).map (reesMap Φ (Localization.AtPrime 𝔪)) =
@@ -887,7 +898,7 @@ theorem homog_mem_reesRF {j : ℤ} (hj : 1 ≤ j) {g : B} (hg : g ∈ Φ.F j) :
       refine Ideal.mul_mem_right _ _ (Ideal.subset_span ?_)
       refine ⟨Finsupp.mapDomain Fin.castSucc α, fun i hi => ?_, ?_, ?_⟩
       · cases i using Fin.lastCases with
-        | last => exact Finsupp.mapDomain_notin_range _ _ (by simp)
+        | last => exact Finsupp.mapDomain_of_notMem_range _ _ (by simp)
         | cast i =>
           rw [Finsupp.mapDomain_apply_of_injective (Fin.castSucc_injective n)]
           apply h0
@@ -900,7 +911,7 @@ theorem homog_mem_reesRF {j : ℤ} (hj : 1 ≤ j) {g : B} (hg : g ∈ Φ.F j) :
         exact_mod_cast hj
       · rw [Fin.prod_univ_castSucc]
         simp only [Finsupp.mapDomain_apply_of_injective (Fin.castSucc_injective n), reesChart_x]
-        rw [Finsupp.mapDomain_notin_range _ _ (by simp), pow_zero, mul_one]
+        rw [Finsupp.mapDomain_of_notMem_range _ _ (by simp), pow_zero, mul_one]
     | zero =>
       have : (⟨LaurentPolynomial.C 0 * T j, C_mul_T_mem_ReesAlg (by rw [hF]; exact zero_mem _)⟩ :
           ReesAlg Φ) = 0 := Subtype.ext (by simp)
@@ -966,13 +977,13 @@ structure VertexData (𝔪 : Ideal A) [𝔪.IsMaximal] where
   hkn : k ≤ n
   hF : ∀ m, ((compFil hI hmax h𝔭 d).loc (Localization.AtPrime 𝔪)).F m = chartFil J.c J.e d m
 
-include hd hw in
+include hw in
 lemma VertexData.nonempty (𝔪 : Ideal A) [𝔪.IsMaximal] (h𝔭𝔪 : 𝔭 ≤ 𝔪) :
     Nonempty (VertexData hI hmax h𝔭 (d := d) (v₀ := v₀) 𝔪) := by
   have hZ := mem_maxLocus_of_minimal hI hmax h𝔭 𝔪 h𝔭𝔪
   obtain ⟨n, e, ⟨⟨J, hJ, hJe⟩, hmin⟩, hev⟩ := hZ.2
   have hJi : IsInv (Iloc I 𝔪) n J.e := ⟨⟨J, hJ, rfl⟩, by rw [hJe]; exact hmin⟩
-  haveI := residueField_isIntegral 𝔪
+  have := residueField_isIntegral 𝔪
   obtain ⟨k, ck, hrun, -, -, hsupp⟩ := hJi.exists_run (Iloc_ne_bot hI 𝔪) (Iloc_le hZ.1) J.c
     J.centred
   have hw' : ∀ i : Fin n, ∃ w : ℕ, (w : ℚ) = d * J.e i := fun i => by
@@ -1006,6 +1017,7 @@ variable {S S' : Type*} [CommRing S] [Algebra ℚ S] [IsLocalRing S] [CommRing S
 def ringEquivQ (φ : S ≃+* S') : S ≃ₐ[ℚ] S' :=
   AlgEquiv.ofRingEquiv (f := φ) (fun q => RingHom.map_rat_algebraMap φ.toRingHom q)
 
+omit [IsLocalRing S] [IsLocalRing S'] in
 lemma map_ringEquivQ (φ : S ≃+* S') (I : Ideal S) : I.map (ringEquivQ φ) = I.map φ := by
   apply le_antisymm <;> rw [Ideal.map_le_iff_le_comap] <;> intro x hx <;>
     exact Ideal.mem_map_of_mem _ hx
@@ -1017,8 +1029,6 @@ lemma IsInv.mapRingEquiv {I : Ideal S} {e : Fin n → ℚ} (h : IsInv I n e) (φ
 
 /-- Transport of a marked centre along a ring isomorphism. -/
 def MC.mapRingEquiv (φ : S ≃+* S') (J : MC S n) : MC S' n := J.mapEquiv (ringEquivQ φ)
-
-lemma MC.mapRingEquiv_e (φ : S ≃+* S') (J : MC S n) : (J.mapRingEquiv φ).e = J.e := rfl
 
 lemma MC.mapRingEquiv_RF (φ : S ≃+* S') (J : MC S n) (t : ℚ) :
     (J.mapRingEquiv φ).RF t = (J.RF t).map φ := by
@@ -1066,11 +1076,11 @@ theorem VertexData.vertexG_data {𝔪 : Ideal A} [𝔪.IsMaximal]
   set P₀ := vertexG Φ 𝔪 hpos
   set hId := I_le_compFil hI hmax h𝔭 hd
   have hIdm : Iloc I 𝔪 ≤ (Φ.loc (Localization.AtPrime 𝔪)).F d := Ideal.map_mono hId
-  haveI : IsNoetherianRing (Localization.AtPrime 𝔪) := inferInstance
+  have : IsNoetherianRing (Localization.AtPrime 𝔪) := inferInstance
   obtain ⟨c', hF', hinvV, hcentV, hadmV⟩ := vertex_isInv D.J.nonneg D.J.anti hd D.hwe hpos D.J.c
     D.J.centred D.hF D.hsupp D.hkn (Iloc I 𝔪) (Iloc_ne_bot hI 𝔪) hIdm D.hinv.2
-  letI := reesAlgLoc Φ 𝔪
-  haveI : IsLocalization.AtPrime (VLoc hpos) P₀ := isLocalization_VLoc Φ 𝔪 hpos
+  let := reesAlgLoc Φ 𝔪
+  have : IsLocalization.AtPrime (VLoc hpos) P₀ := isLocalization_VLoc Φ 𝔪 hpos
   let eV : Localization.AtPrime P₀ ≃ₐ[R] VLoc hpos :=
     IsLocalization.algEquiv P₀.primeCompl (Localization.AtPrime P₀) (VLoc hpos)
   let eq : VLoc hpos ≃+* Localization.AtPrime P₀ := eV.symm.toRingEquiv

@@ -40,9 +40,9 @@ theorem exists_chart_away {A : Type} [CommRing A] [Algebra ℚ A] [Algebra.Smoot
   obtain ⟨-, I, b, hb⟩ := (Algebra.IsStandardSmooth.iff_exists_basis_kaehlerDifferential).1 hstd
   have hu : IsUnit (algebraMap A (Localization.AtPrime p) f) :=
     IsLocalization.map_units (Localization.AtPrime p) (⟨f, hf⟩ : p.primeCompl)
-  haveI : Nontrivial (Localization.Away f) := (IsLocalization.Away.lift f hu).domain_nontrivial
+  have : Nontrivial (Localization.Away f) := (IsLocalization.Away.lift f hu).domain_nontrivial
   have : Finite I := Module.Finite.finite_basis b
-  haveI := Fintype.ofFinite I
+  have := Fintype.ofFinite I
   let e := Fintype.equivFin I
   let b' := b.reindex e
   choose s hs using fun i : Fin (Fintype.card I) => hb ⟨e.symm i, rfl⟩
@@ -63,7 +63,7 @@ instance fs_localization [Algebra.FormallySmooth ℚ A] :
 
 lemma residueField_isIntegral [Algebra.FiniteType ℚ A] :
     Algebra.IsIntegral ℚ (ResidueField (Localization.AtPrime 𝔪)) := by
-  letI := Ideal.Quotient.field 𝔪
+  let := Ideal.Quotient.field 𝔪
   have hfin : Module.Finite ℚ (A ⧸ 𝔪) := finite_of_finite_type_of_isJacobsonRing ℚ (A ⧸ 𝔪)
   have hint : Algebra.IsIntegral ℚ (A ⧸ 𝔪) := Algebra.IsIntegral.of_finite ℚ _
   exact Algebra.IsIntegral.of_surjective (IsScalarTower.toAlgHom ℚ (A ⧸ 𝔪) 𝔪.ResidueField)
@@ -71,7 +71,7 @@ lemma residueField_isIntegral [Algebra.FiniteType ℚ A] :
 
 instance fe_residueField [Algebra.FiniteType ℚ A] :
     Algebra.FormallyEtale ℚ (ResidueField (Localization.AtPrime 𝔪)) := by
-  haveI := residueField_isIntegral 𝔪
+  have := residueField_isIntegral 𝔪
   exact Algebra.FormallyEtale.of_isSeparable ℚ _
 
 end BezoutCounterexample.Principalization
@@ -112,14 +112,11 @@ lemma recFun_mem [Algebra.IsIntegral ℚ (ResidueField R)] (c : Chart R n) (i : 
   rw [← Polynomial.aeval_algebraMap_apply]
   exact minpoly.aeval ℚ _
 
-lemma recFun_of_mem (c : Chart R n) {i : Fin n} (hi : c.x i ∈ maximalIdeal R) :
-    c.recFun i = c.x i := by
-  simp [recFun, (residue_eq_zero_iff _).2 hi, minpoly.zero, aeval_X]
-
 end Chart
 
 variable {A : Type} [CommRing A] [IsDomain A] [Algebra ℚ A] [IsNoetherianRing A]
 
+omit [IsDomain A] [IsNoetherianRing A] in
 lemma Loc.map_aeval {M N : Submonoid A} (h : M ≤ N) (a : Localization M) (p : ℚ[X]) :
     Loc.map h (aeval a p) = aeval (Loc.map h a) p :=
   (Polynomial.aeval_algHom_apply (Loc.map h).toRatAlgHom a p).symm
@@ -132,14 +129,14 @@ lemma exists_centred_transport [Algebra.FormallySmooth ℚ A] [Algebra.FiniteTyp
     ∃ M', ∃ hE : Loc.Ext M 𝔪.primeCompl M', ∃ c₁ : Chart (Localization M') n,
       (Loc.transport hE.le₂ c₁).IsCentred := by
   classical
-  haveI := residueField_isIntegral 𝔪
+  have := residueField_isIntegral 𝔪
   have hN := Ideal.primeCompl_le_nonZeroDivisors 𝔪
   set cN := Loc.transport hM c
   -- the recentred functions, over `M⁻¹A`
   set y₀ : Fin n → Localization M := fun i =>
     aeval (c.x i) (minpoly ℚ (residue _ (cN.x i))) with hy₀
   have hy : ∀ i, Loc.map hM (y₀ i) = cN.recFun i := fun i => by
-    rw [hy₀]; simp only [Loc.map_aeval, Chart.recFun, Loc.transport_x]; rfl
+    rw [hy₀]; simp only [Loc.map_aeval, Chart.recFun]; rfl
   have hdet : Loc.map hM (c.jac y₀).det = (cN.jac cN.recFun).det := by
     rw [RingHom.map_det]
     congr 1
@@ -185,7 +182,7 @@ theorem local_structure (I : Ideal A) (hI : I ≠ ⊥) (𝔪 : Ideal A) [𝔪.Is
           toLex ek ≤ toLex J'.e ∧
           (J'.e = ek → ∀ t, J'.RF t = (Loc.transport (hctrl 𝔪' hg') ck).RF ek t) := by
   classical
-  haveI : IsNoetherianRing A := Algebra.FiniteType.isNoetherianRing ℚ A
+  have : IsNoetherianRing A := Algebra.FiniteType.isNoetherianRing ℚ A
   obtain ⟨f, hf, n, ⟨c₀⟩⟩ := exists_chart_away 𝔪
   have hM₀ : Submonoid.powers f ≤ 𝔪.primeCompl := (Submonoid.powers_le).2 hf
   obtain ⟨M₁, hE₁, c₁, hc₁⟩ := exists_centred_transport 𝔪 hM₀ c₀

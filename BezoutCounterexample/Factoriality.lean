@@ -1,23 +1,71 @@
-import Mathlib
+import BezoutCounterexample.RealPoints
 
 /-!
-# Nagata's criterion for factoriality
+# Section 3.1: factoriality
 
-Two facts about unique factorization domains, proved from Kaplansky's
-criterion (`UniqueFactorizationMonoid.iff_exists_prime_mem_of_isPrime`):
+A domain is *factorial* if it is a unique factorization domain. We repeatedly use finitely
+generated `ℚ`-domains that are smooth over `ℚ` and factorial (`SmoothFactorialDomain`); such rings
+are Noetherian (`SmoothFactorialDomain.isNoetherianRing`) and countable.
 
-* `UniqueFactorizationMonoid.of_isLocalization`: a localization of a UFD is a UFD.
-* `UniqueFactorizationMonoid.of_isLocalization_away` (Nagata's criterion): if `A` is a
-  Noetherian domain, `p ∈ A` is a prime element and `A[1/p]` is a UFD, then `A` is a UFD.
+* A polynomial ring over a UFD is a UFD (`polynomial_ufd`, `mvPolynomial_ufd`; Stacks, Tag 0BC1).
+* **Nagata's criterion** (Stacks, Tag 0AFU): if `A` is a Noetherian domain and `p ∈ A` is a prime
+  element such that `A[1/p]` is a UFD, then `A` is a UFD
+  (`UniqueFactorizationMonoid.of_isLocalization_away`). We also use that localizations of UFDs
+  are UFDs (`UniqueFactorizationMonoid.of_isLocalization`).
+* Consequently, if `A` is a Noetherian UFD, then so is `A[T, T⁻¹] = A[T][1/T]`
+  (`laurentPolynomial_ufd`), and every prime element of `A` remains prime in `A[T, T⁻¹]`
+  (`prime_laurentPolynomial_C`), because `(A/pA)[T, T⁻¹]` is a domain.
 -/
+
+noncomputable section
 
 namespace BezoutCounterexample
 
-open IsLocalization
+open IsLocalization LaurentPolynomial
+
+/-! ## Smooth finitely generated factorial `ℚ`-domains -/
+
+/-- A smooth finitely generated factorial `ℚ`-domain (`Algebra.Smooth` includes finite
+presentation). -/
+structure SmoothFactorialDomain where
+  /-- The underlying ring. -/
+  carrier : Type
+  [commRing : CommRing carrier]
+  [isDomain : IsDomain carrier]
+  [algebra : Algebra ℚ carrier]
+  [smooth : Algebra.Smooth ℚ carrier]
+  [ufd : UniqueFactorizationMonoid carrier]
+
+attribute [instance] SmoothFactorialDomain.commRing SmoothFactorialDomain.isDomain
+  SmoothFactorialDomain.algebra SmoothFactorialDomain.smooth SmoothFactorialDomain.ufd
+
+instance : CoeSort SmoothFactorialDomain Type := ⟨SmoothFactorialDomain.carrier⟩
+
+/-- Smooth finitely generated `ℚ`-algebras are Noetherian. -/
+instance SmoothFactorialDomain.isNoetherianRing (A : SmoothFactorialDomain) :
+    IsNoetherianRing A := Algebra.FiniteType.isNoetherianRing ℚ A
+
+/-- Every finitely generated `ℚ`-algebra is countable. -/
+instance SmoothFactorialDomain.countable (A : SmoothFactorialDomain) : Countable A := by
+  obtain ⟨n, f, hf⟩ := Algebra.FiniteType.iff_quotient_mvPolynomial''.1
+    (inferInstance : Algebra.FiniteType ℚ A)
+  exact hf.countable
+
+/-! ## Polynomial rings -/
+
+/-- A polynomial ring over a UFD is a UFD (Stacks, Tag 0BC1). -/
+theorem polynomial_ufd (A : Type*) [CommRing A] [IsDomain A] [UniqueFactorizationMonoid A] :
+    UniqueFactorizationMonoid (Polynomial A) := inferInstance
+
+/-- A polynomial ring in finitely many variables over a UFD is a UFD. -/
+theorem mvPolynomial_ufd (A : Type*) [CommRing A] [IsDomain A] [UniqueFactorizationMonoid A]
+    (σ : Type*) [Finite σ] : UniqueFactorizationMonoid (MvPolynomial σ A) := inferInstance
 
 section
 
 variable {A : Type*} [CommRing A] [IsDomain A]
+
+/-! ## Nagata's criterion -/
 
 omit [IsDomain A] in
 /-- The preimage of a prime ideal of a localization `L = A_S` is disjoint from `S`. -/
@@ -65,8 +113,8 @@ theorem UniqueFactorizationMonoid.of_isLocalization [UniqueFactorizationMonoid A
     hπ.ne_zero ((IsLocalization.injective L hSle) (by rw [h, map_zero]))
   exact (Ideal.span_singleton_prime hne).1 hmap
 
-/-- **Nagata's criterion.** Let `A` be a Noetherian domain and `p ∈ A` a prime element such that
-`A[1/p]` is a UFD. Then `A` is a UFD. -/
+/-- **Nagata's criterion** (Stacks, Tag 0AFU). Let `A` be a Noetherian domain and `p ∈ A` a prime
+element such that `A[1/p]` is a UFD. Then `A` is a UFD. -/
 theorem UniqueFactorizationMonoid.of_isLocalization_away [IsNoetherianRing A] {p : A}
     (hp : Prime p) (L : Type*) [CommRing L] [Algebra A L] [IsLocalization.Away p L]
     [UniqueFactorizationMonoid L] : UniqueFactorizationMonoid A := by
@@ -156,6 +204,54 @@ theorem UniqueFactorizationMonoid.of_isLocalization_away [IsNoetherianRing A] {p
   rcases ha'L.dvd_or_dvd hbcL with h | h
   · exact Or.inl (key b h)
   · exact Or.inr (key c h)
+
+/-! ## Laurent polynomials -/
+
+omit [IsDomain A] in
+/-- `A[T, T⁻¹]` is the localization `A[T][1/T]`. -/
+theorem laurentPolynomial_isLocalization :
+    IsLocalization.Away (Polynomial.X : Polynomial A) A[T;T⁻¹] :=
+  inferInstance
+
+omit [IsDomain A] in
+/-- If `A` is Noetherian, so is `A[T, T⁻¹]`. -/
+theorem laurentPolynomial_isNoetherianRing [IsNoetherianRing A] : IsNoetherianRing A[T;T⁻¹] :=
+  IsLocalization.isNoetherianRing (Submonoid.powers (Polynomial.X : Polynomial A)) _
+    inferInstance
+
+/-- If `A` is a (Noetherian) UFD, then so is `A[T, T⁻¹] = A[T][1/T]`. -/
+theorem laurentPolynomial_ufd [UniqueFactorizationMonoid A] :
+    UniqueFactorizationMonoid A[T;T⁻¹] :=
+  UniqueFactorizationMonoid.of_isLocalization (Submonoid.powers (Polynomial.X : Polynomial A))
+    (fun h => by obtain ⟨n, hn⟩ := h; exact Polynomial.X_ne_zero (pow_eq_zero_iff'.1 hn).1) _
+
+/-- Every prime element `p` of `A` remains prime in `A[T, T⁻¹]`. -/
+theorem prime_laurentPolynomial_C {p : A} (hp : Prime p) :
+    Prime (LaurentPolynomial.C p : A[T;T⁻¹]) := by
+  have hpX : Prime (Polynomial.C p) := Polynomial.prime_C_iff.2 hp
+  have hsle : Submonoid.powers (Polynomial.X : Polynomial A) ≤ nonZeroDivisors (Polynomial A) :=
+    powers_le_nonZeroDivisors_of_noZeroDivisors Polynomial.X_ne_zero
+  have hdisj : Disjoint (Submonoid.powers (Polynomial.X : Polynomial A) : Set (Polynomial A))
+      (Ideal.span {Polynomial.C p} : Set (Polynomial A)) := by
+    rw [Set.disjoint_left]
+    rintro _ ⟨n, rfl⟩ h
+    rw [SetLike.mem_coe, Ideal.mem_span_singleton] at h
+    obtain ⟨q, hq⟩ := h
+    have := congrArg (fun f => Polynomial.coeff f n) hq
+    simp only [Polynomial.coeff_X_pow_self, Polynomial.coeff_C_mul] at this
+    exact hp.not_isUnit (IsUnit.of_mul_eq_one _ this.symm)
+  have hprime := isPrime_of_isPrime_disjoint (Submonoid.powers (Polynomial.X : Polynomial A))
+    A[T;T⁻¹] _ ((Ideal.span_singleton_prime hpX.ne_zero).2 hpX) hdisj
+  rw [Ideal.map_span, Set.image_singleton] at hprime
+  have hC : algebraMap (Polynomial A) A[T;T⁻¹] (Polynomial.C p) = LaurentPolynomial.C p := by
+    simp [LaurentPolynomial.algebraMap_eq_toLaurent]
+  rw [hC] at hprime
+  have hne : (LaurentPolynomial.C p : A[T;T⁻¹]) ≠ 0 := by
+    intro h
+    have h0 : (LaurentPolynomial.C p * T 0 : A[T;T⁻¹]) = 0 := by rw [T_zero, mul_one, h]
+    rw [← single_eq_C_mul_T] at h0
+    exact hp.ne_zero (AddMonoidAlgebra.single_eq_zero.1 h0)
+  exact (Ideal.span_singleton_prime hne).1 hprime
 
 end
 

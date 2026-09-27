@@ -60,9 +60,9 @@ lemma ext0_lt {n : ℕ} {e e' : Fin n → ℚ} (h : toLex e < toLex e') :
   · simp only [Pi.toLex_apply] at hbelow ⊢
     have hjn : j < n := lt_trans hj i.2
     have := hbelow ⟨j, hjn⟩ hj
-    simp only [ext0, dif_pos hjn]; exact this
+    simp only [ext0, dite_eq_left hjn]; exact this
   · simp only [Pi.toLex_apply] at hi ⊢
-    simp only [ext0, dif_pos i.2]; exact hi
+    simp only [ext0, dite_eq_left i.2]; exact hi
 
 end Aux
 
@@ -77,6 +77,7 @@ section WeakFacts
 
 variable {B : Type*} [CommRing B] [Algebra ℚ B] [IsDomain B] (Φ : WFil B)
 
+omit [IsDomain B] [Algebra ℚ B] in
 lemma weakT_ne_bot {I : Ideal B} (hI : I ≠ ⊥) (d : ℤ) (hId : I ≤ Φ.F d) : weakT Φ I d hId ≠ ⊥ := by
   obtain ⟨f, hf, hf0⟩ := Submodule.exists_mem_ne_zero_of_ne_bot hI
   intro h
@@ -84,9 +85,10 @@ lemma weakT_ne_bot {I : Ideal B} (hI : I ≠ ⊥) (d : ℤ) (hId : I ≤ Φ.F d)
       weakT Φ I d hId := Ideal.subset_span ⟨⟨f, hf⟩, rfl⟩
   rw [h, Ideal.mem_bot] at hmem
   have := congrArg (fun p : ReesAlg Φ => (p : B[T;T⁻¹]).coeff d) hmem
-  simp only [coeff_C_mul_T, if_pos rfl] at this
+  simp only [coeff_C_mul_T] at this
   exact hf0 (by simpa using this)
 
+omit [IsDomain B] [Algebra ℚ B] in
 lemma weakT_le {I : Ideal B} (d : ℤ) (hId : I ≤ Φ.F d) (P : Ideal (ReesAlg Φ))
     (h : ∀ f (hf : f ∈ I), (⟨LaurentPolynomial.C f * T d, C_mul_T_mem_ReesAlg (hId hf)⟩ :
       ReesAlg Φ) ∈ P) : weakT Φ I d hId ≤ P := by
@@ -94,6 +96,7 @@ lemma weakT_le {I : Ideal B} (d : ℤ) (hId : I ≤ Φ.F d) (P : Ideal (ReesAlg 
   rintro _ ⟨⟨f, hf⟩, rfl⟩
   exact h f hf
 
+omit [IsDomain B] [Algebra ℚ B] in
 lemma reesScale_weakT_le (μ : Bˣ) {I : Ideal B} (d : ℤ) (hId : I ≤ Φ.F d) :
     (weakT Φ I d hId).map (reesScale Φ μ) ≤ weakT Φ I d hId := by
   rw [Ideal.map_le_iff_le_comap]
@@ -110,6 +113,7 @@ lemma reesScale_weakT_le (μ : Bˣ) {I : Ideal B} (d : ℤ) (hId : I ≤ Φ.F d)
   rw [this]
   exact Ideal.mul_mem_left _ _ (Ideal.subset_span ⟨⟨f, hf⟩, rfl⟩)
 
+omit [IsDomain B] [Algebra ℚ B] in
 lemma reesScale_weakT (μ : Bˣ) {I : Ideal B} (d : ℤ) (hId : I ≤ Φ.F d) :
     (weakT Φ I d hId).map (reesScale Φ μ) = weakT Φ I d hId := by
   refine le_antisymm (reesScale_weakT_le Φ μ d hId) ?_
@@ -136,9 +140,9 @@ lemma Loc.exists_of_mem_map {T : Type} [CommRing T] [IsDomain T] [Algebra ℚ T]
     (J : Ideal (Localization M)) {x : T}
     (hx : algebraMap T (Localization.AtPrime Q) x ∈ J.map (Loc.map h)) :
     ∃ s : T, s ∉ Q ∧ algebraMap T (Localization M) (s * x) ∈ J := by
-  letI := Loc.alg h
-  haveI := Loc.tower h
-  haveI := Loc.isLoc h
+  let := Loc.alg h
+  have := Loc.tower h
+  have := Loc.isLoc h
   have halg : ∀ y : Localization M, Loc.map h y = algebraMap (Localization M) (Localization Q.primeCompl) y :=
     fun _ => rfl
   have hJ : J.map (Loc.map h) = J.map (algebraMap (Localization M) (Localization Q.primeCompl)) := rfl
@@ -174,7 +178,7 @@ of the Rees algebra on the exceptional divisor and off the vertex locus `V(R₊)
 has strictly smaller invariant. -/
 theorem drop (P : Ideal (ReesAlg (compFil hI hmax h𝔭 d))) [hPm : P.IsMaximal]
     (hIwP : weakT (compFil hI hmax h𝔭 d) I d (I_le_compFil hI hmax h𝔭 hd) ≤ P)
-    (hsP : reesS (compFil hI hmax h𝔭 d) (fun j hj => compFil_F_nonpos hI hmax h𝔭 d hj) ∈ P)
+    (hsP : reesS (compFil hI hmax h𝔭 d) (fun _j hj => compFil_F_nonpos hI hmax h𝔭 d hj) ∈ P)
     {j : ℤ} (hj : 1 ≤ j) {f : A} (hf : f ∈ (compFil hI hmax h𝔭 d).F j)
     (hyP : (⟨LaurentPolynomial.C f * T j, C_mul_T_mem_ReesAlg hf⟩ :
       ReesAlg (compFil hI hmax h𝔭 d)) ∉ P)
@@ -183,13 +187,13 @@ theorem drop (P : Ideal (ReesAlg (compFil hI hmax h𝔭 d))) [hPm : P.IsMaximal]
   classical
   have hneg : ∀ j : ℤ, j ≤ 0 → (compFil hI hmax h𝔭 d).F j = ⊤ := fun j hj => compFil_F_nonpos hI hmax h𝔭 d hj
   have hId := I_le_compFil hI hmax h𝔭 hd
-  haveI : Algebra.FiniteType A (ReesAlg (compFil hI hmax h𝔭 d)) := reesAlg_finiteType hI hmax h𝔭 d hd hw
-  haveI : Algebra.FiniteType ℚ (ReesAlg (compFil hI hmax h𝔭 d)) := Algebra.FiniteType.trans (S := A) inferInstance inferInstance
-  haveI : IsNoetherianRing (ReesAlg (compFil hI hmax h𝔭 d)) := Algebra.FiniteType.isNoetherianRing A (ReesAlg (compFil hI hmax h𝔭 d))
-  haveI : Algebra.Smooth ℚ (ReesAlg (compFil hI hmax h𝔭 d)) := rees_smooth hI hmax h𝔭 hd hw
+  have : Algebra.FiniteType A (ReesAlg (compFil hI hmax h𝔭 d)) := reesAlg_finiteType hI hmax h𝔭 d hd hw
+  have : Algebra.FiniteType ℚ (ReesAlg (compFil hI hmax h𝔭 d)) := Algebra.FiniteType.trans (S := A) inferInstance inferInstance
+  have : IsNoetherianRing (ReesAlg (compFil hI hmax h𝔭 d)) := Algebra.FiniteType.isNoetherianRing A (ReesAlg (compFil hI hmax h𝔭 d))
+  have : Algebra.Smooth ℚ (ReesAlg (compFil hI hmax h𝔭 d)) := rees_smooth hI hmax h𝔭 hd hw
   -- the point of `A` below `P`
   set 𝔪 := P.comap (algebraMap A (ReesAlg (compFil hI hmax h𝔭 d)))
-  haveI : 𝔪.IsMaximal := comap_isMaximal_of_finiteType P
+  have : 𝔪.IsMaximal := comap_isMaximal_of_finiteType P
   have h𝔭𝔪 : 𝔭 ≤ 𝔪 := by
     intro g hg
     have hg1 : g ∈ (compFil hI hmax h𝔭 d).F 1 := by
@@ -201,7 +205,7 @@ theorem drop (P : Ideal (ReesAlg (compFil hI hmax h𝔭 d))) [hPm : P.IsMaximal]
       show algebraMap A A[T;T⁻¹] g = T (-1) * (LaurentPolynomial.C g * T 1)
       rw [mul_left_comm, ← T_add, neg_add_cancel, T_zero, mul_one, LaurentPolynomial.C_eq_algebraMap]
     rw [this]; exact P.mul_mem_right _ hsP
-  obtain ⟨D⟩ := VertexData.nonempty hI hmax h𝔭 hd hw 𝔪 h𝔭𝔪
+  obtain ⟨D⟩ := VertexData.nonempty hI hmax h𝔭 hw 𝔪 h𝔭𝔪
   set hpos := D.hpos hd
   set P₀ := vertexG (compFil hI hmax h𝔭 d) 𝔪 hpos
   obtain ⟨J₀, hJ₀adm, hJ₀e, hJ₀inv, hJ₀homog⟩ := D.vertexG_data hd
@@ -210,7 +214,7 @@ theorem drop (P : Ideal (ReesAlg (compFil hI hmax h𝔭 d))) [hPm : P.IsMaximal]
   have hIwP₀ : (weakT (compFil hI hmax h𝔭 d) I d hId) ≤ P₀ := by
     apply weakT_le
     intro g hg
-    rw [mem_vertexG, coeff_C_mul_T, if_neg (by omega)]
+    rw [mem_vertexG, coeff_C_mul_T, ite_eq_right (by omega)]
     exact zero_mem _
   obtain ⟨n', M', g, hg, hctrl, k', ck, ek, hsupp', hadm', hinv', hcent', hbound'⟩ :=
     local_inv (weakT (compFil hI hmax h𝔭 d) I d hId) hIw0 P₀ hIwP₀
@@ -240,7 +244,7 @@ theorem drop (P : Ideal (ReesAlg (compFil hI hmax h𝔭 d))) [hPm : P.IsMaximal]
   obtain ⟨μ, hμ, hμG⟩ := exists_reesScale_not_mem (compFil hI hmax h𝔭 d) hneg P hsP G hG
   set σ := reesScale (compFil hI hmax h𝔭 d) (qUnit (B := A) μ hμ)
   set P' := P.comap σ
-  haveI : P'.IsMaximal := Ideal.comap_isMaximal_of_surjective σ σ.surjective
+  have : P'.IsMaximal := Ideal.comap_isMaximal_of_surjective σ σ.surjective
   have hgP' : g ∉ P' := fun h' => hμG (by rw [Ideal.mem_comap] at h'; exact
     (show σ G ∈ P by rw [map_mul]; exact P.mul_mem_right _ h'))
   have hhP' : h ∉ P' := fun h' => hμG (by rw [Ideal.mem_comap] at h'; exact

@@ -35,7 +35,7 @@ lemma mem_unitPre {w : W} : w ∈ unitPre θ ↔ IsUnit (θ w) := IsUnit.mem_sub
 lemma isLocalization_unitPre (hinj : Function.Injective θ)
     (hsurj : ∀ z : S', ∃ a b : W, IsUnit (θ b) ∧ z * θ b = θ a) :
     @IsLocalization _ _ (unitPre θ) S' _ θ.toAlgebra := by
-  letI := θ.toAlgebra
+  let := θ.toAlgebra
   refine ⟨fun m => (mem_unitPre θ).1 m.2, fun z => ?_, fun {x y} h => ⟨1, by
     simp only [OneMemClass.coe_one, one_mul]; exact hinj h⟩⟩
   obtain ⟨a, b, hb, h⟩ := hsurj z
@@ -57,10 +57,10 @@ theorem IsInv.transfer_mvLoc {r : ℕ} (θ : MvPolynomial (Fin r) S →+* S')
     {c : Chart S n} (hc : c.IsCentred) {I : Ideal S} (hI : I ≠ ⊥) (hIm : I ≤ maximalIdeal S)
     {e : Fin n → ℚ} (he : IsInv I n e) :
     IsInv (I.map (θ.comp MvPolynomial.C)) (n + r) (pad (n + r) e) := by
-  letI := θ.toAlgebra
-  haveI : IsScalarTower ℚ (MvPolynomial (Fin r) S) S' :=
+  let := θ.toAlgebra
+  have : IsScalarTower ℚ (MvPolynomial (Fin r) S) S' :=
     IsScalarTower.of_algebraMap_eq (fun q => (RingHom.map_rat_algebraMap θ q).symm)
-  haveI := isLocalization_unitPre θ hinj hsurj
+  have := isLocalization_unitPre θ hinj hsurj
   have hcc := (c.compat_mvPolynomial r).trans
     ((c.mvPolynomial r).compat_localization (L := S') (unitPre θ))
   exact IsInv.transfer (fun a ha => hloc a ha) hc hcc hI hIm he
@@ -72,10 +72,10 @@ theorem IsInv.transfer_polyLoc (θ : Polynomial S →+* S')
     {c : Chart S n} (hc : c.IsCentred) {I : Ideal S} (hI : I ≠ ⊥) (hIm : I ≤ maximalIdeal S)
     {e : Fin n → ℚ} (he : IsInv I n e) :
     IsInv (I.map (θ.comp Polynomial.C)) (n + 1) (pad (n + 1) e) := by
-  letI := θ.toAlgebra
-  haveI : IsScalarTower ℚ (Polynomial S) S' :=
+  let := θ.toAlgebra
+  have : IsScalarTower ℚ (Polynomial S) S' :=
     IsScalarTower.of_algebraMap_eq (fun q => (RingHom.map_rat_algebraMap θ q).symm)
-  haveI := isLocalization_unitPre θ hinj hsurj
+  have := isLocalization_unitPre θ hinj hsurj
   have hcc := c.compat_polynomial.trans (c.polynomial.compat_localization (L := S') (unitPre θ))
   exact IsInv.transfer (fun a ha => hloc a ha) hc hcc hI hIm he
 
@@ -88,19 +88,19 @@ variable {S S' : Type*} [CommRing S] [Algebra ℚ S] [CommRing S'] [Algebra ℚ 
 lemma chart_of_mvLoc {r : ℕ} (θ : MvPolynomial (Fin r) S →+* S')
     (hinj : Function.Injective θ) (hsurj : ∀ z : S', ∃ a b, IsUnit (θ b) ∧ z * θ b = θ a)
     (c : Chart S n) : Nonempty (Chart S' (n + r)) := by
-  letI := θ.toAlgebra
-  haveI : IsScalarTower ℚ (MvPolynomial (Fin r) S) S' :=
+  let := θ.toAlgebra
+  have : IsScalarTower ℚ (MvPolynomial (Fin r) S) S' :=
     IsScalarTower.of_algebraMap_eq (fun q => (RingHom.map_rat_algebraMap θ q).symm)
-  haveI := isLocalization_unitPre θ hinj hsurj
+  have := isLocalization_unitPre θ hinj hsurj
   exact ⟨(c.mvPolynomial r).localization (unitPre θ)⟩
 
 lemma chart_of_polyLoc (θ : Polynomial S →+* S')
     (hinj : Function.Injective θ) (hsurj : ∀ z : S', ∃ a b, IsUnit (θ b) ∧ z * θ b = θ a)
     (c : Chart S n) : Nonempty (Chart S' (n + 1)) := by
-  letI := θ.toAlgebra
-  haveI : IsScalarTower ℚ (Polynomial S) S' :=
+  let := θ.toAlgebra
+  have : IsScalarTower ℚ (Polynomial S) S' :=
     IsScalarTower.of_algebraMap_eq (fun q => (RingHom.map_rat_algebraMap θ q).symm)
-  haveI := isLocalization_unitPre θ hinj hsurj
+  have := isLocalization_unitPre θ hinj hsurj
   exact ⟨c.polynomial.localization (unitPre θ)⟩
 
 end ChartLoc
@@ -119,6 +119,7 @@ variable {B : Type*} [CommRing B] [Algebra ℚ B] [IsDomain B] (Φ : WFil B)
   (P : Ideal (ReesAlg Φ)) [P.IsPrime] (hsP : reesS Φ hneg ∉ P)
 include hneg hsP
 
+omit [IsDomain B] [Algebra ℚ B] in
 lemma s_isUnit_loc : IsUnit (algebraMap (ReesAlg Φ) (Localization.AtPrime P) (reesS Φ hneg)) :=
   IsLocalization.map_units (Localization.AtPrime P) (⟨reesS Φ hneg, hsP⟩ : P.primeCompl)
 
@@ -127,13 +128,15 @@ def laurentToLoc : B[T;T⁻¹] →+* Localization.AtPrime P := by
   haveI := isLocalization_away_s Φ hneg
   exact IsLocalization.Away.lift (reesS Φ hneg) (s_isUnit_loc Φ hneg P hsP)
 
+omit [IsDomain B] [Algebra ℚ B] in
 lemma laurentToLoc_coe (r : ReesAlg Φ) :
     laurentToLoc Φ hneg P hsP (r : B[T;T⁻¹]) = algebraMap (ReesAlg Φ) (Localization.AtPrime P) r := by
-  haveI := isLocalization_away_s Φ hneg
+  have := isLocalization_away_s Φ hneg
   exact IsLocalization.lift_eq (M := Submonoid.powers (reesS Φ hneg)) _ r
 
+omit [Algebra ℚ B] in
 lemma laurentToLoc_injective : Function.Injective (laurentToLoc Φ hneg P hsP) := by
-  haveI := isLocalization_away_s Φ hneg
+  have := isLocalization_away_s Φ hneg
   rw [injective_iff_map_eq_zero]
   intro z hz
   obtain ⟨⟨r, m⟩, hr⟩ := IsLocalization.surj (Submonoid.powers (reesS Φ hneg)) z
@@ -154,14 +157,17 @@ def theta1 : Polynomial (Localization.AtPrime 𝔮) →+* Localization.AtPrime P
   Polynomial.eval₂RingHom (Localization.localRingHom 𝔮 P (algebraMap B (ReesAlg Φ)) h𝔮)
     (laurentToLoc Φ hneg P hsP (T 1))
 
+omit [IsDomain B] [Algebra ℚ B] in
 lemma theta1_C (a : Localization.AtPrime 𝔮) :
     theta1 Φ hneg P hsP 𝔮 h𝔮 (Polynomial.C a) =
       Localization.localRingHom 𝔮 P (algebraMap B (ReesAlg Φ)) h𝔮 a := by
   simp [theta1]
 
+omit [IsDomain B] [Algebra ℚ B] in
 lemma theta1_X : theta1 Φ hneg P hsP 𝔮 h𝔮 Polynomial.X = laurentToLoc Φ hneg P hsP (T 1) := by
   simp [theta1]
 
+omit [IsDomain B] [Algebra ℚ B] in
 lemma theta1_map (q : Polynomial B) :
     theta1 Φ hneg P hsP 𝔮 h𝔮 (q.map (algebraMap B (Localization.AtPrime 𝔮))) =
       laurentToLoc Φ hneg P hsP (Polynomial.toLaurent q) := by
@@ -193,6 +199,7 @@ variable {B : Type*} [CommRing B] [Algebra ℚ B] [IsDomain B] (Φ : WFil B)
   (𝔮 : Ideal B) [𝔮.IsPrime] (h𝔮 : 𝔮 = P.comap (algebraMap B (ReesAlg Φ)))
 include hneg hsP h𝔮
 
+omit [Algebra ℚ B] in
 lemma theta1_injective : Function.Injective (theta1 Φ hneg P hsP 𝔮 h𝔮) := by
   rw [injective_iff_map_eq_zero]
   intro w hw
@@ -210,6 +217,7 @@ lemma theta1_injective : Function.Injective (theta1 Φ hneg P hsP 𝔮 h𝔮) :=
   exact (IsLocalization.integerNormalization_eq_zero_iff
     (Ideal.primeCompl_le_nonZeroDivisors 𝔮) w).1 h3
 
+omit [IsDomain B] [Algebra ℚ B] in
 lemma theta1_surj (z : Localization.AtPrime P) :
     ∃ a b, IsUnit (theta1 Φ hneg P hsP 𝔮 h𝔮 b) ∧
       z * theta1 Φ hneg P hsP 𝔮 h𝔮 b = theta1 Φ hneg P hsP 𝔮 h𝔮 a := by
@@ -238,6 +246,7 @@ lemma theta1_surj (z : Localization.AtPrime P) :
           algebraMap _ (Localization.AtPrime P) (t : ReesAlg Φ)) * (L (T N) * L (T N')) := by ring
       _ = _ := by rw [hs]; ring
 
+omit [IsDomain B] [Algebra ℚ B] in
 lemma theta1_local (a : Localization.AtPrime 𝔮) (ha : a ∈ maximalIdeal (Localization.AtPrime 𝔮)) :
     theta1 Φ hneg P hsP 𝔮 h𝔮 (Polynomial.C a) ∈ maximalIdeal (Localization.AtPrime P) := by
   rw [theta1_C]
@@ -264,6 +273,7 @@ local notation "PP" => Q.comap (algebraMap R (Jou.J y))
 abbrev jmap : Jou.J y →+* Jou.J (algebraMap R (Localization.AtPrime PP) ∘ y) :=
   Jou.map (algebraMap R (Localization.AtPrime PP)) y
 
+omit [IsDomain R] [IsDomain (Jou.J y)] in
 lemma jmap_isLocalization :
     @IsLocalization _ _ ((PP).primeCompl.map (algebraMap R (Jou.J y)))
       (Jou.J (algebraMap R (Localization.AtPrime PP) ∘ y)) _ (jmap y Q).toAlgebra :=
@@ -281,6 +291,7 @@ def jequiv : Jou.J (algebraMap R (Localization.AtPrime PP) ∘ y) ≃+*
   Jou.equivPoly (c := algebraMap R (Localization.AtPrime PP) ∘ y) (l := l) (ylUnit y Q hyl) rfl
 
 omit hyl in
+omit [IsDomain R] [IsDomain (Jou.J y)] in
 lemma jmap_units (m : (PP).primeCompl.map (algebraMap R (Jou.J y))) :
     IsUnit (algebraMap (Jou.J y) (Localization.AtPrime Q) m) := by
   obtain ⟨_, ⟨a, ha, rfl⟩⟩ := m
@@ -293,11 +304,11 @@ def jlift : Jou.J (algebraMap R (Localization.AtPrime PP) ∘ y) →+* Localizat
   exact IsLocalization.lift (M := (PP).primeCompl.map (algebraMap R (Jou.J y)))
     (S := Jou.J (algebraMap R (Localization.AtPrime PP) ∘ y)) (jmap_units y Q)
 
-omit hyl in
+omit hyl [IsDomain R] [IsDomain (Jou.J y)] in
 lemma jlift_jmap (u : Jou.J y) :
     jlift y Q (jmap y Q u) = algebraMap (Jou.J y) (Localization.AtPrime Q) u := by
-  letI := (jmap y Q).toAlgebra
-  haveI := jmap_isLocalization y Q
+  let := (jmap y Q).toAlgebra
+  have := jmap_isLocalization y Q
   exact IsLocalization.lift_eq (M := (PP).primeCompl.map (algebraMap R (Jou.J y)))
     (S := Jou.J (algebraMap R (Localization.AtPrime PP) ∘ y)) (jmap_units y Q) u
 
@@ -323,14 +334,17 @@ local notation "PP" => Q.comap (algebraMap R (Jou.J y))
 def theta2 : MvPolynomial (Fin r) (Localization.AtPrime PP) →+* Localization.AtPrime Q :=
   (jlift y Q).comp (jequiv y Q hyl).symm.toRingHom
 
+omit [IsDomain R] [IsDomain (Jou.J y)] in
 lemma theta2_jequiv (z : Jou.J (algebraMap R (Localization.AtPrime PP) ∘ y)) :
     theta2 y Q hyl (jequiv y Q hyl z) = jlift y Q z := by
   simp [theta2]
 
+omit [IsDomain R] [IsDomain (Jou.J y)] in
 lemma jequiv_algebraMap (b : Localization.AtPrime PP) :
     jequiv y Q hyl (algebraMap _ _ b) = MvPolynomial.C b :=
   Jou.equivPoly_algebraMap _ _ b
 
+omit [IsDomain R] [IsDomain (Jou.J y)] in
 lemma theta2_C_algebraMap (a : R) :
     theta2 y Q hyl (MvPolynomial.C (algebraMap R (Localization.AtPrime PP) a)) =
       algebraMap (Jou.J y) (Localization.AtPrime Q) (algebraMap R (Jou.J y) a) := by
@@ -339,16 +353,18 @@ lemma theta2_C_algebraMap (a : R) :
     rw [jmap, Jou.map_algebraMap, jequiv_algebraMap]
   rw [h1, theta2_jequiv, jlift_jmap]
 
+omit [IsDomain R] [IsDomain (Jou.J y)] in
 lemma theta2_comp :
     (theta2 y Q hyl).comp (MvPolynomial.C.comp (algebraMap R (Localization.AtPrime PP))) =
       (algebraMap (Jou.J y) (Localization.AtPrime Q)).comp (algebraMap R (Jou.J y)) :=
   RingHom.ext fun a => theta2_C_algebraMap y Q hyl a
 
+omit [IsDomain R] in
 lemma theta2_injective : Function.Injective (theta2 y Q hyl) := by
   rw [injective_iff_map_eq_zero]
   intro w hw
-  letI := (jmap y Q).toAlgebra
-  haveI := jmap_isLocalization y Q
+  let := (jmap y Q).toAlgebra
+  have := jmap_isLocalization y Q
   obtain ⟨⟨u, m⟩, hum⟩ := IsLocalization.surj ((PP).primeCompl.map (algebraMap R (Jou.J y)))
     ((jequiv y Q hyl).symm w)
   have hw' : jlift y Q ((jequiv y Q hyl).symm w) = 0 := hw
@@ -363,6 +379,7 @@ lemma theta2_injective : Function.Injective (theta2 y Q hyl) := by
   have h3 : (jequiv y Q hyl).symm w = 0 := hmu.mul_left_eq_zero.1 hum
   simpa using congrArg (jequiv y Q hyl) h3
 
+omit [IsDomain R] [IsDomain (Jou.J y)] in
 lemma theta2_surj (z : Localization.AtPrime Q) :
     ∃ a b, IsUnit (theta2 y Q hyl b) ∧ z * theta2 y Q hyl b = theta2 y Q hyl a := by
   obtain ⟨⟨u, t⟩, rfl⟩ := IsLocalization.mk'_surjective Q.primeCompl z
@@ -371,6 +388,7 @@ lemma theta2_surj (z : Localization.AtPrime Q) :
   · rw [theta2_jequiv, theta2_jequiv, jlift_jmap, jlift_jmap]
     exact IsLocalization.mk'_spec _ u t
 
+omit [IsDomain R] [IsDomain (Jou.J y)] in
 lemma theta2_local (a : Localization.AtPrime PP) (ha : a ∈ maximalIdeal (Localization.AtPrime PP)) :
     theta2 y Q hyl (MvPolynomial.C a) ∈ maximalIdeal (Localization.AtPrime Q) := by
   obtain ⟨⟨p, m⟩, rfl⟩ := IsLocalization.mk'_surjective (PP).primeCompl a
@@ -407,18 +425,19 @@ variable {R : Type} [CommRing R] [IsDomain R] [Algebra ℚ R] [Algebra.Smooth �
   (hyl : y l ∉ Q.comap (algebraMap R (Jou.J y)))
 include hyl
 
+omit [Algebra.Smooth ℚ R] in
 /-- **Smooth invariance along the torsor** `R_P → U_Q`. -/
 theorem invAt_torsor_of_rees {J : Ideal R} (hJ : J ≠ ⊥) (hJP : J ≤ Q.comap (algebraMap R (Jou.J y)))
     {w : ℕ → ℚ} (hw : InvAt J (Q.comap (algebraMap R (Jou.J y))) w) :
     InvAt (J.map (algebraMap R (Jou.J y))) Q w := by
   obtain ⟨n, e, he, rfl⟩ := hw
-  haveI : IsNoetherianRing (Localization.AtPrime Q) :=
+  have : IsNoetherianRing (Localization.AtPrime Q) :=
     IsLocalization.isNoetherianRing Q.primeCompl _ inferInstance
-  haveI : IsNoetherianRing (Localization.AtPrime (Q.comap (algebraMap R (Jou.J y)))) :=
+  have : IsNoetherianRing (Localization.AtPrime (Q.comap (algebraMap R (Jou.J y)))) :=
     IsLocalization.isNoetherianRing (Q.comap (algebraMap R (Jou.J y))).primeCompl _ inferInstance
-  haveI := residueField_isIntegral Q
+  have := residueField_isIntegral Q
   obtain ⟨M, -, -⟩ := he.1
-  haveI : Algebra.FormallySmooth ℚ (ResidueField (Localization.AtPrime Q)) :=
+  have : Algebra.FormallySmooth ℚ (ResidueField (Localization.AtPrime Q)) :=
     (Algebra.FormallyEtale.iff_formallyUnramified_and_formallySmooth.1 (fe_residueField Q)).2
   have h := IsInv.transfer_mvLoc (S := Localization.AtPrime (Q.comap (algebraMap R (Jou.J y))))
     (S' := Localization.AtPrime Q) (theta2 y Q hyl) (theta2_injective y Q hyl) (theta2_surj y Q hyl)
@@ -441,19 +460,20 @@ variable {B : Type} [CommRing B] [IsDomain B] [Algebra ℚ B] [Algebra.Smooth �
   (P : Ideal (ReesAlg Φ)) [P.IsMaximal] (hsP : reesS Φ hneg ∉ P)
 include hneg hsP
 
+omit [Algebra.Smooth ℚ B] in
 /-- **Smooth invariance off the exceptional divisor** `B_𝔪 → R_P`. -/
 theorem invAt_rees_of_base {J : Ideal B} (hJ : J ≠ ⊥)
     (hJP : J ≤ P.comap (algebraMap B (ReesAlg Φ)))
     {u : ℕ → ℚ} (hu : InvAt J (P.comap (algebraMap B (ReesAlg Φ))) u) :
     InvAt (J.map (algebraMap B (ReesAlg Φ))) P u := by
   obtain ⟨n, e, he, rfl⟩ := hu
-  haveI : IsNoetherianRing (Localization.AtPrime P) :=
+  have : IsNoetherianRing (Localization.AtPrime P) :=
     IsLocalization.isNoetherianRing P.primeCompl _ inferInstance
-  haveI : IsNoetherianRing (Localization.AtPrime (P.comap (algebraMap B (ReesAlg Φ)))) :=
+  have : IsNoetherianRing (Localization.AtPrime (P.comap (algebraMap B (ReesAlg Φ)))) :=
     IsLocalization.isNoetherianRing (P.comap (algebraMap B (ReesAlg Φ))).primeCompl _ inferInstance
-  haveI := residueField_isIntegral P
+  have := residueField_isIntegral P
   obtain ⟨M, -, -⟩ := he.1
-  haveI : Algebra.FormallySmooth ℚ (ResidueField (Localization.AtPrime P)) :=
+  have : Algebra.FormallySmooth ℚ (ResidueField (Localization.AtPrime P)) :=
     (Algebra.FormallyEtale.iff_formallyUnramified_and_formallySmooth.1 (fe_residueField P)).2
   set 𝔮 := P.comap (algebraMap B (ReesAlg Φ))
   have h := IsInv.transfer_polyLoc (S := Localization.AtPrime 𝔮) (S' := Localization.AtPrime P)
@@ -494,6 +514,7 @@ lemma InvAt.of_Iloc_eq {I I' : Ideal A} {𝔪 : Ideal A} [𝔪.IsPrime] (h : Ilo
   obtain ⟨n, e, he, rfl⟩ := hv
   exact ⟨n, e, h ▸ he, rfl⟩
 
+omit [Algebra ℚ A] in
 lemma Iloc_span_unit_mul {s : A} {J : Ideal A} {𝔪 : Ideal A} [𝔪.IsPrime] (hs : s ∉ 𝔪) (d : ℕ) :
     Iloc (Ideal.span {s ^ d} * J) 𝔪 = Iloc J 𝔪 := by
   rw [Iloc, Iloc, Ideal.map_mul, Ideal.map_span, Set.image_singleton]
@@ -521,7 +542,7 @@ abbrev torsorI : Ideal (Torsor hI hmax h𝔭 d hπ) :=
 /-- The exceptional element `s` on the torsor. -/
 abbrev torsorS : Torsor hI hmax h𝔭 d hπ :=
   algebraMap (ReesAlg (compFil hI hmax h𝔭 d)) (Torsor hI hmax h𝔭 d hπ)
-    (reesS (compFil hI hmax h𝔭 d) (fun j hj => compFil_F_nonpos hI hmax h𝔭 d hj))
+    (reesS (compFil hI hmax h𝔭 d) (fun _j hj => compFil_F_nonpos hI hmax h𝔭 d hj))
 
 lemma torsor_map_eq : I.map (algebraMap A (Torsor hI hmax h𝔭 d hπ)) =
     Ideal.span {torsorS hI hmax h𝔭 hπ ^ d} * torsorI hI hmax h𝔭 hd hπ := by
@@ -545,13 +566,12 @@ variable {I : Ideal A} (hI : I ≠ ⊥) {v₀ : ℕ → ℚ}
   (hw : ∀ i, ∃ w : ℕ, (w : ℚ) = d * v₀ i) {π : A} (hπ : π ∈ (compFil hI hmax h𝔭 d).F 1)
   (hπ0 : π ≠ 0)
 
-include hd hw in
 /-- Some torsor generator is a unit at every point. -/
 lemma exists_torsorY_not_mem (Q : Ideal (Torsor hI hmax h𝔭 d hπ)) [Q.IsPrime] :
     ∃ l, torsorY hI hmax h𝔭 d hπ l ∉
       Q.comap (algebraMap (ReesAlg (compFil hI hmax h𝔭 d)) (Torsor hI hmax h𝔭 d hπ)) := by
   by_contra h
-  push_neg at h
+  push Not at h
   apply ‹Q.IsPrime›.ne_top
   rw [Ideal.eq_top_iff_one, ← Jou.sum_σ_mul (torsorY hI hmax h𝔭 d hπ)]
   exact Ideal.sum_mem _ fun l _ => Q.mul_mem_left _ (h l)
@@ -562,7 +582,7 @@ lemma torsor_not_le_of_s_not_mem (Q : Ideal (Torsor hI hmax h𝔭 d hπ)) [Q.IsP
     (hsQ : torsorS hI hmax h𝔭 hπ ∉ Q) :
     ¬ 𝔭 ≤ Q.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ)) := by
   intro hle
-  obtain ⟨l, hl⟩ := exists_torsorY_not_mem hI hmax h𝔭 hd hw hπ Q
+  obtain ⟨l, hl⟩ := exists_torsorY_not_mem hI hmax h𝔭 hπ Q
   apply hl
   set P := Q.comap (algebraMap (ReesAlg (compFil hI hmax h𝔭 d)) (Torsor hI hmax h𝔭 d hπ))
   have hsP : reesS (compFil hI hmax h𝔭 d) (fun j hj => compFil_F_nonpos hI hmax h𝔭 d hj) ∉ P := hsQ
@@ -594,7 +614,7 @@ lemma torsor_not_le_of_s_not_mem (Q : Ideal (Torsor hI hmax h𝔭 d hπ)) [Q.IsP
     rw [reesS_pow_coe, hm, mul_assoc, ← T_add, add_neg_cancel, T_zero, mul_one,
       LaurentPolynomial.C_eq_algebraMap]
   rw [← heq] at hgP
-  haveI : P.IsPrime := Ideal.comap_isPrime _ _
+  have : P.IsPrime := Ideal.comap_isPrime _ _
   rcases ‹P.IsPrime›.mem_or_mem hgP with h | h
   · exact h
   · exact absurd (‹P.IsPrime›.mem_of_pow_mem m h) hsP
@@ -630,25 +650,25 @@ theorem torsor_invAt (Q : Ideal (Torsor hI hmax h𝔭 d hπ)) [hQ : Q.IsMaximal]
   have hneg : ∀ j : ℤ, j ≤ 0 → (compFil hI hmax h𝔭 d).F j = ⊤ :=
     fun j hj => compFil_F_nonpos hI hmax h𝔭 d hj
   have hId := I_le_compFil hI hmax h𝔭 hd
-  haveI : Algebra.FiniteType A (ReesAlg (compFil hI hmax h𝔭 d)) :=
+  have : Algebra.FiniteType A (ReesAlg (compFil hI hmax h𝔭 d)) :=
     reesAlg_finiteType hI hmax h𝔭 d hd hw
-  haveI : Algebra.FiniteType ℚ (ReesAlg (compFil hI hmax h𝔭 d)) :=
+  have : Algebra.FiniteType ℚ (ReesAlg (compFil hI hmax h𝔭 d)) :=
     Algebra.FiniteType.trans (S := A) inferInstance inferInstance
-  haveI : IsNoetherianRing (ReesAlg (compFil hI hmax h𝔭 d)) :=
+  have : IsNoetherianRing (ReesAlg (compFil hI hmax h𝔭 d)) :=
     Algebra.FiniteType.isNoetherianRing A (ReesAlg (compFil hI hmax h𝔭 d))
-  haveI : Algebra.Smooth ℚ (ReesAlg (compFil hI hmax h𝔭 d)) := rees_smooth hI hmax h𝔭 hd hw
-  haveI : IsDomain (Torsor hI hmax h𝔭 d hπ) := torsor_isDomain hI hmax h𝔭 hπ hπ0
-  haveI : Algebra.FiniteType ℚ (Torsor hI hmax h𝔭 d hπ) := torsor_finiteType hI hmax h𝔭 hd hw hπ
-  haveI : IsNoetherianRing (Torsor hI hmax h𝔭 d hπ) :=
+  have : Algebra.Smooth ℚ (ReesAlg (compFil hI hmax h𝔭 d)) := rees_smooth hI hmax h𝔭 hd hw
+  have : IsDomain (Torsor hI hmax h𝔭 d hπ) := torsor_isDomain hI hmax h𝔭 hπ hπ0
+  have : Algebra.FiniteType ℚ (Torsor hI hmax h𝔭 d hπ) := torsor_finiteType hI hmax h𝔭 hd hw hπ
+  have : IsNoetherianRing (Torsor hI hmax h𝔭 d hπ) :=
     Algebra.FiniteType.isNoetherianRing ℚ (Torsor hI hmax h𝔭 d hπ)
-  haveI : Algebra.Smooth ℚ (Torsor hI hmax h𝔭 d hπ) := torsor_smooth hI hmax h𝔭 hd hw hπ
+  have : Algebra.Smooth ℚ (Torsor hI hmax h𝔭 d hπ) := torsor_smooth hI hmax h𝔭 hd hw hπ
   -- the point of the Rees algebra below `Q`
-  haveI hPm : (Q.comap (algebraMap (ReesAlg (compFil hI hmax h𝔭 d))
+  have hPm : (Q.comap (algebraMap (ReesAlg (compFil hI hmax h𝔭 d))
     (Torsor hI hmax h𝔭 d hπ))).IsMaximal := comap_isMaximal_of_finiteType Q
   have hIwP : weakT (compFil hI hmax h𝔭 d) I d hId ≤
       Q.comap (algebraMap (ReesAlg (compFil hI hmax h𝔭 d)) (Torsor hI hmax h𝔭 d hπ)) :=
     Ideal.map_le_iff_le_comap.1 hIQ
-  obtain ⟨l, hl⟩ := exists_torsorY_not_mem hI hmax h𝔭 hd hw hπ Q
+  obtain ⟨l, hl⟩ := exists_torsorY_not_mem hI hmax h𝔭 hπ Q
   have hIw0 : weakT (compFil hI hmax h𝔭 d) I d hId ≠ ⊥ :=
     weakT_ne_bot (compFil hI hmax h𝔭 d) hI d hId
   obtain ⟨w, hw'⟩ := exists_invAt hIw0 _ hIwP
@@ -669,7 +689,7 @@ theorem torsor_invAt (Q : Ideal (Torsor hI hmax h𝔭 d hπ)) [hQ : Q.IsMaximal]
       rw [← Ideal.map_le_iff_le_comap, torsor_map_eq hI hmax h𝔭 hd hπ]
       exact Ideal.mul_le_right.trans hIQ
     refine ⟨hsQ, hI𝔪, torsor_not_le_of_s_not_mem hI hmax h𝔭 hd hw hπ Q hsQ, ?_⟩
-    haveI h𝔪m : (Q.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ))).IsMaximal :=
+    have h𝔪m : (Q.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ))).IsMaximal :=
       comap_isMaximal_of_finiteType Q
     obtain ⟨u, hu⟩ := exists_invAt hI _ hI𝔪
     have hu' := InvAt.congr_pt hcomap hu
@@ -686,53 +706,6 @@ theorem torsor_invAt (Q : Ideal (Torsor hI hmax h𝔭 d hπ)) [hQ : Q.IsMaximal]
 end BezoutCounterexample.Principalization
 
 
-namespace BezoutCounterexample.Jou
-
-open MvPolynomial
-
-variable {B : Type*} [CommRing B] {r : ℕ}
-
-lemma algebraMap_eq_mk_comp_C (c : Fin r → B) :
-    algebraMap B (J c) = (Ideal.Quotient.mk (Ideal.span {rel c})).comp C := by
-  ext b
-  rw [IsScalarTower.algebraMap_apply B (MvPolynomial (Fin r) B), MvPolynomial.algebraMap_eq,
-    Ideal.Quotient.algebraMap_eq]
-  rfl
-
-/-- The kernel of the reduction `J(c) → J(c mod 𝔞)` is `𝔞 J(c)`. -/
-lemma ker_map_quotient (c : Fin r → B) (𝔞 : Ideal B) :
-    RingHom.ker (map (Ideal.Quotient.mk 𝔞) c) = 𝔞.map (algebraMap B (J c)) := by
-  apply le_antisymm
-  · intro z hz
-    obtain ⟨p, rfl⟩ := Ideal.Quotient.mk_surjective z
-    rw [RingHom.mem_ker, map_mk, Ideal.Quotient.eq_zero_iff_mem] at hz
-    obtain ⟨a', ha'⟩ := Ideal.mem_span_singleton'.1 hz
-    obtain ⟨a, rfl⟩ := MvPolynomial.map_surjective _ Ideal.Quotient.mk_surjective a'
-    rw [← map_rel, ← map_mul, ← sub_eq_zero, ← map_sub] at ha'
-    have hk : p - a * rel c ∈ Ideal.map (C : B →+* MvPolynomial (Fin r) B)
-        (RingHom.ker (Ideal.Quotient.mk 𝔞)) := by
-      rw [← MvPolynomial.ker_map, RingHom.mem_ker, ← neg_sub, map_neg, ha', neg_zero]
-    rw [Ideal.mk_ker] at hk
-    have h1 : Ideal.Quotient.mk (Ideal.span {rel c}) p =
-        Ideal.Quotient.mk (Ideal.span {rel c}) (p - a * rel c) := by
-      rw [Ideal.Quotient.eq, show p - (p - a * rel c) = a * rel c by ring]
-      exact Ideal.mul_mem_left _ _ (Ideal.mem_span_singleton_self _)
-    rw [h1, algebraMap_eq_mk_comp_C, ← Ideal.map_map]
-    exact Ideal.mem_map_of_mem _ hk
-  · rw [Ideal.map_le_iff_le_comap]
-    intro b hb
-    rw [Ideal.mem_comap, RingHom.mem_ker, map_algebraMap, Ideal.Quotient.eq_zero_iff_mem.2 hb,
-      map_zero]
-
-/-- `𝔞 J(c)` is prime when `B/𝔞` is a domain and some `c_l ∉ 𝔞`. -/
-lemma isPrime_map {c : Fin (r + 1) → B} (𝔞 : Ideal B) [𝔞.IsPrime] {l : Fin (r + 1)}
-    (hl : c l ∉ 𝔞) : (𝔞.map (algebraMap B (J c))).IsPrime := by
-  rw [← ker_map_quotient]
-  haveI : IsDomain (J (Ideal.Quotient.mk 𝔞 ∘ c)) := isDomain (l := l) (by
-    simpa [Ideal.Quotient.eq_zero_iff_mem] using hl)
-  exact RingHom.ker_isPrime _
-
-end BezoutCounterexample.Jou
 
 
 namespace BezoutCounterexample.Principalization
@@ -747,10 +720,12 @@ variable {B : Type*} [CommRing B] [Algebra ℚ B] (Φ : WFil B) (𝔞 : Ideal B)
 def reesRed : ReesAlg Φ →+* (B ⧸ 𝔞)[T;T⁻¹] :=
   (lmap (Ideal.Quotient.mk 𝔞)).comp (ReesAlg Φ).val.toRingHom
 
+omit [Algebra ℚ B] in
 lemma reesRed_coeff (p : ReesAlg Φ) (j : ℤ) :
     (reesRed Φ 𝔞 p).coeff j = Ideal.Quotient.mk 𝔞 ((p : B[T;T⁻¹]).coeff j) :=
   lmap_coeff _ _ _
 
+omit [Algebra ℚ B] in
 lemma exists_mem_map_rees {j : ℤ} {x : B} (hx : x ∈ Φ.F j * 𝔞) :
     ∃ q ∈ 𝔞.map (algebraMap B (ReesAlg Φ)), (q : B[T;T⁻¹]) = LaurentPolynomial.C x * T j := by
   refine Submodule.mul_induction_on hx (fun a ha b hb => ?_) (fun x y hx hy => ?_)
@@ -764,6 +739,7 @@ lemma exists_mem_map_rees {j : ℤ} {x : B} (hx : x ∈ Φ.F j * 𝔞) :
       show (q : B[T;T⁻¹]) + q' = _
       rw [h, h', map_add, add_mul]⟩
 
+omit [Algebra ℚ B] in
 /-- **`𝔞 R` is the kernel of the reduction** when `𝔞` is comaximal to every `F_j`. -/
 theorem map_eq_ker_reesRed (h : ∀ j, Φ.F j ⊔ 𝔞 = ⊤) :
     𝔞.map (algebraMap B (ReesAlg Φ)) = RingHom.ker (reesRed Φ 𝔞) := by
@@ -785,12 +761,13 @@ theorem map_eq_ker_reesRed (h : ∀ j, Φ.F j ⊔ 𝔞 = ⊤) :
     have h1 : (p : B[T;T⁻¹]).coeff j ∈ 𝔞 := by
       rw [← Ideal.Quotient.eq_zero_iff_mem, ← reesRed_coeff, hp]; rfl
     have h2 : (p : B[T;T⁻¹]).coeff j ∈ Φ.F j * 𝔞 := by
-      rw [← Ideal.inf_eq_mul_of_isCoprime (Ideal.isCoprime_iff_sup_eq.2 (h j))]
+      rw [Ideal.mul_eq_inf_of_isCoprime (Ideal.isCoprime_iff_sup_eq.2 (h j))]
       exact ⟨p.2 j, h1⟩
     obtain ⟨q, hq, hq'⟩ := exists_mem_map_rees Φ 𝔞 h2
     have : q = hcomp Φ p j := Subtype.ext hq'
     rw [← this]; exact hq
 
+omit [Algebra ℚ B] in
 theorem isPrime_map_rees [IsDomain (B ⧸ 𝔞)] (h : ∀ j, Φ.F j ⊔ 𝔞 = ⊤) :
     (𝔞.map (algebraMap B (ReesAlg Φ))).IsPrime := by
   rw [map_eq_ker_reesRed Φ 𝔞 h]
@@ -840,7 +817,7 @@ lemma exists_torsorY_not_mem_map {𝔭' : Ideal A} (h𝔭' : 𝔭' ∈ (locusIde
     exact h𝔭'.1.1.ne_top this
   obtain ⟨g, hg, hg'⟩ : ∃ g ∈ gensF hI hmax h𝔭 d 1, g ∉ 𝔭' := by
     by_contra hcon
-    push_neg at hcon
+    push Not at hcon
     apply hF1
     rw [← span_gensF]
     exact Ideal.span_le.2 hcon
@@ -855,12 +832,12 @@ lemma exists_torsorY_not_mem_map {𝔭' : Ideal A} (h𝔭' : 𝔭' ∈ (locusIde
     rw [← h2]; simpa using h1
   exact Ideal.Quotient.eq_zero_iff_mem.1 h3
 
-include hd hw hπ0 in
+include hd hw in
 /-- **The other components stay prime on the torsor.** -/
 theorem torsor_comp_isPrime {𝔭' : Ideal A} (h𝔭' : 𝔭' ∈ (locusIdeal I v₀).minimalPrimes)
     (hne : 𝔭 ≠ 𝔭') : (𝔭'.map (algebraMap A (Torsor hI hmax h𝔭 d hπ))).IsPrime := by
-  haveI := h𝔭'.1.1
-  haveI : (𝔭'.map (algebraMap A (ReesAlg (compFil hI hmax h𝔭 d)))).IsPrime :=
+  have := h𝔭'.1.1
+  have : (𝔭'.map (algebraMap A (ReesAlg (compFil hI hmax h𝔭 d)))).IsPrime :=
     isPrime_map_rees _ _ (compFil_sup_eq_top hI hmax h𝔭 hd hw h𝔭' hne)
   obtain ⟨l, hl⟩ := exists_torsorY_not_mem_map hI hmax h𝔭 hd hw hπ h𝔭' hne
   rw [IsScalarTower.algebraMap_eq A (ReesAlg (compFil hI hmax h𝔭 d)) (Torsor hI hmax h𝔭 d hπ),
@@ -895,7 +872,7 @@ theorem minimalPrimes_sInf_subset {S : Set (Ideal U)} {ι : Type*} (s : Finset �
     rw [Finset.prod_empty, Ideal.one_eq_top] at hprod
     exact absurd (eq_top_iff.2 (hprod.trans h𝔮.1.2)) h𝔮p.ne_top
   obtain ⟨i, hi, hle⟩ := h𝔮p.prod_le.1 (hprod.trans h𝔮.1.2)
-  haveI := hprime i hi
+  have := hprime i hi
   have hjac : sInf S ≤ 𝔯 i := by
     rw [← IsJacobsonRing.out ‹IsJacobsonRing U› (Ideal.IsPrime.isRadical (hprime i hi)),
       Ideal.jacobson]
@@ -963,10 +940,10 @@ include hd hw hπ0 in
 theorem torsor_inv_ge (Q : Ideal (Torsor hI hmax h𝔭 d hπ)) [Q.IsMaximal]
     (hIQ : torsorI hI hmax h𝔭 hd hπ ≤ Q) {v : ℕ → ℚ}
     (hv : InvAt (torsorI hI hmax h𝔭 hd hπ) Q v) : toLex v₀ ≤ toLex v := by
-  haveI : Algebra.FiniteType ℚ (Torsor hI hmax h𝔭 d hπ) := torsor_finiteType hI hmax h𝔭 hd hw hπ
+  have : Algebra.FiniteType ℚ (Torsor hI hmax h𝔭 d hπ) := torsor_finiteType hI hmax h𝔭 hd hw hπ
   rcases torsor_invAt hI hmax h𝔭 hd hw hπ hπ0 Q hIQ hv with ⟨-, hlt⟩ | ⟨-, hI𝔪, -, hv'⟩
   · exact hlt.le
-  · haveI : (Q.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ))).IsMaximal :=
+  · have : (Q.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ))).IsMaximal :=
       comap_isMaximal_of_finiteType Q
     exact hmax _ hI𝔪 v hv'
 
@@ -976,13 +953,13 @@ theorem mem_maxLocus_torsor {𝔭' : Ideal A} (h𝔭' : 𝔭' ∈ (locusIdeal I 
     (hne : 𝔭 ≠ 𝔭') (Q : Ideal (Torsor hI hmax h𝔭 d hπ)) [hQ : Q.IsMaximal]
     (hle : 𝔭'.map (algebraMap A (Torsor hI hmax h𝔭 d hπ)) ≤ Q) :
     Q ∈ maxLocus (torsorI hI hmax h𝔭 hd hπ) v₀ := by
-  haveI : IsDomain (Torsor hI hmax h𝔭 d hπ) := torsor_isDomain hI hmax h𝔭 hπ hπ0
-  haveI : Algebra.FiniteType ℚ (Torsor hI hmax h𝔭 d hπ) := torsor_finiteType hI hmax h𝔭 hd hw hπ
-  haveI : IsNoetherianRing (Torsor hI hmax h𝔭 d hπ) :=
+  have : IsDomain (Torsor hI hmax h𝔭 d hπ) := torsor_isDomain hI hmax h𝔭 hπ hπ0
+  have : Algebra.FiniteType ℚ (Torsor hI hmax h𝔭 d hπ) := torsor_finiteType hI hmax h𝔭 hd hw hπ
+  have : IsNoetherianRing (Torsor hI hmax h𝔭 d hπ) :=
     Algebra.FiniteType.isNoetherianRing ℚ (Torsor hI hmax h𝔭 d hπ)
-  haveI : Algebra.Smooth ℚ (Torsor hI hmax h𝔭 d hπ) := torsor_smooth hI hmax h𝔭 hd hw hπ
+  have : Algebra.Smooth ℚ (Torsor hI hmax h𝔭 d hπ) := torsor_smooth hI hmax h𝔭 hd hw hπ
   have h𝔪 : 𝔭' ≤ Q.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ)) := Ideal.map_le_iff_le_comap.1 hle
-  haveI : (Q.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ))).IsMaximal :=
+  have : (Q.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ))).IsMaximal :=
     comap_isMaximal_of_finiteType Q
   obtain ⟨hI𝔪, hinv⟩ := mem_maxLocus_of_minimal hI hmax h𝔭' _ h𝔪
   have hn𝔭 : ¬ 𝔭 ≤ Q.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ)) := fun h => by
@@ -1007,8 +984,8 @@ theorem torsor_count :
     (locusIdeal (torsorI hI hmax h𝔭 hd hπ) v₀).minimalPrimes.ncard <
       (locusIdeal I v₀).minimalPrimes.ncard := by
   classical
-  haveI : Algebra.FiniteType ℚ (Torsor hI hmax h𝔭 d hπ) := torsor_finiteType hI hmax h𝔭 hd hw hπ
-  haveI : IsJacobsonRing (Torsor hI hmax h𝔭 d hπ) := isJacobsonRing_of_finiteType (A := ℚ)
+  have : Algebra.FiniteType ℚ (Torsor hI hmax h𝔭 d hπ) := torsor_finiteType hI hmax h𝔭 hd hw hπ
+  have : IsJacobsonRing (Torsor hI hmax h𝔭 d hπ) := isJacobsonRing_of_finiteType (A := ℚ)
   have hfin : (locusIdeal I v₀).minimalPrimes.Finite :=
     Ideal.finite_minimalPrimes_of_isNoetherianRing A _
   have hle := ncard_minimalPrimes_sInf_le (S := maxLocus (torsorI hI hmax h𝔭 hd hπ) v₀)
@@ -1019,12 +996,12 @@ theorem torsor_count :
     exact lt_of_le_of_lt hle hcard
   · intro 𝔭' h𝔭'
     rw [Finset.mem_erase, Set.Finite.mem_toFinset] at h𝔭'
-    exact torsor_comp_isPrime hI hmax h𝔭 hd hw hπ hπ0 h𝔭'.2 (Ne.symm h𝔭'.1)
+    exact torsor_comp_isPrime hI hmax h𝔭 hd hw hπ h𝔭'.2 (Ne.symm h𝔭'.1)
   · intro Q hQ
     obtain ⟨hQm, hIQ, hv⟩ := hQ
     rcases torsor_invAt hI hmax h𝔭 hd hw hπ hπ0 Q hIQ hv with ⟨-, hlt⟩ | ⟨-, hI𝔪, hn𝔭, hv'⟩
     · exact absurd hlt (lt_irrefl _)
-    · haveI : (Q.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ))).IsMaximal :=
+    · have : (Q.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ))).IsMaximal :=
         comap_isMaximal_of_finiteType Q
       have hL : locusIdeal I v₀ ≤ Q.comap (algebraMap A (Torsor hI hmax h𝔭 d hπ)) :=
         sInf_le ⟨inferInstance, hI𝔪, hv'⟩
