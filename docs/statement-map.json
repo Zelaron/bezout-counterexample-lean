@@ -1,0 +1,263 @@
+[
+  {
+    "label": "thm:main",
+    "number": "1.1",
+    "title": "A Bézout domain that is not an elementary divisor domain",
+    "file": "BezoutCounterexample/MainTheorem.lean",
+    "declarations": [
+      "BezoutCounterexample.main_theorem",
+      "BezoutCounterexample.not_hasSmithNormalForm"
+    ],
+    "note": ""
+  },
+  {
+    "label": "lem:orientation-descent",
+    "number": "2.1",
+    "title": "Orientation descends along compact monotone surjections",
+    "file": "BezoutCounterexample/Mobius.lean",
+    "declarations": [
+      "BezoutCounterexample.orientation_descent"
+    ],
+    "note": ""
+  },
+  {
+    "label": "lem:monotone-composition",
+    "number": "2.2",
+    "title": "Composition of monotone surjections",
+    "file": "BezoutCounterexample/Mobius.lean",
+    "declarations": [
+      "BezoutCounterexample.IsMonotoneSurjection.comp"
+    ],
+    "note": ""
+  },
+  {
+    "label": "lem:jouanolou",
+    "number": "3.1",
+    "title": "Jouanolou rings, all five parts",
+    "file": "BezoutCounterexample/Jouanolou.lean",
+    "declarations": [
+      "BezoutCounterexample.Jou.tensorEquiv",
+      "BezoutCounterexample.Jou.quotientEquiv",
+      "BezoutCounterexample.Jou.isLocalization_map",
+      "BezoutCounterexample.Jou.awayEquiv",
+      "BezoutCounterexample.Jou.isDomain",
+      "BezoutCounterexample.Jou.algebraMap_injective",
+      "BezoutCounterexample.Jou.formallySmooth",
+      "BezoutCounterexample.Jou.smooth",
+      "BezoutCounterexample.Jou.ufd"
+    ],
+    "note": "Parts (1)–(5) are separate declarations; the row length is `r + 1` when eliminating a coordinate."
+  },
+  {
+    "label": "def:marked-centre",
+    "number": "3.2",
+    "title": "Marked centers, weighted ideals, admissibility",
+    "file": "BezoutCounterexample/MarkedCenter.lean",
+    "declarations": [
+      "BezoutCounterexample.MarkedCenter",
+      "BezoutCounterexample.MarkedCenter.F",
+      "BezoutCounterexample.MarkedCenter.IsAdmissible",
+      "BezoutCounterexample.MarkedCenter.weights",
+      "BezoutCounterexample.IsRegularSystemOfParameters.exists_chart"
+    ],
+    "note": "The definition uses regular parameters, not a stronger chart hypothesis. The bridge to dual derivations is proved."
+  },
+  {
+    "label": "thm:invariant",
+    "number": "3.3",
+    "title": "Weighted invariant, all five parts",
+    "file": "BezoutCounterexample/Invariant.lean",
+    "declarations": [
+      "BezoutCounterexample.theorem_3_3_1",
+      "BezoutCounterexample.inv_map_eq_of_localization_polynomial",
+      "BezoutCounterexample.maxinv_spec",
+      "BezoutCounterexample.theorem_3_3_3",
+      "BezoutCounterexample.theorem_3_3_4",
+      "BezoutCounterexample.Γ",
+      "BezoutCounterexample.inv_mem_Γ",
+      "BezoutCounterexample.Γ_wellFoundedOn",
+      "BezoutCounterexample.next_weight_form"
+    ],
+    "note": "Part (2) is exactly the polynomial-localization case in the revised paper. General smooth morphisms and stacks are not claimed. Part (5) uses well-foundedness of the strict reverse lexicographic order; totality comes from lexicographic order."
+  },
+  {
+    "label": "not:rees",
+    "number": "3.4",
+    "title": "Extended Rees algebra and weak transform",
+    "file": "BezoutCounterexample/Rees.lean",
+    "declarations": [
+      "BezoutCounterexample.ReesData",
+      "BezoutCounterexample.ReesData.𝓕",
+      "BezoutCounterexample.ReesData.𝓡",
+      "BezoutCounterexample.ReesData.s",
+      "BezoutCounterexample.ReesData.𝓡plus",
+      "BezoutCounterexample.ReesData.Iw",
+      "BezoutCounterexample.ReesData.G",
+      "BezoutCounterexample.ReesData.span_G"
+    ],
+    "note": ""
+  },
+  {
+    "label": "lem:rees",
+    "number": "3.5",
+    "title": "Rees algebra properties, all five parts",
+    "file": "BezoutCounterexample/Rees.lean",
+    "declarations": [
+      "BezoutCounterexample.ReesData.𝓕_of_nonpos",
+      "BezoutCounterexample.ReesData.𝓕_one",
+      "BezoutCounterexample.ReesData.pow_le_𝓕",
+      "BezoutCounterexample.ReesData.I_le_𝓕",
+      "BezoutCounterexample.ReesData.map_I_eq",
+      "BezoutCounterexample.ReesData.map_𝔭_le",
+      "BezoutCounterexample.ReesData.𝓕_eq_sum",
+      "BezoutCounterexample.ReesData.𝓡_eq_adjoin",
+      "BezoutCounterexample.ReesData.𝓡plus_eq_span",
+      "BezoutCounterexample.ReesData.isLocalization_away_s",
+      "BezoutCounterexample.ReesData.isLocalization_rees",
+      "BezoutCounterexample.ReesData.rees_presentation",
+      "BezoutCounterexample.ReesData.rees_loc_eq_top",
+      "BezoutCounterexample.ReesData.rees_smooth_domain",
+      "BezoutCounterexample.ReesData.quotientSRingEquiv",
+      "BezoutCounterexample.ReesData.initialForm_mul",
+      "BezoutCounterexample.ReesData.gradedAddEquiv_apply",
+      "BezoutCounterexample.ReesData.associatedGraded_isDomain",
+      "BezoutCounterexample.ReesData.prime_s"
+    ],
+    "note": "Part (5) also uses AssociatedGraded.lean: the direct sum has its usual addition and homogeneous multiplication, and the identification is a ring isomorphism, not merely a module isomorphism. Parts (3)–(4) express localization by its universal property, equivalent to the displayed rings/tensor products."
+  },
+  {
+    "label": "thm:drop",
+    "number": "3.6",
+    "title": "Strict decrease on the exceptional divisor away from the vertex",
+    "file": "BezoutCounterexample/Rees.lean",
+    "declarations": [
+      "BezoutCounterexample.ReesData.drop"
+    ],
+    "note": "The affine vertex, local-center, and rational scaling argument is in Principalization/Vertex.lean, ReesVertex.lean, and Drop.lean, matching the revised proof."
+  },
+  {
+    "label": "lem:derivations",
+    "number": "3.7",
+    "title": "Preservation of the center and bound from derivations",
+    "file": "BezoutCounterexample/Rees.lean",
+    "declarations": [
+      "BezoutCounterexample.deriv_mem_maxCenter",
+      "BezoutCounterexample.ReesData.deriv_mem_𝓕",
+      "BezoutCounterexample.numNonzero_inv_add_le"
+    ],
+    "note": "The last conclusion is written as `number of nonzero weights + m ≤ dim A`, equivalent to the paper’s subtraction bound."
+  },
+  {
+    "label": "lem:divisorial",
+    "number": "4.1",
+    "title": "Divisorial step",
+    "file": "BezoutCounterexample/Divisorial.lean",
+    "declarations": [
+      "BezoutCounterexample.PrincipalizationData.divisorial_e",
+      "BezoutCounterexample.PrincipalizationData.divisorial_𝔭_eq",
+      "BezoutCounterexample.PrincipalizationData.divisorial_le",
+      "BezoutCounterexample.PrincipalizationData.divisorial_I_eq",
+      "BezoutCounterexample.PrincipalizationData.divisorial_decrease"
+    ],
+    "note": ""
+  },
+  {
+    "label": "lem:torsor",
+    "number": "4.2",
+    "title": "Torsor smoothness, factoriality, injection, factorization",
+    "file": "BezoutCounterexample/Torsor.lean",
+    "declarations": [
+      "BezoutCounterexample.PrincipalizationData.torsor_spec"
+    ],
+    "note": ""
+  },
+  {
+    "label": "lem:torsor-invariant",
+    "number": "4.3",
+    "title": "Nonzero weak transform and complexity decrease",
+    "file": "BezoutCounterexample/Torsor.lean",
+    "declarations": [
+      "BezoutCounterexample.PrincipalizationData.torsor_invariant"
+    ],
+    "note": ""
+  },
+  {
+    "label": "lem:length-control",
+    "number": "4.4",
+    "title": "Preservation of the dimension and derivation bound",
+    "file": "BezoutCounterexample/LengthControl.lean",
+    "declarations": [
+      "BezoutCounterexample.Star",
+      "BezoutCounterexample.PrincipalizationData.length_control_divisorial",
+      "BezoutCounterexample.PrincipalizationData.length_control_torsor"
+    ],
+    "note": ""
+  },
+  {
+    "label": "lem:sphere-bundle",
+    "number": "4.5",
+    "title": "Compact normalized lift with connected fibers",
+    "file": "BezoutCounterexample/SphereBundle.lean",
+    "declarations": [
+      "BezoutCounterexample.PrincipalizationData.E",
+      "BezoutCounterexample.PrincipalizationData.E_spec",
+      "BezoutCounterexample.PrincipalizationData.sphereBundle",
+      "BezoutCounterexample.PrincipalizationData.sphere_bundle"
+    ],
+    "note": ""
+  },
+  {
+    "label": "prop:principalization-extension",
+    "number": "4.6",
+    "title": "Principalization extension for two elements",
+    "file": "BezoutCounterexample/PrincipalizationExtension.lean",
+    "declarations": [
+      "BezoutCounterexample.principalization_extension"
+    ],
+    "note": "The exported statement is for `a,b` not both zero. `principalization_extension_ideal` and `principalization_star` prove the auxiliary stronger assertions used in its proof."
+  },
+  {
+    "label": "construction:ring",
+    "number": "5.1",
+    "title": "Scheduled construction and increasing union",
+    "file": "BezoutCounterexample/Construction.lean",
+    "declarations": [
+      "BezoutCounterexample.pairing",
+      "BezoutCounterexample.left_le_pairing",
+      "BezoutCounterexample.Construction.η_surjective",
+      "BezoutCounterexample.Construction.pairAt_eq",
+      "BezoutCounterexample.Construction.stage",
+      "BezoutCounterexample.Construction.step_of_eq_zero",
+      "BezoutCounterexample.Construction.step_of_ne_zero",
+      "BezoutCounterexample.Construction.incl_injective",
+      "BezoutCounterexample.Construction.isCompact_K",
+      "BezoutCounterexample.Construction.isMonotoneSurjOn_incl",
+      "BezoutCounterexample.R",
+      "BezoutCounterexample.R.of_injective",
+      "BezoutCounterexample.R.exists_of"
+    ],
+    "note": "The increasing union is Mathlib’s ring direct limit; injectivity and representation at finite stages are proved. The construction includes the zero cases and coprime-factor reduction."
+  },
+  {
+    "label": "prop:bezout-domain",
+    "number": "5.2",
+    "title": "The constructed ring is a Bézout domain",
+    "file": "BezoutCounterexample/Construction.lean",
+    "declarations": [
+      "BezoutCounterexample.bezout_domain",
+      "BezoutCounterexample.R.isDomain",
+      "BezoutCounterexample.R.isBezout"
+    ],
+    "note": ""
+  },
+  {
+    "label": "lem:key-obstruction",
+    "number": "5.3",
+    "title": "No five elements satisfy the matrix identity",
+    "file": "BezoutCounterexample/MainTheorem.lean",
+    "declarations": [
+      "BezoutCounterexample.key_obstruction"
+    ],
+    "note": "Exactly five elements and right-hand side `1`, as in the new article; no extra element or congruence modulo Δ."
+  }
+]
