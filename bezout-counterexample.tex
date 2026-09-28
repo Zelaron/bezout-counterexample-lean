@@ -1,6 +1,7 @@
 \documentclass[11pt]{amsart}
 
 \usepackage[T1]{fontenc}
+\usepackage{fullpage}
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
 \usepackage{microtype}
@@ -10,7 +11,7 @@
 \hypersetup{
   pdftitle={A B\'ezout domain that is not an elementary divisor domain},
   pdfauthor={Christian H\"agg and Anders M\"ortberg},
-  pdfsubject={B\'ezout domains, elementary divisor domains, principalization, and Smith normal form}
+  pdfsubject={B\'ezout domains, elementary divisor domains, and Smith normal form}
 }
 \setlength{\emergencystretch}{2em}
 \numberwithin{equation}{section}
@@ -50,23 +51,31 @@
 \author[Anders M\"ortberg]{Anders M\"ortberg}
 \address{Department of Mathematics, Stockholm University}
 \email{anders.mortberg@math.su.se}
-\date{}
-\subjclass[2020]{Primary 13F10; Secondary 13C10, 14E15, 14P25, 15A21}
-\keywords{B\'ezout domain, elementary divisor domain, Smith normal form, principalization, weighted blowup, real line bundle}
+\date{\today}
+%% \subjclass[2020]{Primary 13F10; Secondary 13C10, 14E15, 14P25, 15A21}
+%% \keywords{B\'ezout domain, elementary divisor domain, Smith normal form, principalization, weighted blowup, real line bundle}
 
 \begin{document}
 
 \begin{abstract}
-We settle in the negative the longstanding question whether every B\'ezout domain is an elementary divisor domain. We construct a B\'ezout domain over which an explicit $2\times2$ matrix has no Smith normal form. The obstruction is topological and is detected by the M\"obius line bundle.
+We settle in the negative the longstanding question whether every
+B\'ezout domain is an elementary divisor domain by constructing a
+B\'ezout domain over which an explicit $2\times2$ matrix has no Smith
+normal form. The obstruction is topological and is detected by the
+M\"obius line bundle.
 \end{abstract}
 
 \maketitle
 
+\noindent \emph{This is an early draft and work in progress. The
+complete Lean formalization is available at
+\url{https://github.com/Zelaron/bezout-counterexample-lean}. }
+
+\bigskip
+
 \section{Introduction}
 
-\noindent\emph{This is an early draft.}
-
-The Smith normal form over a principal ideal domain is a fundamental structure theorem: every finite matrix can be diagonalized by invertible row and column operations, with diagonal entries forming a divisibility chain. In 1943, Helmer asked whether this conclusion continues to hold over every B\'ezout domain \cite{Helmer}. We answer this question in the negative.
+The Smith normal form over a principal ideal domain is a fundamental structure theorem: every finite matrix can be diagonalized by invertible row and column operations, with diagonal entries forming a divisibility chain. In 1943, Helmer asked whether this conclusion continues to hold over every B\'ezout domain \cite{Helmer}.\footnote{Helmer uses the term ``Prüfer ring'' for what we here call ``B\'ezout domain''.}  We answer this question in the negative.
 
 Throughout, rings are commutative with identity, and ring homomorphisms preserve the identity. A \emph{B\'ezout domain} is an integral domain in which every finitely generated ideal is principal; equivalently, every two-generated ideal is principal. For a ring $A$, two $m\times n$ matrices $F$ and $G$ over $A$ are \emph{equivalent} if $PFQ=G$ for some $P\in\GL_m(A)$ and $Q\in\GL_n(A)$. A \emph{Smith normal form} of $F$ is an equivalent diagonal matrix whose nonzero diagonal entries occur first and satisfy $d_1\mid d_2\mid\cdots\mid d_r$. A domain is an \emph{elementary divisor domain} if every finite matrix over it has a Smith normal form. Every elementary divisor domain is B\'ezout, as follows by applying the definition to $1\times2$ matrices. The problem is whether the converse holds.
 
@@ -88,9 +97,18 @@ The proof constructs an ascending sequence of smooth finitely generated factoria
 
 The algebraic point is to principalize a two-generated ideal without destroying the topological obstruction. We use the weighted invariant of Abramovich, Temkin, and W{\l}odarczyk \cite{ATW}, in the presentation of Brais \cite{Brais}. For a center of codimension at least two, we form its extended Rees algebra and apply Jouanolou's device. The resulting smooth factorial affine ring factors the ideal by a prime power and lowers the invariant or removes one component of its maximal locus. Divisorial centers are handled by division. On real points, the torsor step admits a compact lift with connected fibers.
 
-Section~\ref{sec:topology} gives the topological obstruction. Section~\ref{sec:tools} records the algebraic tools, Section~\ref{sec:principalization} proves the principalization extension used in the construction, and Section~\ref{sec:construction} constructs the B\'ezout domain and proves Theorem~\ref{thm:main}.
+\bigskip
 
-The Lean formalization is available at \url{https://github.com/Zelaron/bezout-counterexample-lean}. OpenAI's GPT-6 Astra (via Codex) was used in preparing this article and its Lean formalization.
+\paragraph{\textbf{Outline}} Section~\ref{sec:topology} gives the topological obstruction, Section~\ref{sec:tools} records the algebraic tools, Section~\ref{sec:principalization} proves the principalization extension used in the construction, and Section~\ref{sec:construction} constructs the B\'ezout domain and proves Theorem~\ref{thm:main}.
+
+\bigskip
+
+\paragraph{\textbf{Use of AI}} OpenAI's GPT-6 Astra (via Codex) was used in preparing this
+article and its Lean formalization. Anthropic's Claude Opus 5.5 was
+used to first (unsuccessfully) search for a counterexample and then to
+check the counterexample produced by GPT-6 Astra.
+
+\bigskip
 
 \section{The topological obstruction}\label{sec:topology}
 
