@@ -58,26 +58,20 @@
 \begin{document}
 
 \begin{abstract}
-We settle in the negative the longstanding question whether every
-B\'ezout domain is an elementary divisor domain by constructing a
-B\'ezout domain over which an explicit $2\times2$ matrix has no Smith
-normal form. The obstruction is topological and is detected by the
-M\"obius line bundle.
+We settle in the negative the longstanding question whether every B\'ezout domain is an elementary divisor domain by constructing a B\'ezout domain over which an explicit $2\times2$ matrix has no Smith normal form. The obstruction is topological and is detected by the M\"obius line bundle.
 \end{abstract}
 
 \maketitle
 
-\noindent \emph{This is an early draft. The complete Lean
-formalization is available at
-\url{https://github.com/Zelaron/bezout-counterexample-lean}. }
+\noindent\emph{This is an early draft. The complete Lean formalization is available at \url{https://github.com/Zelaron/bezout-counterexample-lean}.}
 
 \bigskip
 
 \section{Introduction}
 
-The Smith normal form over a principal ideal domain is a fundamental structure theorem: every finite matrix can be diagonalized by invertible row and column operations, with diagonal entries forming a divisibility chain. In 1943, Helmer asked whether this conclusion continues to hold over every B\'ezout domain \cite{Helmer}.\footnote{Helmer uses the term ``Prüfer ring'' for what we here call ``B\'ezout domain''.}  We answer this question in the negative.
+The Smith normal form over a principal ideal domain is a fundamental structure theorem: every matrix can be diagonalized by invertible row and column operations, with diagonal entries forming a divisibility chain. In 1943, Helmer asked whether this conclusion continues to hold over every B\'ezout domain \cite{Helmer}.\footnote{Helmer uses the term ``Prüfer ring'' for what we here call ``B\'ezout domain''.}  We answer this question in the negative.
 
-Throughout, rings are commutative with identity, and ring homomorphisms preserve the identity. A \emph{B\'ezout domain} is an integral domain in which every finitely generated ideal is principal; equivalently, every two-generated ideal is principal. For a ring $A$, two $m\times n$ matrices $F$ and $G$ over $A$ are \emph{equivalent} if $PFQ=G$ for some $P\in\GL_m(A)$ and $Q\in\GL_n(A)$. A \emph{Smith normal form} of $F$ is an equivalent diagonal matrix whose nonzero diagonal entries occur first and satisfy $d_1\mid d_2\mid\cdots\mid d_r$. A domain is an \emph{elementary divisor domain} if every finite matrix over it has a Smith normal form. Every elementary divisor domain is B\'ezout, as follows by applying the definition to $1\times2$ matrices. The problem is whether the converse holds.
+Throughout, rings are commutative with identity, and ring homomorphisms preserve the identity. A \emph{B\'ezout domain} is an integral domain in which every finitely generated ideal is principal; equivalently, every two-generated ideal is principal. For a ring $A$, two $m\times n$ matrices $F$ and $G$ over $A$ are \emph{equivalent} if $PFQ=G$ for some $P\in\GL_m(A)$ and $Q\in\GL_n(A)$. A \emph{Smith normal form} of $F$ is an equivalent diagonal matrix whose nonzero diagonal entries occur first and satisfy $d_1\mid d_2\mid\cdots\mid d_r$. A domain is an \emph{elementary divisor domain} if every matrix over it has a Smith normal form. Every elementary divisor domain is B\'ezout, as follows by applying the definition to $1\times2$ matrices. The problem is whether the converse holds.
 
 Helmer proved the elementary divisor theorem for adequate domains \cite[Theorem~3]{Helmer}. Kaplansky subsequently introduced elementary divisor rings and showed that, over a domain, the problem is already detected by $2\times2$ matrices \cite[Theorem~5.1 and the subsequent remark]{Kaplansky}. Gillman and Henriksen constructed a B\'ezout ring with zero divisors that is not an elementary divisor ring \cite[Example~4.11]{GH}, but the domain case remained open.
 
@@ -103,10 +97,7 @@ The algebraic point is to principalize a two-generated ideal without destroying 
 
 \bigskip
 
-\paragraph{\textbf{Use of AI}} OpenAI's GPT-6 Astra (via Codex) was used in preparing this
-article and its Lean formalization. Anthropic's Claude Opus 5.5 was
-used to first (unsuccessfully) search for a counterexample and then to
-check the counterexample produced by GPT-6 Astra.
+\paragraph{\textbf{Use of AI}} OpenAI's GPT-6 Astra (via Codex) was used in preparing this article and its Lean formalization. Anthropic's Claude Opus 5.5 was used to first (unsuccessfully) search for a counterexample and then to check the counterexample produced by GPT-6 Astra.
 
 \bigskip
 
