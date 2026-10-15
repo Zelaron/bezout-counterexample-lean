@@ -54,6 +54,6 @@ proved implication from the elementary-divisor property to Kaplansky's condition
 together with failure of the latter, gives the counterexample.
 
 The compile, axiom-audit and kernel-replay checks described in the README include
-these definitions and proofs. The original article and its numbered-statement map remain unchanged in this
-local branch. The new declarations are included in the source compilation,
-exhaustive axiom audit and kernel replay.
+these definitions and proofs. The original article and its numbered-statement
+map remain unchanged. The new declarations are included in the source
+compilation, exhaustive axiom audit and kernel replay.

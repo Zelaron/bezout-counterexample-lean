@@ -109,17 +109,16 @@ OpenAI’s GPT-6 Astra (via Codex) was used in preparing the article and its Lea
 
 [MIT](LICENSE), copyright Christian Hägg and Anders Mörtberg, 2026.
 
-## Local gcd extension
+## Gcd formulation of Kaplansky's condition
 
-This checkout is the local `gcd-kaplansky-local` branch based on the preserved
-original commit `8b9463b544ded872ae92cf89fe4215f9d7f1ec9a`. These changes are not
-published to the original GitHub repository.
+This additive extension of version 1 is based on the preserved
+[original commit `8b9463b`](https://github.com/Zelaron/bezout-counterexample-lean/tree/8b9463b544ded872ae92cf89fe4215f9d7f1ec9a).
+The original construction and existing proof bodies are unchanged.
 
 [Kaplansky.lean](BezoutCounterexample/Kaplansky.lean) adds the normalized-gcd
 condition, its equivalent up-to-units and unit-ideal formulations, the first-order
 Bézout identity characterization, and the primitive-matrix criterion.
 The matrix predicates in that file are aliases of the original definitions.
-The original construction and existing proof bodies are unchanged.
 
 `BezoutCounterexample.main_theorem_gcd` and
 `BezoutCounterexample.exists_gcd_counterexample` in `MainTheorem.lean` prove that
@@ -134,3 +133,5 @@ See the [gcd correspondence notes](docs/KAPLANSKY.md) for the exact formula and 
 The added `Kaplansky.lean` retains the [Apache 2.0 license](LICENSE-APACHE) of the adapted algebraic helpers. The original sources and the additions to `MainTheorem.lean` retain the MIT license.
 
 The [saved gcd verification receipt](docs/VERIFICATION-GCD.json) records compilation and kernel replay of all 44 modules, the audit of 2,860 declarations, the exact checked source hashes, and the printed gcd theorem signatures and axioms.
+It was generated on the local preparation branch before publication; its source
+hashes also match this branch.
