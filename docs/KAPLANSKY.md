@@ -54,6 +54,10 @@ proved implication from the elementary-divisor property to Kaplansky's condition
 together with failure of the latter, gives the counterexample.
 
 The compile, axiom-audit and kernel-replay checks described in the README include
-these definitions and proofs. The original article and its numbered-statement
-map remain unchanged. The new declarations are included in the source
-compilation, exhaustive axiom audit and kernel replay.
+these definitions and proofs. The article's Kaplansky subsection states the exact
+gcd condition and proves the equivalent matrix formulation. The unnumbered
+paragraph after Lemma 5.3 states its failure for the constructed ring. All 19
+original numbered statements and their statement map remain unchanged. The
+mathematical sources and verification scripts still match every hash in the
+saved verification receipt; the later article and documentation edits do not
+alter those checked proofs.
