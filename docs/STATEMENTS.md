@@ -1,6 +1,6 @@
 # Statement correspondence
 
-This map covers every numbered theorem, lemma, proposition, definition, notation, and construction in *A Bézout domain that is not an elementary divisor domain* by Christian Hägg and Anders Mörtberg. The article is distributed separately. The human comparison of hypotheses and conclusions is recorded below. `scripts/check.py` checks that the listed declarations are present in the axiom audit. With `--paper PATH`, it also compares the article’s label inventory and records its SHA-256 hash; those mechanical checks supplement the mathematical comparison.
+This map covers every numbered theorem, lemma, proposition, definition, notation, and construction in *A Bézout domain that is not an elementary divisor domain* by Christian Hägg and Anders Mörtberg. The [article source](../bezout-counterexample.tex) and [PDF](../bezout-counterexample.pdf) are included. The human comparison of hypotheses and conclusions is recorded below. `scripts/check.py` checks that the listed declarations are present in the axiom audit. With `--paper PATH`, it also compares the article's label inventory and records its SHA-256 hash; those mechanical checks supplement the mathematical comparison.
 
 | Number | Paper label | Statement | Lean source |
 |---|---|---|---|
@@ -121,6 +121,23 @@ Exactly five elements and right-hand side `1`, as in the new article; no extra e
 ## Numbered equations and the obstruction
 
 `Basic.lean` defines `A₀`, `x`, `y`, `Δ`, and `M`. `Mobius.lean` proves `det_M`, `span_entries_M`, `M_sq`, `Mreal_cos_sin`, and `L₀_not_isOrientable`. `SphereBundle.lean` proves `s_norm`. `Construction.nonorientable` proves nonorientability at every stage. The union and the hypothetical Smith normal form are represented by `R` and `not_hasSmithNormalForm`.
+
+## Gcd formulation of Kaplansky's condition
+
+The unnumbered additions preserve the 19 numbered statements above.
+
+| Article passage | Lean declarations |
+|---|---|
+| Kaplansky subsection: normalized-gcd condition and equivalent unit-ideal condition | `KaplanskyConditionGCD`, `kaplanskyCondition_iff_gcd` |
+| Same subsection: equivalent matrix property | `kaplanskyCondition_iff_primitive_matrix` |
+| Same subsection: elementary divisor domains satisfy the condition | `Matrix.IsElementaryDivisorDomain.kaplanskyCondition` |
+| Paragraph after Lemma 5.3: failure for the constructed ring | `BezoutCounterexample.not_kaplanskyConditionGCD`, `BezoutCounterexample.exists_gcd_counterexample` |
+
+`BezoutCounterexample.gcd_eq_sum` also proves the Bézout identity for the chosen
+normalized gcd. `BezoutCounterexample.main_theorem_gcd` packages the ring, its
+domain and Bézout properties, that identity, and the failed triple in one
+unconditional existential theorem. See [the correspondence notes](KAPLANSKY.md)
+for the up-to-units version and normalization conventions.
 
 ## Conventions
 

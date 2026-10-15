@@ -16,4 +16,11 @@ The substantive adaptations are:
 
 The old explicit/countable quotient construction files are not part of this project. Useful intermediate algebraic results remain where they support the included proofs.
 
-This source distribution contains no caches or build artifacts. A fresh checkout obtains the pinned third-party dependencies from `lake-manifest.json` with `lake exe cache get`. The article is distributed separately and is not needed to compile or verify the formalization.
+This source distribution contains no Lean caches or build artifacts. A fresh checkout obtains the pinned third-party dependencies from `lake-manifest.json` with `lake exe cache get`. The article source and a compiled PDF are included; neither is needed to compile or verify the formalization.
+
+The gcd extension adds `Kaplansky.lean` and new declarations in `MainTheorem.lean`
+without changing any existing mathematical proof body. The original published
+version remains in Git history at commit
+`8b9463b544ded872ae92cf89fe4215f9d7f1ec9a`. The accompanying article now includes
+the gcd condition, its equivalent matrix formulation, and its failure for the
+same ring. Its original construction and all 19 numbered statements are retained.

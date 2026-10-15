@@ -1,4 +1,5 @@
 import BezoutCounterexample.Construction
+import BezoutCounterexample.Kaplansky
 
 /-!
 # Lemma 5.3 and Theorem 1.1 of the current article
@@ -122,5 +123,56 @@ theorem main_theorem :
     ∃ (R : Type) (_ : CommRing R),
       IsDomain R ∧ IsBezout R ∧ ¬ IsElementaryDivisorDomain R :=
   ⟨R, inferInstance, R.isDomain, R.isBezout, not_isElementaryDivisorDomain⟩
+
+/-- The original explicit matrix has primitive entries. -/
+theorem entryIdeal_M_map : Matrix.entryIdeal (M.map R.ι) = ⊤ := by
+  apply top_unique
+  rw [← span_entries_M_map, Ideal.span_le]
+  rintro z (rfl | rfl | rfl)
+  · exact Ideal.subset_span ⟨(0, 0), by simp [M]⟩
+  · exact Ideal.subset_span ⟨(0, 1), by simp [M]⟩
+  · exact Ideal.subset_span ⟨(1, 1), by simp [M]⟩
+
+/-- The original constructed ring fails Kaplansky's unit-ideal condition. -/
+theorem not_kaplanskyCondition : ¬ KaplanskyCondition R := by
+  intro h
+  obtain ⟨p, q, u, v, hpq⟩ :=
+    h.exists_vecMul_dotProduct_eq_one (M.map R.ι) entryIdeal_M_map
+  exact key_obstruction ⟨p, q, u, v, 1, by simpa only [one_mul] using hpq⟩
+
+/-- A normalized gcd structure exists because the constructed domain is Bézout.
+Its existence is derived by Mathlib; it is not an extra hypothesis. -/
+noncomputable instance normalizedGCDMonoid : NormalizedGCDMonoid R :=
+  Classical.choice (inferInstance : Nonempty (NormalizedGCDMonoid R))
+
+/-- The first-order Bézout identity for this same constructed ring and gcd. -/
+theorem gcd_eq_sum (a b : R) : ∃ x y : R, x * a + y * b = gcd a b :=
+  (KaplanskyCondition.isBezout_iff_gcd_eq_sum.mp (inferInstance : IsBezout R)) a b
+
+/-- The constructed Bézout domain fails the exact normalized-gcd condition. -/
+theorem not_kaplanskyConditionGCD : ¬ KaplanskyConditionGCD R :=
+  fun h => not_kaplanskyCondition (kaplanskyCondition_iff_gcd.mpr h)
+
+/-- The same failure with any gcd understood up to multiplication by a unit. -/
+theorem not_kaplanskyConditionGCDUpToUnits : ¬ KaplanskyConditionGCDUpToUnits R :=
+  fun h => not_kaplanskyCondition (kaplanskyCondition_iff_gcdUpToUnits.mpr h)
+
+/-- A triple with gcd one for which no Kaplansky coefficients give gcd one. -/
+theorem exists_gcd_counterexample :
+    ∃ a b c : R, gcd a (gcd b c) = 1 ∧
+      ∀ p q : R, gcd (p * a) (p * b + q * c) ≠ 1 :=
+  not_kaplanskyConditionGCD_iff.mp not_kaplanskyConditionGCD
+
+/-- An unconditional counterexample to the first-order gcd formulation.
+The ring, domain and Bézout proofs, normalized gcd and failed triple are all
+supplied by the construction, with no additional hypotheses. -/
+theorem main_theorem_gcd :
+    ∃ (S : Type) (_ : CommRing S) (_ : NormalizedGCDMonoid S),
+      IsDomain S ∧ IsBezout S ∧
+      (∀ a b : S, ∃ x y : S, x * a + y * b = gcd a b) ∧
+      ∃ a b c : S, gcd a (gcd b c) = 1 ∧
+        ∀ p q : S, gcd (p * a) (p * b + q * c) ≠ 1 :=
+  ⟨R, inferInstance, inferInstance, inferInstance, inferInstance,
+    gcd_eq_sum, exists_gcd_counterexample⟩
 
 end BezoutCounterexample

@@ -1,6 +1,6 @@
 # A Bézout domain that is not an elementary divisor domain
 
-This Lean 4 / Mathlib project formalizes *A Bézout domain that is not an elementary divisor domain* by **Christian Hägg and Anders Mörtberg**. Numbered references below and in the Lean sources refer to that paper, which is distributed separately.
+This Lean 4 / Mathlib project formalizes *A Bézout domain that is not an elementary divisor domain* by **Christian Hägg and Anders Mörtberg**. Numbered references below and in the Lean sources refer to the included [article](bezout-counterexample.tex) ([PDF](bezout-counterexample.pdf)).
 
 Repository: [Zelaron/bezout-counterexample-lean](https://github.com/Zelaron/bezout-counterexample-lean). The formalization constructs a Bézout domain and proves that the explicit matrix
 
@@ -63,17 +63,17 @@ Ordinary `lake build` is also supported by the package configuration. The script
 
 Kernel replay checks project declarations against the pinned imported dependencies. It uses Lean’s kernel, not an independently implemented proof checker. Its small wrapper is [scripts/Replay.lean](scripts/Replay.lean); the axiom audit is [scripts/AxiomAudit.lean](scripts/AxiomAudit.lean). The replay wrapper uses Lean’s IO interface; it introduces no mathematical declarations or assumptions.
 
-The source distribution contains no dependency cache, compiled artifacts, logs, or generated verification reports. Running the command above recreates them under `.lake/` and `verification/`, both ignored by Git.
+The source distribution contains no dependency cache, compiled Lean artifacts, or full verification logs. Running the command above recreates them under `.lake/` and `verification/`. A compact verification receipt is included below.
 
-The article is not required for compilation, the axiom audit, or kernel replay. If you have its source separately, you can also check its numbered-statement inventory against the statement map:
+The article is not required for compilation, the axiom audit, or kernel replay. You can also check its numbered-statement inventory against the statement map:
 
 ```bash
-python3 scripts/check.py --replay --paper ../bezout-counterexample.tex
+python3 scripts/check.py --replay --paper bezout-counterexample.tex
 ```
 
 This optional check records the article’s SHA-256 hash in the generated report. The inventory and declaration checks supplement the mathematical comparison documented in [docs/STATEMENTS.md](docs/STATEMENTS.md); they do not by themselves establish that informal statements match Lean types.
 
-The 43 Lean source modules were compiled and replayed through the Lean kernel on roos before this source-only distribution was prepared. The audit covered 2,804 declarations and found only the three standard axioms listed above. The mathematical Lean sources are unchanged in this distribution; rerun the command above to generate a verification report for your checkout.
+The original 43-module version was compiled and replayed through the Lean kernel on roos; its audit covered 2,804 declarations. The gcd extension below was checked on 14 October 2026: all 44 modules compiled and passed kernel replay, and the audit covered 2,860 declarations. Both audits found only the three standard axioms listed above. Rerun the command above to generate a verification report for your checkout.
 
 ## Read the proof
 
@@ -89,6 +89,7 @@ The top-level files follow the paper:
 | Principalization steps and termination | `Divisorial.lean`, `Torsor.lean`, `LengthControl.lean`, `PrincipalizationStar.lean` |
 | Compact lift and principalization extension | `SphereBundle.lean`, `PrincipalizationExtension.lean` |
 | Scheduled union, Bézout property, obstruction | `Construction.lean`, `MainTheorem.lean` |
+| Kaplansky's condition, gcd equivalences, failure for the constructed ring | `Kaplansky.lean`, `MainTheorem.lean` |
 
 The supporting algebraic proofs live in `BezoutCounterexample/Principalization/`. They prove the needed invariant, center, Rees, and torsor facts; these are not introduced as axioms. Proof comments explain the mathematical steps and connect the supporting machinery to the statements in the paper.
 
@@ -98,6 +99,7 @@ To use the result from another Lean file:
 import BezoutCounterexample
 
 #check BezoutCounterexample.main_theorem
+#check BezoutCounterexample.main_theorem_gcd
 #print axioms BezoutCounterexample.main_theorem
 ```
 
@@ -108,3 +110,30 @@ OpenAI’s GPT-6 Astra (via Codex) was used in preparing the article and its Lea
 ## License
 
 [MIT](LICENSE), copyright Christian Hägg and Anders Mörtberg, 2026.
+
+## Gcd formulation of Kaplansky's condition
+
+This additive extension of version 1 is based on the preserved
+[original commit `8b9463b`](https://github.com/Zelaron/bezout-counterexample-lean/tree/8b9463b544ded872ae92cf89fe4215f9d7f1ec9a).
+The original construction and existing proof bodies are unchanged.
+
+[Kaplansky.lean](BezoutCounterexample/Kaplansky.lean) adds the normalized-gcd
+condition, its equivalent up-to-units and unit-ideal formulations, the first-order
+Bézout identity characterization, and the primitive-matrix criterion.
+The matrix predicates in that file are aliases of the original definitions.
+
+`BezoutCounterexample.main_theorem_gcd` and
+`BezoutCounterexample.exists_gcd_counterexample` in `MainTheorem.lean` prove that
+the original constructed ring fails the exact gcd condition. Its normalized gcd
+structure is derived from the proved Bézout-domain instances, with no new axiom.
+This branch has 44 mathematical source modules; the earlier 43-module verification
+account above refers to the original commit. Rerun the same verification command
+to check the additive extension, including its axiom audit and kernel replay.
+
+See the [gcd correspondence notes](docs/KAPLANSKY.md) for the exact formula and normalization convention.
+
+The added `Kaplansky.lean` retains the [Apache 2.0 license](LICENSE-APACHE) of the adapted algebraic helpers. The original sources and the additions to `MainTheorem.lean` retain the MIT license.
+
+The [saved gcd verification receipt](docs/VERIFICATION-GCD.json) records compilation and kernel replay of all 44 modules, the audit of 2,860 declarations, the exact checked source hashes, and the printed gcd theorem signatures and axioms.
+It was generated on the local preparation branch before publication; its source
+hashes also match the current mathematical sources and verification scripts.
